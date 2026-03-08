@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using System.Security.Claims;
 using TeamUpBackEnd.Models;
 using TeamUpBackEnd.Services;
@@ -52,37 +53,35 @@ namespace TeamUpBackEnd.Extensions
 				.WithSummary("Register a new user").WithTags("User Management");
 
 			//logins user and returns a token with user info, if the login is successful. If not, it returns an unauthorized status.
-			app.MapPost("/login", async (user_data.LoginUser input_user, UserManager<ApplicationUser> userManager, IConfiguration config) =>
+			app.MapPost("/login", async (user_data.LoginUser input_user, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> SignInManager, IConfiguration config) =>
 			{
 				if (input_user == null)
-				{
 					return Results.BadRequest("No input");
-				}
 
-				if (input_user.EmailOrUsername == null || input_user.Password == null)
-				{
+				if (string.IsNullOrWhiteSpace(input_user.EmailOrUsername) ||
+					string.IsNullOrWhiteSpace(input_user.Password))
+
 					return Results.BadRequest("Email/Username and password are required");
-				}
 
 				var user = await userManager.FindByEmailAsync(input_user.EmailOrUsername) ?? await userManager.FindByNameAsync(input_user.EmailOrUsername);
 
 				if (user == null)
-				{
 					return Results.Unauthorized();
-				}
 
 				var passwordValid = await userManager.CheckPasswordAsync(user, input_user.Password);
 
 				if (!passwordValid)
-				{
 					return Results.Unauthorized();
-				}
 
 				var token = TokenService.GenerateToken(user, config);
 
-				//add refresh token to the response header
-
-				return Results.Ok(token);
+				return Results.Ok(new
+				{
+					token,
+					user.Id,
+					user.UserName,
+					user.Email
+				});
 			})
 				.WithSummary("Logs user as the token returns user id, name, email and security stamp").WithTags("User Management");
 
@@ -93,20 +92,20 @@ namespace TeamUpBackEnd.Extensions
 
 				if (userId == null)
 				{
-					return Results.Unauthorized();
+					return Results.BadRequest("Id not found");
 				}
 
 				var user = await userManager.FindByIdAsync(userId);
 
 				if (user == null)
 				{
-					return Results.Unauthorized();
+					return Results.BadRequest("User not found");
 				}
 
 				var token = TokenService.GenerateToken(user, config);
 				
 				return Results.Ok(token);
-			})
+			}).RequireAuthorization()
 				.WithSummary("Refreshes the token and returns a new token with user info").WithTags("User Management");
 
 			//logs out user by invalidating the token. This is done by changing the security stamp of the user, which will invalidate all tokens that were issued before the change.
@@ -116,34 +115,34 @@ namespace TeamUpBackEnd.Extensions
 
 				if (userId == null)
 				{
-					return Results.Unauthorized();
+					return Results.BadRequest("Id not found");
 				}
 
 				var user = await userManager.FindByIdAsync(userId);
 				
 				if (user == null)
 				{
-					return Results.Unauthorized();
+					return Results.BadRequest("User not found");
 				}
 
 				await userManager.UpdateSecurityStampAsync(user);
 				
 				return Results.Ok("Logged out successfully");
-			})
+			}).RequireAuthorization()
 				.WithSummary("Logs out user by invalidating the token").WithTags("User Management");
 		
 			//returns the current user's info
-			app.MapGet("/me", async (ClaimsPrincipal userClaims, UserManager<ApplicationUser> userManager) =>
+			app.MapGet("/me", [Authorize] async (ClaimsPrincipal userClaims, UserManager<ApplicationUser> userManager) =>
 			{
 				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
 
 				if (userId == null)
-					return Results.Unauthorized();
+					return Results.BadRequest("Id not found");
 
 				var user = await userManager.FindByIdAsync(userId);
 
 				if (user == null)
-					return Results.Unauthorized();
+					return Results.BadRequest("User not found");
 
 				return Results.Ok(new
 				{
@@ -153,8 +152,8 @@ namespace TeamUpBackEnd.Extensions
 					user.FirstName,
 					user.LastName
 				});
-			})
-				.WithSummary("Returns the current user's info").WithTags("User Management");
+			}).RequireAuthorization()
+				.WithSummary("Returns the current user's info").WithTags("User Management"); 
 		}
 	}
 }
