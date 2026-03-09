@@ -7,6 +7,7 @@ using System.Text;
 using TeamUpBackEnd.DbContext;
 using TeamUpBackEnd.Extensions;
 using TeamUpBackEnd.Models;
+using TeamUpBackEnd.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,6 +19,15 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
 	.AddEntityFrameworkStores<AppDbContext>()
 	.AddDefaultTokenProviders();
+
+builder.Services.Configure<IdentityOptions>(options =>
+{
+	options.Password.RequiredLength = 8;
+	options.Password.RequireDigit = true;
+	options.Password.RequireUppercase = true;
+});
+
+builder.Services.AddScoped<EmailService>();
 
 builder.Services.AddAuthentication(options =>
 {
