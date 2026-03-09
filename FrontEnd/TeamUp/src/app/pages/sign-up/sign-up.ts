@@ -32,6 +32,10 @@ export class SignUp {
 
   constructor(private renderer: Renderer2, private auth: Auth) {}
 
+  ngOnInit() {
+    this.auth.me();
+  }
+
   ngAfterViewInit() {
     this.renderer.addClass(this.pageDiv.nativeElement, 'light-mode');
   }
@@ -48,11 +52,20 @@ export class SignUp {
     }
   }
 
+  convertDateFormat = (dateStr: string): string => {
+    // Input: "mm-dd-yyyy" -> Output: ["mm", "dd", "yyyy"]
+    const [month, day, year] = dateStr.split('-');
+    
+    // Re-join as "yyyy-mm-dd"
+    return `${year}-${month}-${day}`;
+  };
+
   togglePassword() {
     this.showPassword = !this.showPassword;
   }
 
   register() {
+    this.userData.birthDate = new Date(this.convertDateFormat(this.userData.birthDate.toString()));
     this.auth.register(this.userData);
   }
 }
