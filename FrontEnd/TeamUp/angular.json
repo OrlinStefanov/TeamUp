@@ -22,17 +22,15 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "**/*",
+                "input": "src/assets"
               }
             ],
             "styles": [
               "src/styles.css"
-            ],
-            "server": "src/main.server.ts",
-            "outputMode": "server",
-            "ssr": {
-              "entry": "src/server.ts"
-            }
-          },
+            ]},
           "configurations": {
             "production": {
               "budgets": [
@@ -84,6 +82,10 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "**/*",
+                "input": "src/assets"
               }
             ],
             "styles": [
@@ -93,5 +95,8 @@
         }
       }
     }
+  },
+  "cli": {
+    "analytics": "0f8805d1-c22c-4c4b-9f5a-353f1b2b1808"
   }
 }

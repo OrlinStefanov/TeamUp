@@ -3,6 +3,112 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/main/VisualStudio.gitignore
 
+############################
+# Build results
+############################
+bin/
+obj/
+out/
+build/
+
+############################
+# Visual Studio
+############################
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+############################
+# Rider / JetBrains
+############################
+.idea/
+*.sln.iml
+
+############################
+# VS Code
+############################
+.vscode/
+
+############################
+# Logs
+############################
+*.log
+
+############################
+# OS generated files
+############################
+.DS_Store
+Thumbs.db
+
+############################
+# Test results
+############################
+TestResults/
+
+############################
+# Publish output
+############################
+publish/
+
+############################
+# Node (if frontend later)
+############################
+node_modules/
+npm-debug.log*
+
+############################
+# Environment configs
+############################
+.env
+.env.*
+
+############################
+# ASP.NET configuration
+############################
+appsettings.Development.json
+appsettings.Local.json
+
+############################
+# Secrets
+############################
+secrets.json
+*.secret
+*.key
+*.pfx
+
+############################
+# Azure
+############################
+.azure/
+
+############################
+# Docker
+############################
+docker-compose.override.yml
+
+############################
+# EF migrations snapshots (optional)
+############################
+*.db
+
+############################
+# Temporary files
+############################
+*.tmp
+*.temp
+
+############################
+# Cloudinary / API keys files
+############################
+cloudinary.config.json
+
+############################
+# User Secrets
+############################
+**/secrets.json
+
 # User-specific files
 *.rsuser
 *.suo

@@ -1,14 +1,16 @@
 export interface RegisterUser {
-    UserName: string;
-    FirstName: string;
-    LastName: string;
-    Email: string;
-    Password: string;
+    userName: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    password : string;
+    birthDate: Date;
+    phoneNumber: string;
 }
 
 export interface LoginUser {
-    EmailOrUsername: string;
-    Password: string;
+    emailOrUsername: string;
+    password: string;
 }
 
 export interface User {
