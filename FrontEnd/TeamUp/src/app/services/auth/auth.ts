@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { LoginUser, User } from './auth-types';
+import { LoginUser, RegisterUser, User } from './auth-types';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject } from 'rxjs';
 
@@ -22,7 +22,7 @@ export class Auth {
 
   login(user : LoginUser)
   {
-    return this.http.post<{ token: string }>(`${this.apiUrl}/login`, user).subscribe({
+    return this.http.post<{ token: string }>(`${this.apiUrl}/login`, user, { withCredentials: true, headers: { 'Content-Type': 'application/json' } }).subscribe({
       next: (response) => {
         localStorage.setItem(this.tokenKey, response.token);
         const decodedUser = this.decodeToken(response.token);
@@ -37,7 +37,18 @@ export class Auth {
   logout() {
     localStorage.removeItem(this.tokenKey);
     this.userSubject.next(null);
-    return this.http.post(`${this.apiUrl}/logout`, {}, {  });
+    return this.http.post(`${this.apiUrl}/logout`, { withCredentials: true, headers: { 'Content-Type': 'application/json' } }, {  });
+  }
+
+  register(user: RegisterUser) {
+    return this.http.post(`${this.apiUrl}/register`, user, { withCredentials: true, headers: { 'Content-Type': 'application/json' } }).subscribe({
+      next: (response) => {
+        console.log('Registration successful', response);
+      },
+      error: (error) => {
+        console.error('Registration failed', error);
+      }
+    });
   }
 
   //-----------------------Decoding the token--------------------------------------------
