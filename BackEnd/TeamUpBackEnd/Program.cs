@@ -49,6 +49,17 @@ builder.Services.AddAuthentication(options =>
 	};
 });
 
+builder.Services.AddCors(options =>
+{
+	options.AddPolicy("AllowAll", builder =>
+	{
+		builder.WithOrigins("http://localhost:4200")
+				.AllowAnyHeader()
+				.AllowAnyMethod()
+				.AllowCredentials();
+	});
+});
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -80,6 +91,8 @@ if (app.Environment.IsDevelopment())
 		c.RoutePrefix = string.Empty; 
 	});
 }
+
+app.UseCors("AllowAll");
 
 app.UseAuthentication();
 app.UseAuthorization();

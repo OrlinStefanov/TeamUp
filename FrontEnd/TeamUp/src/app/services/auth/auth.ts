@@ -40,6 +40,20 @@ export class Auth {
     return this.http.post(`${this.apiUrl}/logout`, {}, {  });
   }
 
+  //returns the user information based on the token
+  me()
+  {
+    return this.http.get(`${this.apiUrl}/me`, { withCredentials: true, headers: { 'Content-Type': 'application/json' } }).subscribe({
+      next: (response) => {
+        console.log('Me successful', response);
+        this.me_credentials = response;
+      },
+      error: (error) => {
+        console.error('Me failed', error);
+      }
+    });
+  }
+
   //-----------------------Decoding the token--------------------------------------------
   getToken(): string | null {
     return localStorage.getItem(this.tokenKey);
