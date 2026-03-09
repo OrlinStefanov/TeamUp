@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using System.Security.Claims;
 using TeamUpBackEnd.Models;
 using TeamUpBackEnd.Services;
+
 using user_data = TeamUpBackEnd.DTO.UserDataDTO;
 
 namespace TeamUpBackEnd.Extensions
@@ -34,7 +35,9 @@ namespace TeamUpBackEnd.Extensions
 					UserName = input_user.UserName,
 					Email = input_user.Email,
 					FirstName = input_user.FirstName,
-					LastName = input_user.LastName
+					LastName = input_user.LastName,
+					BirthDate = input_user.BirthDate,
+					PhoneNumber = input_user.PhoneNumber
 				};
 
 				var result = await userManager.CreateAsync(user, input_user.Password);
@@ -150,10 +153,58 @@ namespace TeamUpBackEnd.Extensions
 					user.UserName,
 					user.Email,
 					user.FirstName,
-					user.LastName
+					user.LastName,
+					user.BirthDate,
+					user.PhoneNumber,
 				});
 			}).RequireAuthorization()
-				.WithSummary("Returns the current user's info").WithTags("User Management"); 
+				.WithSummary("Returns the current user's info").WithTags("User Management");
+
+			//forgets the old password and via email sends proposition for a new one. If the email is not found, it returns ok status without sending an email, to prevent email enumeration attacks.
+			app.MapPost("/forgot-password", async (user_data.ForgotPasswordDTO dto, UserManager<ApplicationUser> userManager, EmailService emailService) =>
+			{
+				var user = await userManager.FindByEmailAsync(dto.Email);
+
+				if (user == null)
+					return Results.Ok();
+
+				var token = await userManager.GeneratePasswordResetTokenAsync(user);
+
+				var encodedToken = Uri.EscapeDataString(token);
+
+				var link =
+					$"https://yourfrontend.com/reset-password?email={dto.Email}&token={encodedToken}";
+
+				await emailService.SendEmailAsync(
+					dto.Email,
+					"Reset Password",
+					$"Click here to reset your password:<br><a href='{link}'>Reset</a>");
+
+				return Results.Ok("Reset email sent");
+			}).WithSummary("Resets the old password and via email sends link in the frontend for a new one")
+				.WithTags("User Management");
+
+			//resets the password using the token that was sent to the user's email. If the token is invalid, it returns a bad request status with the error(s) that occurred during password reset.
+			app.MapPost("/reset-password", async (user_data.ResetPasswordDTO dto, UserManager<ApplicationUser> userManager) =>
+			{
+				var user = await userManager.FindByEmailAsync(dto.Email);
+
+				if (user == null)
+					return Results.BadRequest("Invalid request");
+
+				var result = await userManager.ResetPasswordAsync(
+					user,
+					dto.Token,
+					dto.NewPassword);
+
+				if (!result.Succeeded)
+					return Results.BadRequest(result.Errors);
+
+				await userManager.UpdateSecurityStampAsync(user);
+
+				return Results.Ok("Password reset successful");
+			}).WithSummary("Resets the password using the token that was sent to the user's email")
+				.WithTags("User Management");
 		}
 	}
 }
