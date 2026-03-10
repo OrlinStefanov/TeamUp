@@ -1,34 +1,23 @@
-import { Component, ElementRef, Renderer2, ViewChild } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { LoginUser, RegisterUser } from '../../services/auth/auth-types';
-import { Auth } from '../../services/auth/auth';
+import { Component } from '@angular/core';
+import { ElementRef, Renderer2, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-
+import { NgIf, NgClass } from '@angular/common';
 
 @Component({
-  selector: 'app-log-in',
-  imports: [CommonModule, FormsModule],
-  templateUrl: './log-in.html',
-  styleUrl: './log-in.css',
+  selector: 'app-forgot-password',
+  imports: [FormsModule, NgIf, NgClass],
+  templateUrl: './forgot-password.html',
+  styleUrl: './forgot-password.css',
 })
-export class LogIn {
-
+export class ForgotPassword {
   @ViewChild('pageDiv') pageDiv!: ElementRef;
-  userData: LoginUser = {
-    emailOrUsername: '',
-    password: ''
-  };
 
-  showPassword = false;
   isDarkMode: boolean = false;
-
-  errorMessage : string = '';
-
-  constructor(private renderer: Renderer2, private auth: Auth) {}
+  showPassword = false;
+  
+  constructor(private renderer: Renderer2) {}
 
   ngOnInit() {
-    this.auth.me();
-
     const savedMode = localStorage.getItem('darkMode');
 
     if (savedMode !== null) {
@@ -44,10 +33,10 @@ export class LogIn {
 
   toggleDarkMode() {
     this.isDarkMode = !this.isDarkMode;
-
+    
     localStorage.setItem('darkMode', String(this.isDarkMode));
 
-    if (this.isDarkMode) {
+    if(this.isDarkMode){
       this.renderer.removeClass(this.pageDiv.nativeElement, 'light-mode');
       this.renderer.addClass(this.pageDiv.nativeElement, 'dark-mode');
     } else {
@@ -60,16 +49,18 @@ export class LogIn {
     this.showPassword = !this.showPassword;
   }
 
-  login() {
-    this.auth.login(this.userData).subscribe({
-      next: (response) => {
-        console.log('Login successful:', response);
-      },
-      error: (error) => {
-        console.error('Login failed:', error);
-        this.errorMessage = error.error || 'Login failed. Please try again.';
-      }
-    });
+  resetPassword() {
+      
   }
 
+  checkPasswordsMatch() {
+    const passwordInput = document.querySelector('input[name="password"]') as HTMLInputElement;
+    const confirmPasswordInput = document.querySelector('input[name="confirm-password"]') as HTMLInputElement;
+
+    if (passwordInput.value !== confirmPasswordInput.value) {
+      confirmPasswordInput.setCustomValidity("Passwords do not match");
+    } else {
+      confirmPasswordInput.setCustomValidity("");
+    }
+  }
 }

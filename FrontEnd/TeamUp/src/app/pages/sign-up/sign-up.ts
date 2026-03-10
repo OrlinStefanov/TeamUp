@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RegisterUser } from '../../services/auth/auth-types';
 import { Auth } from '../../services/auth/auth';
 import { FormsModule } from '@angular/forms';
+import { NgIf } from '@angular/common';
 
 @Component({
   selector: 'app-sign-up',
@@ -27,7 +28,7 @@ export class SignUp {
   };
 
   showPassword = false;
-  isDarkMode = false;
+  isDarkMode: boolean = false;
 
   errorMessage : string = '';
 
@@ -35,14 +36,24 @@ export class SignUp {
 
   ngOnInit() {
     this.auth.me();
-  }
 
-  ngAfterViewInit() {
-    this.renderer.addClass(this.pageDiv.nativeElement, 'light-mode');
+    const savedMode = localStorage.getItem('darkMode');
+
+    if (savedMode !== null) {
+      this.isDarkMode = savedMode === 'true';
+    }
+
+    if (this.isDarkMode) {
+      this.renderer.addClass(this.pageDiv.nativeElement, 'dark-mode');
+    } else {
+      this.renderer.addClass(this.pageDiv.nativeElement, 'light-mode');
+    }
   }
 
   toggleDarkMode() {
     this.isDarkMode = !this.isDarkMode;
+
+    localStorage.setItem('darkMode', String(this.isDarkMode));
 
     if (this.isDarkMode) {
       this.renderer.removeClass(this.pageDiv.nativeElement, 'light-mode');
