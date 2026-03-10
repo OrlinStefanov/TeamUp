@@ -29,6 +29,8 @@ export class SignUp {
   showPassword = false;
   isDarkMode = false;
 
+  errorMessage : string = '';
+
   constructor(private renderer: Renderer2, private auth: Auth) {}
 
   ngOnInit() {
@@ -56,6 +58,15 @@ export class SignUp {
   }
 
   register() {
-    this.auth.register(this.userData);
+    this.auth.register(this.userData).subscribe({
+      next: (response) => {
+        console.log('Registration successful:', response);
+        // Handle successful registration, e.g., navigate to login page or show success message
+      },
+      error: (error) => {
+        console.error('Registration failed:', error);
+        this.errorMessage = error.error || 'Registration failed. Please try again.';
+      }
+    });
   }
 }

@@ -33,6 +33,11 @@ namespace TeamUpBackEnd.Extensions
 				if (string.IsNullOrWhiteSpace(input_user.PhoneNumber)) return Results.BadRequest("Phone number is required");
 				if (string.IsNullOrWhiteSpace(input_user.BirthDate.ToString())) return Results.BadRequest("BirthDate is required");
 
+				if (!DateOnly.TryParse(input_user.BirthDate.ToString(), out var birthDate))
+				{
+					return Results.BadRequest("Invalid birth date format");
+				}
+
 				var user = new ApplicationUser
 				{
 					UserName = input_user.UserName,
@@ -41,7 +46,6 @@ namespace TeamUpBackEnd.Extensions
 					LastName = input_user.LastName,
 					BirthDate = input_user.BirthDate,
 					PhoneNumber = input_user.PhoneNumber,
-					ProfilePictureUrl = input_user.ProfilePictureUrl
 				};
 
 				if (userManager.Users.Any(u => u.UserName == user.UserName))
