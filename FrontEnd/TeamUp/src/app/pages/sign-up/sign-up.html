@@ -1,4 +1,4 @@
-<div #pageDiv class="page light-mode">
+<div #pageDiv class="page" [ngClass]="{'light-mode': !isDarkMode, 'dark-mode': isDarkMode}">
   <div class="container">
 
     <!-- floating orbs -->
@@ -26,11 +26,11 @@
           <!-- First + Last -->
           <div class="flex gap-3">
             <div class="flex-1">
-              <label class="form-label">First Name</label>
+              <label class="form-label">First Name <span style="color:red;">*</span></label>
               <input type="text" class="form-control" placeholder="Enter first name" name="firstName" [(ngModel)]="userData.firstName" required>
             </div>
             <div class="flex-1">
-              <label class="form-label">Last Name</label>
+              <label class="form-label">Last Name <span style="color:red;">*</span></label>
               <input type="text" class="form-control" placeholder="Enter last name" name="lastName" [(ngModel)]="userData.lastName" required>
             </div>
           </div>
@@ -38,11 +38,11 @@
           <!-- Email + Username -->
           <div class="flex gap-3">
             <div class="flex-1">
-              <label class="form-label">Email</label>
+              <label class="form-label">Email <span style="color:red;">*</span></label>
               <input type="email" class="form-control" placeholder="Enter email" name="email" [(ngModel)]="userData.email" required>
             </div>
             <div class="flex-1">
-              <label class="form-label">Username</label>
+              <label class="form-label">Username <span style="color:red;">*</span></label>
               <input type="text" class="form-control" placeholder="Enter username" name="username" [(ngModel)]="userData.userName" required>
             </div>
           </div>
@@ -50,18 +50,18 @@
           <!-- Phone + Birthdate -->
           <div class="flex gap-3">
             <div class="flex-1">
-              <label class="form-label">Phone</label>
+              <label class="form-label">Phone <span style="color:red;">*</span></label>
               <input type="tel" class="form-control" placeholder="Enter phone number" name="phone" [(ngModel)]="userData.phoneNumber" required>
             </div>
             <div class="flex-1">
-              <label class="form-label">Birthdate</label>
+              <label class="form-label">Birthdate <span style="color:red;">*</span></label>
               <input type="date" id="birthdate" class="form-control" name="birthdate" [(ngModel)]="userData.birthDate" required>
             </div>
           </div>
 
           <!-- Password -->
           <div class="mb-3">
-            <label class="form-label">Password</label>
+            <label class="form-label">Password <span style="color:red;">*</span></label>
             <div class="password-wrapper" style="position:relative; display:inline-block;">
               <input [type]="showPassword ? 'text' : 'password'" class="form-control" placeholder="Enter password" name="password" [(ngModel)]="userData.password" required>
               <button type="button" (click)="togglePassword()" class="btn-toggle-password">
@@ -94,6 +94,6 @@
       <div class="mt-6 text-center">
         <label>Already have an account? <a href="/login">Log in</a></label>
       </div>
-    </div>
+    </form>
   </div>
 </div>
