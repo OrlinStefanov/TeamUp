@@ -3,13 +3,12 @@ import { CommonModule } from '@angular/common';
 import { RegisterUser } from '../../services/auth/auth-types';
 import { Auth } from '../../services/auth/auth';
 import { FormsModule } from '@angular/forms';
-import { HttpClientModule } from '@angular/common/http';
 
 @Component({
   selector: 'app-sign-up',
   standalone: true,
   providers: [Auth],
-  imports: [CommonModule, FormsModule, HttpClientModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './sign-up.html',
   styleUrls: ['./sign-up.css'],
 })
