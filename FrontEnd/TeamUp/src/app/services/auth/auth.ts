@@ -23,16 +23,7 @@ export class Auth {
 
   login(user : LoginUser)
   {
-    return this.http.post<{ token: string }>(`${this.apiUrl}/login`, user, { withCredentials: true, headers: { 'Content-Type': 'application/json' } }).subscribe({
-      next: (response) => {
-        localStorage.setItem(this.tokenKey, response.token);
-        const decodedUser = this.decodeToken(response.token);
-        this.userSubject.next(decodedUser);
-      },
-      error: (error) => {
-        console.error('Login failed', error);
-      }
-    });
+    return this.http.post<{ token: string }>(`${this.apiUrl}/login`, user, { withCredentials: true, headers: { 'Content-Type': 'application/json' } });
   }
 
   logout() {
@@ -42,28 +33,13 @@ export class Auth {
   }
 
   register(user: RegisterUser) {
-    return this.http.post(`${this.apiUrl}/register`, user, { withCredentials: true, headers: { 'Content-Type': 'application/json' } }).subscribe({
-      next: (response) => {
-        console.log('Registration successful', response);
-      },
-      error: (error) => {
-        console.error('Registration failed', error);
-      }
-    });
+    return this.http.post(`${this.apiUrl}/register`, user, { withCredentials: true, headers: { 'Content-Type': 'application/json' } });
   }
 
   //returns the user information based on the token
   me()
   {
-    return this.http.get(`${this.apiUrl}/me`, { withCredentials: true, headers: { 'Content-Type': 'application/json' } }).subscribe({
-      next: (response) => {
-        console.log('Me successful', response);
-        this.me_credentials = response;
-      },
-      error: (error) => {
-        console.error('Me failed', error);
-      }
-    });
+    return this.http.get(`${this.apiUrl}/me`, { withCredentials: true, headers: { 'Content-Type': 'application/json' } });
   }
 
   //-----------------------Decoding the token--------------------------------------------
