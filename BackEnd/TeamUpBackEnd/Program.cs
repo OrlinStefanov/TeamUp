@@ -28,6 +28,8 @@ builder.Services.Configure<IdentityOptions>(options =>
 });
 
 builder.Services.AddScoped<EmailService>();
+builder.Services.AddScoped<CloudinaryService>();
+builder.Services.AddScoped<TokenService>();
 
 builder.Services.AddAuthentication(options =>
 {
