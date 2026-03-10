@@ -25,10 +25,13 @@ namespace TeamUpBackEnd.Extensions
 					return Results.BadRequest("No input");
 				}
 
-				if (string.IsNullOrEmpty(input_user.Email) || string.IsNullOrEmpty(input_user.Password) || string.IsNullOrEmpty(input_user.FirstName) || string.IsNullOrEmpty(input_user.LastName))
-				{
-					return Results.BadRequest("Email and password are required");
-				}
+				if (string.IsNullOrWhiteSpace(input_user.UserName)) return Results.BadRequest("Username is required");
+				if (string.IsNullOrWhiteSpace(input_user.Email)) return Results.BadRequest("Email is required");
+				if (string.IsNullOrWhiteSpace(input_user.Password)) return Results.BadRequest("Password is required");
+				if (string.IsNullOrWhiteSpace(input_user.FirstName)) return Results.BadRequest("First name is required");
+				if (string.IsNullOrWhiteSpace(input_user.LastName)) return Results.BadRequest("Last name is required");
+				if (string.IsNullOrWhiteSpace(input_user.PhoneNumber)) return Results.BadRequest("Phone number is required");
+				if (string.IsNullOrWhiteSpace(input_user.BirthDate.ToString())) return Results.BadRequest("BirthDate is required");
 
 				var user = new ApplicationUser
 				{
@@ -37,8 +40,19 @@ namespace TeamUpBackEnd.Extensions
 					FirstName = input_user.FirstName,
 					LastName = input_user.LastName,
 					BirthDate = input_user.BirthDate,
-					PhoneNumber = input_user.PhoneNumber
+					PhoneNumber = input_user.PhoneNumber,
+					ProfilePictureUrl = input_user.ProfilePictureUrl
 				};
+
+				if (userManager.Users.Any(u => u.UserName == user.UserName))
+				{
+					return Results.BadRequest("Username already exists");
+				}
+
+				if (userManager.Users.Any(u => u.Email == user.Email))
+				{
+					return Results.BadRequest("Email already exists");
+				}
 
 				var result = await userManager.CreateAsync(user, input_user.Password);
 				
@@ -61,10 +75,8 @@ namespace TeamUpBackEnd.Extensions
 				if (input_user == null)
 					return Results.BadRequest("No input");
 
-				if (string.IsNullOrWhiteSpace(input_user.EmailOrUsername) ||
-					string.IsNullOrWhiteSpace(input_user.Password))
-
-					return Results.BadRequest("Email/Username and password are required");
+				if (string.IsNullOrWhiteSpace(input_user.EmailOrUsername)) return Results.BadRequest("Email or username is required");
+				if (string.IsNullOrWhiteSpace(input_user.Password)) return Results.BadRequest("Password is required");
 
 				var user = await userManager.FindByEmailAsync(input_user.EmailOrUsername) ?? await userManager.FindByNameAsync(input_user.EmailOrUsername);
 
@@ -83,7 +95,8 @@ namespace TeamUpBackEnd.Extensions
 					token,
 					user.Id,
 					user.UserName,
-					user.Email
+					user.Email,
+					user.ProfilePictureUrl
 				});
 			})
 				.WithSummary("Logs user as the token returns user id, name, email and security stamp").WithTags("User Management");
@@ -156,6 +169,7 @@ namespace TeamUpBackEnd.Extensions
 					user.LastName,
 					user.BirthDate,
 					user.PhoneNumber,
+					user.ProfilePictureUrl
 				});
 			}).RequireAuthorization()
 				.WithSummary("Returns the current user's info").WithTags("User Management");
@@ -205,6 +219,58 @@ namespace TeamUpBackEnd.Extensions
 				return Results.Ok("Password reset successful");
 			}).WithSummary("Resets the password using the token that was sent to the user's email")
 				.WithTags("User Management");
+
+			//uploading user profile picture 
+			app.MapPost("/upload-profile-picture", [Authorize] async (IFormFile file, ClaimsPrincipal userClaims, UserManager<ApplicationUser> userManager, CloudinaryService cloudinaryService) =>
+			{
+				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
+				
+				if (userId is null)
+				{
+					return Results.BadRequest("Id not found");
+				}
+
+				var user = await userManager.FindByIdAsync(userId);
+
+				if (user is null)
+				{
+					return Results.BadRequest("User not found");
+				}
+
+				if (file is null || file.Length == 0)
+				{
+					return Results.BadRequest("No file uploaded");
+				}
+
+				if (!file.ContentType.StartsWith("image/"))
+				{
+					return Results.BadRequest("Invalid file type. Only images are allowed.");
+				}
+
+				if (file.Length > 5 * 1024 * 1024)
+				{
+					return Results.BadRequest("File size exceeds the limit of 5MB");
+				}
+
+				var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp", ".gif" };
+
+				var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+
+				if (!allowedExtensions.Contains(extension))
+				{
+					return Results.BadRequest("Invalid file extension.");
+				}
+
+				var imgUrl = await cloudinaryService.UploadProfileImage(file);
+
+				user.ProfilePictureUrl = imgUrl;
+
+				await userManager.UpdateAsync(user);
+
+				return Results.Ok("Image uploaded " + imgUrl);
+
+			}).RequireAuthorization().Accepts<IFormFile>("multipart/form-data").DisableAntiforgery()
+				.WithSummary("Uploading user profile picture").WithTags("User Management");
 		}
 	}
 }

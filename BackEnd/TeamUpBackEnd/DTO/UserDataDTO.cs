@@ -11,6 +11,7 @@
 			public string Password { get; init; } = string.Empty;
 			public DateOnly? BirthDate { get; init; }
 			public string PhoneNumber { get; init; } = string.Empty;
+			public string ProfilePictureUrl { get; init; } = string.Empty;
 		}
 
 		public record LoginUser
