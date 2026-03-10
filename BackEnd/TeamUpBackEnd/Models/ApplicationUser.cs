@@ -7,5 +7,6 @@ namespace TeamUpBackEnd.Models
 		public string? FirstName { get; set; }
 		public string? LastName { get; set; }
 		public string? ProfilePictureUrl { get; set; }
+		public DateOnly? BirthDate { get; set; }
 	}
 }

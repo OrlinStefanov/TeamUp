@@ -7,6 +7,7 @@ using System.Text;
 using TeamUpBackEnd.DbContext;
 using TeamUpBackEnd.Extensions;
 using TeamUpBackEnd.Models;
+using TeamUpBackEnd.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,6 +19,17 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
 	.AddEntityFrameworkStores<AppDbContext>()
 	.AddDefaultTokenProviders();
+
+builder.Services.Configure<IdentityOptions>(options =>
+{
+	options.Password.RequiredLength = 8;
+	options.Password.RequireDigit = true;
+	options.Password.RequireUppercase = true;
+});
+
+builder.Services.AddScoped<EmailService>();
+builder.Services.AddScoped<CloudinaryService>();
+builder.Services.AddScoped<TokenService>();
 
 builder.Services.AddAuthentication(options =>
 {
@@ -37,6 +49,17 @@ builder.Services.AddAuthentication(options =>
 		ValidAudience = builder.Configuration["Jwt:Audience"],
 		IssuerSigningKey = new SymmetricSecurityKey(key)
 	};
+});
+
+builder.Services.AddCors(options =>
+{
+	options.AddPolicy("AllowAll", builder =>
+	{
+		builder.WithOrigins("http://localhost:4200")
+				.AllowAnyHeader()
+				.AllowAnyMethod()
+				.AllowCredentials();
+	});
 });
 
 builder.Services.AddEndpointsApiExplorer();
@@ -70,6 +93,8 @@ if (app.Environment.IsDevelopment())
 		c.RoutePrefix = string.Empty; 
 	});
 }
+
+app.UseCors("AllowAll");
 
 app.UseAuthentication();
 app.UseAuthorization();
