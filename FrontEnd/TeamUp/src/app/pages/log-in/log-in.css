@@ -153,12 +153,16 @@ form{
   color: #fff;
 }
 
-.page.light-mode .form-control::placeholder {
+.page.light-mode .form-control::placeholder, .page.light-mode #birthdate::-webkit-datetime-edit {
   color: #555;
   opacity: 1;
 }
 
-.page.dark-mode .form-control::placeholder{
+.page.dark-mode #birthdate::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}
+
+.page.dark-mode .form-control::placeholder, .page.dark-mode #birthdate::-webkit-datetime-edit{
   color: #bbb;
   opacity: 1;
 }

@@ -13,7 +13,6 @@ import { NgIf } from '@angular/common';
   styleUrl: './log-in.css',
 })
 export class LogIn {
-
   @ViewChild('pageDiv') pageDiv!: ElementRef;
   userData: LoginUser = {
     emailOrUsername: '',
