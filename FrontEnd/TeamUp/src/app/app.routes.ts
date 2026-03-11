@@ -9,5 +9,5 @@ export const routes: Routes = [
   { path: 'signup', component: SignUp },
   { path: 'login', component: LogIn },
   { path: 'forgot-password', component: ForgotPassword },
-  //{ path: 'dashboard', component: Dashboard, canActivate: [authGuardGuardGuard] },
+  { path: 'dashboard', component: Dashboard, canActivate: [authGuardGuardGuard] },
 ];
