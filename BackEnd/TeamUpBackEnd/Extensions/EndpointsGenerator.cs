@@ -181,20 +181,24 @@ namespace TeamUpBackEnd.Extensions
 			//forgets the old password and via email sends proposition for a new one. If the email is not found, it returns ok status without sending an email, to prevent email enumeration attacks.
 			app.MapPost("/forgot-password", async (user_data.ForgotPasswordDTO dto, UserManager<ApplicationUser> userManager, EmailService emailService) =>
 			{
-				var user = await userManager.FindByEmailAsync(dto.Email);
+				var user = await userManager.FindByEmailAsync(dto.EmailOrUsername) ?? await userManager.FindByNameAsync(dto.EmailOrUsername);
 
 				if (user == null)
-					return Results.Ok();
+					return Results.BadRequest("User not found");
 
 				var token = await userManager.GeneratePasswordResetTokenAsync(user);
 
 				var encodedToken = Uri.EscapeDataString(token);
 
-				var link =
-					$"https://yourfrontend.com/reset-password?email={dto.Email}&token={encodedToken}";
+				var user_email = user.Email;
+
+				if (user_email is null) return Results.BadRequest("User email not found");
+
+				var link = $"https://localhost:4200/reset-password?email={Uri.EscapeDataString(user_email)}&token={encodedToken}"; // in development
+					//$"https://teamup.com/reset-password";
 
 				await emailService.SendEmailAsync(
-					dto.Email,
+					user_email,
 					"Reset Password",
 					$"Click here to reset your password:<br><a href='{link}'>Reset</a>");
 
@@ -205,7 +209,7 @@ namespace TeamUpBackEnd.Extensions
 			//resets the password using the token that was sent to the user's email. If the token is invalid, it returns a bad request status with the error(s) that occurred during password reset.
 			app.MapPost("/reset-password", async (user_data.ResetPasswordDTO dto, UserManager<ApplicationUser> userManager) =>
 			{
-				var user = await userManager.FindByEmailAsync(dto.Email);
+				var user = await userManager.FindByEmailAsync(dto.EmailOrUsername) ?? await userManager.FindByNameAsync(dto.EmailOrUsername);
 
 				if (user == null)
 					return Results.BadRequest("Invalid request");

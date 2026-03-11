@@ -15,5 +15,7 @@ namespace TeamUpBackEnd.Models
 		public ICollection<Message>? SentMessages { get; set; }
 		public ICollection<ConversationMember>? Conversations { get; set; }
 		public ICollection<ChannelMember>? Channels { get; set; }
+		public ICollection<TaskAssignment>? Tasks { get; set; }
+		public ICollection<WorkSpaceMember>? Workspaces { get; set; }
 	}
 }
