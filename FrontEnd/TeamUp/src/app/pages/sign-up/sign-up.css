@@ -152,8 +152,13 @@ form{
   color: #fff;
 }
 
-.page.light-mode .form-control::placeholder, .page.light-mode #birthdate::-webkit-datetime-edit {
+.page.light-mode .form-control::placeholder, .page.light-mode input[type="date"]::-webkit-datetime-edit-text {
   color: #555;
+  opacity: 1;
+}
+
+.page.dark-mode .page.dark-mode #birthdate::-webkit-datetime-edit {
+  color: #fff;
   opacity: 1;
 }
 
@@ -161,7 +166,7 @@ form{
   filter: invert(1);
 }
 
-.page.dark-mode .form-control::placeholder, .page.dark-mode #birthdate::-webkit-datetime-edit{
+.page.dark-mode .form-control::placeholder{
   color: #bbb;
   opacity: 1;
 }

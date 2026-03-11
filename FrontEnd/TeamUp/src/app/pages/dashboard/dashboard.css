@@ -1,0 +1,78 @@
+.page{
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-family:Arial, sans-serif;
+}
+
+.page.dark-mode{
+  background:#0f0f14;
+  color:white;
+}
+
+.page.light-mode{
+  background:#f5f5f5;
+  color:#111;
+}
+
+.page .navbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-between; 
+  align-items: center;
+  padding: 20px;
+  border-bottom: #a64bfb solid 1px;
+  box-shadow: #a64bfb 0 0 10px;
+  z-index: 1;
+}
+
+.navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px; 
+}
+
+.logo-appName img {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.logo-appName {
+  text-decoration: none;
+  text-transform: none;
+  color: #9333ea;
+  text-shadow: #9333ea 0px 0px 5px;
+}
+
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px; 
+}
+
+.btn-toggle{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  padding:8px;
+  height:35px;
+  width:35px;
+
+  border: none;
+  background-color: transparent;
+  cursor:pointer;
+}
+
+.btn-toggle:hover{
+  background:#9333ea;
+  border-radius:50%;
+}
+
+#sunImg{
+  color:white;
+}

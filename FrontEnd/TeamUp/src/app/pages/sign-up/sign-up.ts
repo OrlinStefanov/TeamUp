@@ -72,7 +72,7 @@ export class SignUp {
     this.auth.register(this.userData).subscribe({
       next: (response) => {
         console.log('Registration successful:', response);
-        // Handle successful registration, e.g., navigate to login page or show success message
+        window.location.href = '/dashboard';
       },
       error: (error) => {
         console.error('Registration failed:', error);
