@@ -19,8 +19,8 @@
 			public string Password { get; init; } = string.Empty;
 		}
 
-		public record ForgotPasswordDTO(string Email);
+		public record ForgotPasswordDTO(string EmailOrUsername);
 
-		public record ResetPasswordDTO(string Email, string Token, string NewPassword);
+		public record ResetPasswordDTO(string EmailOrUsername, string Token, string NewPassword);
 	}
 }

@@ -1,4 +1,5 @@
 ﻿using TeamUpBackEnd.Models.Tasks;
+using TeamUpBackEnd.Models.Chat;
 
 namespace TeamUpBackEnd.Models.WorkspaceRelated
 {
@@ -12,7 +13,7 @@ namespace TeamUpBackEnd.Models.WorkspaceRelated
 		public ApplicationUser? owner { get; set; }
 
 		public DateTime? CreatedAt { get; set; }
-
+		public ICollection<Channel>? Channels { get; set; }
 		public ICollection<WorkSpaceMember>? Members { get; set; }
 		public ICollection<TaskItem>? Tasks { get; set; }
 	}
