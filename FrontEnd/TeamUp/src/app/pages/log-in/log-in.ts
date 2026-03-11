@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { LoginUser, RegisterUser } from '../../services/auth/auth-types';
 import { Auth } from '../../services/auth/auth';
 import { FormsModule } from '@angular/forms';
+import { NgIf } from '@angular/common';
 
 
 @Component({
   selector: 'app-log-in',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, NgIf],
   templateUrl: './log-in.html',
   styleUrl: './log-in.css',
 })
@@ -21,6 +22,7 @@ export class LogIn {
 
   showPassword = false;
   isDarkMode: boolean = false;
+  showConfirmReset = false;
 
   errorMessage : string = '';
 
@@ -64,12 +66,25 @@ export class LogIn {
     this.auth.login(this.userData).subscribe({
       next: (response) => {
         console.log('Login successful:', response);
+        window.location.href = '/dashboard';
       },
       error: (error) => {
         console.error('Login failed:', error);
         this.errorMessage = error.error || 'Login failed. Please try again.';
       }
     });
+  }
+
+  openResetConfirm() {
+    this.showConfirmReset = true;
+  }
+
+  closeResetConfirm() {
+    this.showConfirmReset = false;
+  }
+
+  sendResetEmail() {
+    
   }
 
 }

@@ -18,8 +18,8 @@
         </svg>
     </button>
 </div>
-    <h1 class="title">Create your <span class="keyword">workspace</span></h1>
-    <p class="subtitle">Ship faster together. Earn points. Climb the leaderboard.</p>
+    <h1 class="title">Sign in to your <span class="keyword">workspace</span></h1>
+    <p class="subtitle">Jump back in and keep building.</p>
     <form #loginForm="ngForm" (ngSubmit)="login()">
       <!-- Email + Username -->
       <div class="flex gap-3">
@@ -56,7 +56,7 @@
           </div>
 
       <div class="flex-1">
-        <a href="/forgot-password" class="text-sm" style="color: #a64bfb;">Forgot Password?</a>
+        <a (click)="openResetConfirm()" class="text-sm" style="color: #a64bfb;">Forgot Password?</a>
       </div>
 
       <!-- Submit Button -->
@@ -66,8 +66,20 @@
 
       <!-- Login Link -->
       <div class="mt-6 text-center">
-        <label>Don't have an account? <a href="">Sign Up</a></label>
+        <label>Don't have an account? <a href="/signup">Sign Up</a></label>
       </div>
     </form>
   </div>
+
+  <div *ngIf="showConfirmReset" class="confirm-overlay">
+      <div class="confirm-box">
+        <h3>Reset <span style="color: #a64bfb; text-shadow: #a64bfb 0 0 10px;">Password</span></h3>
+        <p>Are you sure you want to receive a password reset email<span style="color: #a64bfb;">?</span></p>
+
+        <div class="confirm-actions">
+          <button class="btn-primary" (click)="sendResetEmail()">Yes, send it</button>
+          <button class="btn-cancel" (click)="closeResetConfirm()">Cancel</button>
+        </div>
+      </div>
+    </div>
 </div>
