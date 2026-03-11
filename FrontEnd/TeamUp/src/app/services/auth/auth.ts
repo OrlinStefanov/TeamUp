@@ -118,4 +118,18 @@ export class Auth {
     const user = this.userSubject.value;
     return user?.roles.includes(role) ?? false;
   }
+
+  isDarkMode(): boolean {
+    const saved = localStorage.getItem('darkMode');
+
+    if (saved !== null) {
+      return saved === 'true';
+    }
+
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+
+  setDarkMode(value: boolean) {
+    localStorage.setItem('darkMode', String(value));
+  }
 }
