@@ -12,8 +12,8 @@
 
 	public enum WorkSpaceRole
 	{
-		Member,
-		Admin,
-		Owner
+		Member, //0
+		Admin, //1
+		Owner //2
 	}
 }
