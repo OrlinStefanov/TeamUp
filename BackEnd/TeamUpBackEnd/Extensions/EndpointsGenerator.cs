@@ -194,7 +194,7 @@ namespace TeamUpBackEnd.Extensions
 
 				if (user_email is null) return Results.BadRequest("User email not found");
 
-				var link = $"https://localhost:4200/reset-password?email={Uri.EscapeDataString(user_email)}&token={encodedToken}"; // in development
+				var link = $"https://localhost:4200/forgot-password?email={Uri.EscapeDataString(user_email)}&token={encodedToken}"; // in development
 					//$"https://teamup.com/reset-password";
 
 				await emailService.SendEmailAsync(
@@ -207,16 +207,22 @@ namespace TeamUpBackEnd.Extensions
 				.WithTags("User Management");
 
 			//resets the password using the token that was sent to the user's email. If the token is invalid, it returns a bad request status with the error(s) that occurred during password reset.
-			app.MapPost("/reset-password", async (user_data.ResetPasswordDTO dto, UserManager<ApplicationUser> userManager) =>
+			app.MapPost("/reset-password", async (
+				user_data.ResetPasswordDTO dto,
+				UserManager<ApplicationUser> userManager) =>
 			{
-				var user = await userManager.FindByEmailAsync(dto.EmailOrUsername) ?? await userManager.FindByNameAsync(dto.EmailOrUsername);
+				var user = await userManager.FindByEmailAsync(dto.EmailOrUsername)
+						   ?? await userManager.FindByNameAsync(dto.EmailOrUsername);
 
 				if (user == null)
 					return Results.BadRequest("Invalid request");
 
+				// Decode token from URL
+				var decodedToken = Uri.UnescapeDataString(dto.Token);
+
 				var result = await userManager.ResetPasswordAsync(
 					user,
-					dto.Token,
+					decodedToken,
 					dto.NewPassword);
 
 				if (!result.Succeeded)
@@ -225,8 +231,9 @@ namespace TeamUpBackEnd.Extensions
 				await userManager.UpdateSecurityStampAsync(user);
 
 				return Results.Ok("Password reset successful");
-			}).WithSummary("Resets the password using the token that was sent to the user's email")
-				.WithTags("User Management");
+			})
+			.WithSummary("Resets the password using the token that was sent to the user's email")
+			.WithTags("User Management");
 
 			//uploading user profile picture 
 			app.MapPost("/upload-profile-picture", [Authorize] async (IFormFile file, ClaimsPrincipal userClaims, UserManager<ApplicationUser> userManager, CloudinaryService cloudinaryService) =>

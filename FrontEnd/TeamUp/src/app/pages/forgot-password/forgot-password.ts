@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { NgIf, NgClass } from '@angular/common';
 import { Auth } from '../../services/auth/auth';
 import { ActivatedRoute } from '@angular/router';
+import { ResetUser } from '../../services/auth/auth-types';
 
 @Component({
   selector: 'app-forgot-password',
@@ -28,16 +29,14 @@ export class ForgotPassword {
       this.isDarkMode = savedMode === 'true';
     }
 
+    this.email = this.route.snapshot.queryParamMap.get('email') || '';
+    this.token = this.route.snapshot.queryParamMap.get('token') || '';
+
     if (this.isDarkMode) {
       this.renderer.addClass(this.pageDiv.nativeElement, 'dark-mode');
     } else {
       this.renderer.addClass(this.pageDiv.nativeElement, 'light-mode');
     }
-
-    this.route.queryParams.subscribe(params => {
-      this.email = params['email'];
-      this.token = params['token'];
-    });
   }
 
   toggleDarkMode() {
@@ -59,7 +58,22 @@ export class ForgotPassword {
   }
 
   resetPassword() {
-      this.auth.resetPassword(localStorage.getItem('resetEmail') || '').subscribe({
+      const passwordInput = document.querySelector('input[name="password"]') as HTMLInputElement;
+      const confirmPasswordInput = document.querySelector('input[name="confirm-password"]') as HTMLInputElement;
+
+      if (passwordInput.value !== confirmPasswordInput.value) {
+        confirmPasswordInput.setCustomValidity("Passwords do not match");
+        confirmPasswordInput.reportValidity();
+        return;
+      }
+
+      const user_reset: ResetUser = {
+        emailOrUsername: this.email || '',
+        token: this.token || '',
+        newPassword: (document.querySelector('input[name="password"]') as HTMLInputElement).value
+      }
+
+      this.auth.resetPassword(user_reset).subscribe({
         next: (response) => {
           console.log('Password reset email sent:', response);
         },
