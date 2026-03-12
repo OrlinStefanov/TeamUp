@@ -10,7 +10,7 @@ namespace TeamUpBackEnd.Models.WorkspaceRelated
 		public string? Title { get; set; }
 		public string? Description { get; set; }
 		public string? OwnerId { get; set; }
-		public ApplicationUser? owner { get; set; }
+		public ApplicationUser? Owner { get; set; }
 
 		public DateTime? CreatedAt { get; set; }
 		public ICollection<Channel>? Channels { get; set; }
