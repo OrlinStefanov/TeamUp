@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { LoginUser, RegisterUser, User } from './auth-types';
+import { LoginUser, RegisterUser, ResetUser, User } from './auth-types';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, tap } from 'rxjs';
 
@@ -61,9 +61,9 @@ export class Auth {
   }
 
   //reset password
-  resetPassword(emailOrUsername : string)
+  resetPassword(user : ResetUser)
   {
-    return this.http.post(`${this.apiUrl}/reset-password`, { emailOrUsername }, { withCredentials: true, headers: { 'Content-Type': 'application/json' } });
+    return this.http.post(`${this.apiUrl}/reset-password`, user, { withCredentials: true, headers: { 'Content-Type': 'application/json' } });
   }
 
   //-----------------------Decoding the token--------------------------------------------
