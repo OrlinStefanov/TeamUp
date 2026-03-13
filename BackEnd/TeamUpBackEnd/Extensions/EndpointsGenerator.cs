@@ -387,7 +387,7 @@ namespace TeamUpBackEnd.Extensions
 				{
 					return Results.BadRequest("Id not found");
 				}
-				
+
 				var workspaces = await db.Workspaces
 					.Where(w => w.Members.Any(m => m.UserId == userId))
 					.Select(w => new
@@ -400,7 +400,7 @@ namespace TeamUpBackEnd.Extensions
 						Members = w.Members.Select(m => new
 						{
 							m.UserId,
-							m.Role
+							Role = (m.Role == WorkSpaceRole.Member) ? "Member" : (m.Role == WorkSpaceRole.Admin) ? "Admin" : "Owner"
 						})
 					})
 					.ToListAsync();
@@ -425,7 +425,7 @@ namespace TeamUpBackEnd.Extensions
 					return Results.BadRequest("Not enough data");
 				}
 
-				var possible_users = await userManager.Users.Where(u => u.Email.Contains(model.emailOrUsername) || u.UserName.Contains(model.emailOrUsername)).ToListAsync();
+				var possible_users = await userManager.Users.Where(u => u.Email!.Contains(model.emailOrUsername) || u.UserName!.Contains(model.emailOrUsername)).ToListAsync();
 
 				if (possible_users is null || possible_users.Count == 0)
 				{
