@@ -5,6 +5,7 @@ using System.Security.Claims;
 using TeamUpBackEnd.DbContext;
 using TeamUpBackEnd.Models;
 using TeamUpBackEnd.Models.WorkspaceRelated;
+using TeamUpBackEnd.Helpers;
 using TeamUpBackEnd.Services;
 
 using user_data = TeamUpBackEnd.DTO.UserDataDTO;
@@ -386,7 +387,7 @@ namespace TeamUpBackEnd.Extensions
 				{
 					return Results.BadRequest("Id not found");
 				}
-
+				
 				var workspaces = await db.Workspaces
 					.Where(w => w.Members.Any(m => m.UserId == userId))
 					.Select(w => new
@@ -403,9 +404,45 @@ namespace TeamUpBackEnd.Extensions
 						})
 					})
 					.ToListAsync();
+
 				return Results.Ok(workspaces);
 			}).RequireAuthorization()
 				.WithSummary("Returns a list of workspaces the user is a member of").WithTags("Workspace Management");
+			
+			//returns the list of possible users user might be searching
+			app.MapPost("search/members/add", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, MemberSearch model, UserManager<ApplicationUser> userManager) =>
+			{
+				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
+
+				if (userId is null) return Results.BadRequest("User id not found");
+
+				var user = await userManager.FindByIdAsync(userId);
+
+				if (user == null) return Results.BadRequest("User not found");
+
+				if (model.emailOrUsername.Length < 3)
+				{
+					return Results.BadRequest("Not enough data");
+				}
+
+				var possible_users = await userManager.Users.Where(u => u.Email.Contains(model.emailOrUsername) || u.UserName.Contains(model.emailOrUsername)).ToListAsync();
+
+				if (possible_users is null || possible_users.Count == 0)
+				{
+					return Results.BadRequest("No users found");
+				}
+
+				var transformed_users = possible_users.Select(u => new
+				{
+					u.UserName,
+					u.Email,
+					u.ProfilePictureUrl
+				}).ToList();
+
+				return Results.Ok(transformed_users);
+			}).RequireAuthorization().WithSummary("Retruns list of possible users you might be searching for").WithTags("Workspace Management");
 		}
 	}
+
+	public record MemberSearch(string emailOrUsername);
 }
