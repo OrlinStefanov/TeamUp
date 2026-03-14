@@ -15,6 +15,8 @@ export class Dashboard {
 
     isDarkMode: boolean = false;
     showDropdown = false;
+    showSettingsDropdown = false;
+    showCreateWorkspace = false;
     timeout: any;
 
     workspaces = [
@@ -59,10 +61,49 @@ export class Dashboard {
     this.showDropdown = !this.showDropdown;
   }
 
+  showSettingsDropDown() {
+    this.showSettingsDropdown = !this.showSettingsDropdown;
+  }
+
+  openCreateWorkspace(){
+    this.showCreateWorkspace = true;
+  }
+
+  closeCreateWorkspace(){
+    this.showCreateWorkspace = false;
+  }
+
   closeMenu() {
     this.timeout = setTimeout(() => {
       this.showDropdown = false;
     }, 90);
   }
+
+  closeSettingsMenu() {
+    this.timeout = setTimeout(() => {
+      this.showSettingsDropdown = false;
+    }, 90);
+  }
+
+  signOut(){
+    this.auth.logout();
+  }
   
+  createWorkspace(){
+    const input = document.getElementsByName("workspaceName")[0] as HTMLInputElement;
+
+    if (!input) return; // ако няма input, спираме
+
+    const value: string = input.value.trim();
+
+    if (value) {
+      this.workspaces.push({ name: value }); // добавяме новия workspace
+      input.value = ''; // чистим input
+      console.log(this.workspaces);
+      this.showCreateWorkspace = false;
+    }
+
+    
+  }
+
 }

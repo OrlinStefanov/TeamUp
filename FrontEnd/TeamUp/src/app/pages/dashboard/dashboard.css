@@ -124,6 +124,21 @@
   transition: all 0.25s cubic-bezier(.4,0,.2,1);
 }
 
+.page.dark-mode .nav-footer .settings-dropdown {
+  position: absolute;
+  left: 100%;
+  bottom: 10%;
+  margin-left: 8px;
+  visibility: hidden;
+  flex-direction: column;
+  background: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 5px;
+  transform: translateY(-8px) scale(0.98);
+  transition: all 0.25s cubic-bezier(.4,0,.2,1);
+}
+
 .page.light-mode .workspaces .dropdown {
   position: absolute;
   left: 100%;
@@ -140,17 +155,33 @@
   box-shadow: #aaaaaa 0 0 4px;
 }
 
-.page.light-mode .workspaces .dropdown.show, .page.dark-mode .workspaces .dropdown.show  {
+.page.light-mode .nav-footer .settings-dropdown{
+  position: absolute;
+  left: 100%;
+  bottom: 10%;
+  margin-left: 8px;
+  visibility: hidden;
+  flex-direction: column;
+  background: #f5f5f5;
+  border: 1px solid #f3f3f3;
+  border-radius: 6px;
+  padding: 5px;
+  transform: translateY(-8px) scale(0.98);
+  transition: all 0.25s cubic-bezier(.4,0,.2,1);
+  box-shadow: #aaaaaa 0 0 4px;
+}
+
+.page.light-mode .workspaces .dropdown.show, .page.dark-mode .workspaces .dropdown.show, .page.light-mode .nav-footer .settings-dropdown.show, .page.dark-mode .nav-footer .settings-dropdown.show  {
   visibility: visible;
   transform: translateY(0) scale(1);
   pointer-events: auto;
 }
 
-.page.light-mode .workspaces .dropdown.hide, .page.dark-mode .workspaces .dropdown{
+.page.light-mode .workspaces .dropdown.hide, .page.dark-mode .workspaces .dropdown, .page.light-mode .nav-footer .settings-dropdown.hide, .page.dark-mode .nav-footer .settings-dropdown.hide{
   visibility: hidden;
 }
 
-.page.light-mode .dropdown button {
+.page.light-mode .dropdown button, .page.light-mode .settings-dropdown button {
   background: transparent;
   border: none;
   color: black;
@@ -158,12 +189,13 @@
   cursor: pointer;
   text-align: center;
   width: 100%;
+  height: 30px;
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.page.dark-mode .dropdown button {
+.page.dark-mode .dropdown button, .page.dark-mode .settings-dropdown button {
   background: transparent;
   border: none;
   color: white;
@@ -171,20 +203,21 @@
   cursor: pointer;
   text-align: center;
   width: 100%;
+  height: 30px;
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.dropdown .createBtn svg, .dropdown .joinBtn svg {
+.dropdown .createBtn svg {
   align-self: left;
 }
 
-.page.light-mode .dropdown button:hover {
+.page.light-mode .dropdown button:hover, .page.light-mode .settings-dropdown button:hover {
   background: #ececec;
 }
 
-.page.dark-mode .dropdown button:hover {
+.page.dark-mode .dropdown button:hover, .page.dark-mode .settings-dropdown button:hover {
   background: #333;
 }
 
@@ -309,3 +342,167 @@
     margin: 0;           
     cursor: pointer;
 }
+
+.confirm-overlay{
+  position:fixed;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:999;
+}
+
+.page.dark-mode form {
+  position:relative;
+  max-width:450px;
+  width:100%;
+  padding:30px;
+  border-radius:12px;
+  overflow:hidden;
+  background:
+    linear-gradient(rgba(169, 85, 247, 0.8) 0px, solid 0px),
+    linear-gradient(90deg, rgba(168,85,247,0.8) 0px, solid 0px);
+  background-size:50px 50px;
+  backdrop-filter:blur(10px);
+  box-shadow:0 20px 60px rgba(168,85,247,0.2);
+  color:white;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.page.light-mode form {
+  position:relative;
+  max-width:450px;
+  width:100%;
+  padding:30px;
+  border-radius:12px;
+  overflow:hidden;
+  background:
+    linear-gradient(rgba(168,85,247,0.5) 0px, transparent 0px),
+    linear-gradient(90deg, rgba(168,85,247,0.5) 0px, transparent 0px);
+  background-size:50px 50px;
+  backdrop-filter:blur(10px);
+  box-shadow:0 20px 60px rgba(168,85,247,0.2);
+  color:black;
+}
+
+.header-row {
+    display: flex;
+    justify-content: space-between; /* заглавие/параграф вляво, бутон вдясно */
+    align-items: flex-start;        /* за да е горе */
+}
+
+.form-group{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+.form-section{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.form-header{
+  margin-bottom:10px;
+}
+
+.page.light-mode .confirm-box{
+  background:white;
+  color:#111;
+}
+
+.page.light-mode .form-label{
+  display:block;
+  margin-bottom:6px;
+  font-size:14px;
+}
+
+.page.dark-mode .form-label{
+  display:block;
+  margin-bottom:6px;
+  font-size:14px;
+}
+
+.page.light-mode .form-control {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #a64bfb;
+  background: rgba(255,255,255,0.04);
+  color: #000;
+}
+
+.page.dark-mode .form-control {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #a64bfb;
+  background: rgba(255,255,255,0.04);
+  color: #fff;
+}
+
+.page.light-mode .form-control::placeholder {
+  color: #555;
+  opacity: 1;
+}
+
+.page.dark-mode .form-control::placeholder{
+  color: #bbb;
+  opacity: 1;
+}
+
+.form-control:focus{
+  outline:1.5px solid #a64bfb;
+  border-color:#a64bfb;
+  box-shadow:0 0 0 4px rgba(168,85,247,0.2);
+}
+
+.confirm-actions{
+  margin-top:20px;
+  display:flex;
+  gap:10px;
+  justify-content:center;
+}
+
+.btn-primary{
+  width:100%;
+  padding:12px;
+  border:none;
+  border-radius:8px;
+  background:#a64bfb;
+  color:white;
+  cursor:pointer;
+}
+
+.btn-primary:hover{
+  background:#9333ea;
+  box-shadow:0px 0px 5px #9333ea;
+}
+
+.page.dark-mode .btn-cancel{
+  padding:10px 16px;
+  border:none;
+  background: transparent;
+  color:white;
+  cursor:pointer;
+}
+
+.page.light-mode .btn-cancel{
+  padding:10px 16px;
+  border:none;
+  background: transparent;
+  color:black;
+  cursor:pointer;
+}
+
+.page .btn-cancel:hover{
+  color:red;
+  background: transparent;
+  border: none;
+}
+
+.flex{ display:flex; }
+.flex-1{ flex:1; }
+.gap-3{ gap:12px; }
