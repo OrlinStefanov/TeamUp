@@ -66,6 +66,11 @@ export class Auth {
     return this.http.post(`${this.apiUrl}/reset-password`, user, { withCredentials: true, headers: { 'Content-Type': 'application/json' } });
   }
 
+  //workspace related 
+  getWorkspaces() {
+    return this.http.get(`${this.apiUrl}/workspaces/short`, { withCredentials: true, headers: { 'Content-Type': 'application/json' } });
+  }
+
   //-----------------------Decoding the token--------------------------------------------
   getToken(): string | null {
     return localStorage.getItem(this.tokenKey);

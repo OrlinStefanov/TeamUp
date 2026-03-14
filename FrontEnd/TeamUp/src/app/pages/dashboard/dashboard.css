@@ -4,6 +4,10 @@
   align-items:center;
   justify-content:center;
   font-family:Arial, sans-serif;
+
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
 }
 
 .page.dark-mode{
@@ -213,6 +217,11 @@
   align-self: left;
 }
 
+.logo-appName {
+  text-decoration: none;
+  text-transform: none;
+  color: #9333ea;
+  text-shadow: #9333ea 0px 0px 5px;
 .page.light-mode .dropdown button:hover, .page.light-mode .settings-dropdown button:hover {
   background: #ececec;
 }
@@ -300,6 +309,7 @@
 #sunImg{
   color:white;
 }
+}
 
 .btn-profile img{
   width:28px;
@@ -310,7 +320,7 @@
   position: absolute;
   top: 0px;
   left: 0;
-  width: 150px;
+  width: 15%;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -506,3 +516,4 @@
 .flex{ display:flex; }
 .flex-1{ flex:1; }
 .gap-3{ gap:12px; }
+
