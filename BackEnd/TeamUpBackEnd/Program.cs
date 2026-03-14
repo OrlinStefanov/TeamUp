@@ -25,6 +25,8 @@ builder.Services.Configure<IdentityOptions>(options =>
 	options.Password.RequiredLength = 8;
 	options.Password.RequireDigit = true;
 	options.Password.RequireUppercase = true;
+	options.Password.RequireLowercase = true;
+	options.Password.RequireNonAlphanumeric = true;
 });
 
 builder.Services.AddScoped<EmailService>();
