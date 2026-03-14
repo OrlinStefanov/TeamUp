@@ -12,7 +12,7 @@
 
 .page.dark-mode{
   background:#0f0f14;
-  color:white;
+  color:#f5f5f5;
 }
 
 .page.light-mode{
@@ -20,38 +20,48 @@
   color:#111;
 }
 
-.page .navbar {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  display: flex;
-  justify-content: space-between; 
-  align-items: center;
-  padding: 20px;
-  border-bottom: #a64bfb solid 1px;
-  box-shadow: #a64bfb 0 0 10px;
-  z-index: 1;
-}
-
-.navbar-left {
-  display: flex;
-  align-items: center;
-  gap: 8px; 
-}
-
-.logo-appName img {
-  display: inline-block;
-  vertical-align: middle;
-}
-
 .logo-appName {
+  display: inline-flex;
+  align-items: center; 
+  gap: 5px; 
+  margin-bottom: 20px;
+  width: 100%; 
+}
+
+.logo-appName img, .nav-footer img {
+  width: 23px;
+  height: 23px;
+  display: block; 
+}
+
+.logo-appName h5 {
+  margin: 0;         
+  padding: 0;
+  line-height: 1;   
+  display: inline-block;
+  font-size: 1rem;
+  margin-right: auto; 
+}
+
+.logo-appName .btn-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 23px;
+  height: 23px;
+  border-radius: 20%;
+  background-color: transparent;
+  color: #9333ea;
+  font-size: 18px;
+  border: 1px solid #9333ea;
+  cursor: pointer;
+  flex-shrink: 0; 
+}
+
+.logo-appName, .btn-profile {
   text-decoration: none;
   text-transform: none;
   color: #9333ea;
-<<<<<<< Updated upstream
-  text-shadow: #9333ea 0px 0px 5px;
-=======
   font-size: 14px;
 }
 
@@ -59,8 +69,6 @@
   display: flex;
   flex-direction: column;
   gap: 7px; 
-
-  flex-shrink: 0;
 }
 
 .nav-section .personal {
@@ -209,6 +217,11 @@
   align-self: left;
 }
 
+.logo-appName {
+  text-decoration: none;
+  text-transform: none;
+  color: #9333ea;
+  text-shadow: #9333ea 0px 0px 5px;
 .page.light-mode .dropdown button:hover, .page.light-mode .settings-dropdown button:hover {
   background: #ececec;
 }
@@ -263,24 +276,21 @@
   background: rgba(255,255,255,0.04);
   color: #fff;
   border-radius: 0 5px 5px 0;
->>>>>>> Stashed changes
 }
 
 .navbar-right {
   display: flex;
   align-items: center;
-  gap: 12px; 
+  gap: 10px;
 }
 
 .btn-toggle{
   display: flex;
   justify-content: center;
   align-items: center;
-
-  padding:8px;
-  height:35px;
-  width:35px;
-
+  padding:6px;
+  height:30px;
+  width:30px;
   border: none;
   background-color: transparent;
   cursor:pointer;
@@ -291,11 +301,14 @@
   border-radius:50%;
 }
 
+.btn-toggle svg{
+  width:18px;
+  height:18px;
+}
+
 #sunImg{
   color:white;
-<<<<<<< Updated upstream
 }
-=======
 }
 
 .btn-profile img{
@@ -503,4 +516,4 @@
 .flex{ display:flex; }
 .flex-1{ flex:1; }
 .gap-3{ gap:12px; }
->>>>>>> Stashed changes
+

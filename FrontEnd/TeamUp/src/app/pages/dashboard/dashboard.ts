@@ -2,16 +2,13 @@ import { Component } from '@angular/core';
 import { ElementRef, Renderer2, ViewChild } from '@angular/core';
 import { Auth } from '../../services/auth/auth';
 import { FormsModule } from '@angular/forms';
-<<<<<<< Updated upstream
 import { CommonModule, NgIf } from '@angular/common';
-=======
 import { CommonModule } from '@angular/common';
-import { UserProfile } from '../../services/auth/auth-types';
->>>>>>> Stashed changes
+
 
 @Component({
   selector: 'app-dashboard',
-  imports: [FormsModule, CommonModule, NgIf],
+  imports: [FormsModule, CommonModule],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
@@ -19,8 +16,6 @@ export class Dashboard {
     @ViewChild('pageDiv') pageDiv!: ElementRef;
 
     isDarkMode: boolean = false;
-<<<<<<< Updated upstream
-=======
     showDropdown = false;
     showSettingsDropdown = false;
     showCreateWorkspace = false;
@@ -30,7 +25,11 @@ export class Dashboard {
 
     //orcho added
     userProfile : any = null;
->>>>>>> Stashed changes
+    workspaces = [
+      { name: 'Design Team' },
+      { name: 'Marketing' },
+      { name: 'Development' }
+    ];
 
     constructor(private renderer: Renderer2, private auth: Auth) {}
 
@@ -75,8 +74,6 @@ export class Dashboard {
       this.renderer.addClass(this.pageDiv.nativeElement, 'light-mode');
     }
   }
-<<<<<<< Updated upstream
-=======
 
   showDropDown() {
     this.showDropdown = !this.showDropdown;
@@ -134,6 +131,4 @@ export class Dashboard {
 
     
   }
-
->>>>>>> Stashed changes
 }
