@@ -12,7 +12,7 @@ namespace TeamUpBackEnd.Models.WorkspaceRelated
 		public string? OwnerId { get; set; }
 		public ApplicationUser? Owner { get; set; }
 
-		public DateTime? CreatedAt { get; set; }
+		public DateOnly? CreatedAt { get; set; }
 		public ICollection<Channel> Channels { get; set; } = new List<Channel>();
 		public ICollection<WorkSpaceMember> Members { get; set; } = new List<WorkSpaceMember>();
 		public ICollection<TaskItem> Tasks { get; set; } = new List<TaskItem>();

@@ -320,7 +320,7 @@ namespace TeamUpBackEnd.Extensions
 					Description = data.Description,
 					OwnerId = userId,
 					Members = new List<WorkSpaceMember>(),
-					CreatedAt = DateTime.UtcNow
+					CreatedAt = DateOnly.FromDateTime(DateTime.UtcNow)
 				};
 
 				//adding the owner
@@ -379,7 +379,7 @@ namespace TeamUpBackEnd.Extensions
 				.WithSummary("Creates a new workspace").WithTags("Workspace Management");
 
 			//returns a list of workspaces the user is a member of, including the workspace id, title, description, owner id and members count. If the user is not a member of any workspace, it returns an empty list.
-			app.MapGet("/workspaces", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims) =>
+			app.MapGet("/workspaces/short", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims) =>
 			{
 				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -395,11 +395,14 @@ namespace TeamUpBackEnd.Extensions
 						w.Id,
 						w.Title,
 						w.Description,
+						w.CreatedAt,
 						w.OwnerId,
 						MembersCount = w.Members.Count,
 						Members = w.Members.Select(m => new
 						{
 							m.UserId,
+							m.User!.UserName,
+							m.User.ProfilePictureUrl,
 							Role = (m.Role == WorkSpaceRole.Member) ? "Member" : (m.Role == WorkSpaceRole.Admin) ? "Admin" : "Owner"
 						})
 					})
@@ -408,6 +411,65 @@ namespace TeamUpBackEnd.Extensions
 				return Results.Ok(workspaces);
 			}).RequireAuthorization()
 				.WithSummary("Returns a list of workspaces the user is a member of").WithTags("Workspace Management");
+
+			//returns the details of a workspace
+			app.MapGet("/workspace/{id}", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, int id) =>
+			{ 
+				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
+
+				if (userId is null)
+				{
+					return Results.BadRequest("Id not found");
+				}
+
+				var user = await db.Users.FindAsync(userId);
+
+				var workspace = await db.Workspaces
+					.Include(w => w.Members)
+					.ThenInclude(m => m.User)
+					.FirstOrDefaultAsync(w => w.Id == id);
+
+				if (workspace == null)
+				{
+					return Results.NotFound("Workspace not found");
+				}
+
+				var owner = workspace.Members.FirstOrDefault(m => m.Role == WorkSpaceRole.Owner);
+
+				if (owner == null || owner.UserId != userId)
+				{
+					return Results.BadRequest("You are not a member of this workspace");
+				}
+
+				workspace.Members = workspace.Members.Where(m => m.UserId != userId).ToList();
+
+				var full_workpace = new workspaceDto.FullWorkspace
+				{
+					Id = workspace.Id,
+					PublicId = workspace.PublicId.ToString(),
+					Title = workspace.Title,
+					Description = workspace.Description,
+					CreatedAt = (DateOnly)workspace.CreatedAt!,
+					Owner = new workspaceDto.FullWorkspaceMember
+					{
+						Id = owner.UserId,
+						UserName = owner.User!.UserName!,
+						Email = owner.User!.Email,
+						Role = WorkSpaceRole.Owner,
+						ProfilePictureUrl = owner.User!.ProfilePictureUrl!
+					},
+					Members = workspace.Members.Select(m => new workspaceDto.FullWorkspaceMember
+					{
+						Id = m.UserId!,
+						UserName = m.User!.UserName!,
+						Email = m.User.Email,
+						Role = m.Role,
+						ProfilePictureUrl = m.User!.ProfilePictureUrl!
+					}).ToList()
+				};
+
+				return Results.Ok(full_workpace);
+			}).RequireAuthorization().WithSummary("Returns full info on workspace based on Id").WithTags("Workspace Management");
 			
 			//returns the list of possible users user might be searching
 			app.MapPost("search/members/add", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, MemberSearch model, UserManager<ApplicationUser> userManager) =>
