@@ -19,7 +19,7 @@ export class StartUp {
   ngOnInit(): void {
     setTimeout(() => {
       this.showStartup = false; 
-      this.router.navigate(['/signup']);
+      this.router.navigate(['/dashboard']);
     }, 3000); 
   }
 

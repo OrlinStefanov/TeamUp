@@ -1,10 +1,15 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using TeamUpBackEnd.DbContext;
 using TeamUpBackEnd.Models;
+using TeamUpBackEnd.Models.WorkspaceRelated;
+using TeamUpBackEnd.Helpers;
 using TeamUpBackEnd.Services;
 
 using user_data = TeamUpBackEnd.DTO.UserDataDTO;
+using workspaceDto = TeamUpBackEnd.DTO.WorkspaceDTO;
 
 namespace TeamUpBackEnd.Extensions
 {
@@ -12,7 +17,8 @@ namespace TeamUpBackEnd.Extensions
 	{
 		public static void MapEndpoints(WebApplication app)
 		{
-			UserEndpoints(app);	
+			UserEndpoints(app);
+			WorkspaceEndpoints(app);
 		}
 
 		public static void UserEndpoints(WebApplication app)
@@ -59,7 +65,7 @@ namespace TeamUpBackEnd.Extensions
 				}
 
 				var result = await userManager.CreateAsync(user, input_user.Password);
-				
+
 				if (!result.Succeeded)
 				{
 					var errors = string.Join(", ", result.Errors.Select(e => e.Description));
@@ -123,7 +129,7 @@ namespace TeamUpBackEnd.Extensions
 				}
 
 				var token = TokenService.GenerateToken(user, config);
-				
+
 				return Results.Ok(token);
 			}).RequireAuthorization()
 				.WithSummary("Refreshes the token and returns a new token with user info").WithTags("User Management");
@@ -139,18 +145,18 @@ namespace TeamUpBackEnd.Extensions
 				}
 
 				var user = await userManager.FindByIdAsync(userId);
-				
+
 				if (user == null)
 				{
 					return Results.BadRequest("User not found");
 				}
 
 				await userManager.UpdateSecurityStampAsync(user);
-				
+
 				return Results.Ok("Logged out successfully");
 			}).RequireAuthorization()
 				.WithSummary("Logs out user by invalidating the token").WithTags("User Management");
-		
+
 			//returns the current user's info
 			app.MapGet("/me", [Authorize] async (ClaimsPrincipal userClaims, UserManager<ApplicationUser> userManager) =>
 			{
@@ -181,20 +187,24 @@ namespace TeamUpBackEnd.Extensions
 			//forgets the old password and via email sends proposition for a new one. If the email is not found, it returns ok status without sending an email, to prevent email enumeration attacks.
 			app.MapPost("/forgot-password", async (user_data.ForgotPasswordDTO dto, UserManager<ApplicationUser> userManager, EmailService emailService) =>
 			{
-				var user = await userManager.FindByEmailAsync(dto.Email);
+				var user = await userManager.FindByEmailAsync(dto.EmailOrUsername) ?? await userManager.FindByNameAsync(dto.EmailOrUsername);
 
 				if (user == null)
-					return Results.Ok();
+					return Results.BadRequest("User not found");
 
 				var token = await userManager.GeneratePasswordResetTokenAsync(user);
 
 				var encodedToken = Uri.EscapeDataString(token);
 
-				var link =
-					$"https://yourfrontend.com/reset-password?email={dto.Email}&token={encodedToken}";
+				var user_email = user.Email;
+
+				if (user_email is null) return Results.BadRequest("User email not found");
+
+				var link = $"https://localhost:4200/forgot-password?email={Uri.EscapeDataString(user_email)}&token={encodedToken}"; // in development
+																																	//$"https://teamup.com/reset-password";
 
 				await emailService.SendEmailAsync(
-					dto.Email,
+					user_email,
 					"Reset Password",
 					$"Click here to reset your password:<br><a href='{link}'>Reset</a>");
 
@@ -203,16 +213,22 @@ namespace TeamUpBackEnd.Extensions
 				.WithTags("User Management");
 
 			//resets the password using the token that was sent to the user's email. If the token is invalid, it returns a bad request status with the error(s) that occurred during password reset.
-			app.MapPost("/reset-password", async (user_data.ResetPasswordDTO dto, UserManager<ApplicationUser> userManager) =>
+			app.MapPost("/reset-password", async (
+				user_data.ResetPasswordDTO dto,
+				UserManager<ApplicationUser> userManager) =>
 			{
-				var user = await userManager.FindByEmailAsync(dto.Email);
+				var user = await userManager.FindByEmailAsync(dto.EmailOrUsername)
+						   ?? await userManager.FindByNameAsync(dto.EmailOrUsername);
 
 				if (user == null)
 					return Results.BadRequest("Invalid request");
 
+				// Decode token from URL
+				var decodedToken = Uri.UnescapeDataString(dto.Token);
+
 				var result = await userManager.ResetPasswordAsync(
 					user,
-					dto.Token,
+					decodedToken,
 					dto.NewPassword);
 
 				if (!result.Succeeded)
@@ -221,14 +237,15 @@ namespace TeamUpBackEnd.Extensions
 				await userManager.UpdateSecurityStampAsync(user);
 
 				return Results.Ok("Password reset successful");
-			}).WithSummary("Resets the password using the token that was sent to the user's email")
-				.WithTags("User Management");
+			})
+			.WithSummary("Resets the password using the token that was sent to the user's email")
+			.WithTags("User Management");
 
 			//uploading user profile picture 
 			app.MapPost("/upload-profile-picture", [Authorize] async (IFormFile file, ClaimsPrincipal userClaims, UserManager<ApplicationUser> userManager, CloudinaryService cloudinaryService) =>
 			{
 				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
-				
+
 				if (userId is null)
 				{
 					return Results.BadRequest("Id not found");
@@ -276,5 +293,218 @@ namespace TeamUpBackEnd.Extensions
 			}).RequireAuthorization().Accepts<IFormFile>("multipart/form-data").DisableAntiforgery()
 				.WithSummary("Uploading user profile picture").WithTags("User Management");
 		}
+
+		public static void WorkspaceEndpoints(WebApplication app)
+		{
+			//creates a new workspace and adds the owner as a member with the owner role. If there are additional members provided in the request, it adds them as members with the member role.
+			app.MapPost("/create/worspace" , [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, UserManager<ApplicationUser> userManager, workspaceDto.CreateWorkspace data) =>
+			{
+				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
+
+				if (userId is null)
+				{
+					return Results.BadRequest("Id not found");
+				}
+
+				var user = await userManager.FindByIdAsync(userId);
+
+				if (user is null)
+				{
+					return Results.BadRequest("User not found");
+				}
+
+				//creating workspace entity
+				var workspace = new WorkSpace
+				{
+					Title = data.Title,
+					Description = data.Description,
+					OwnerId = userId,
+					Members = new List<WorkSpaceMember>(),
+					CreatedAt = DateOnly.FromDateTime(DateTime.UtcNow)
+				};
+
+				//adding the owner
+				workspace.Members.Add(new WorkSpaceMember
+				{
+					UserId = userId,
+					Role = WorkSpaceRole.Owner
+				});
+
+				if (data.Members != null && data.Members.Count > 0)
+				{
+					var memberEmailsOrUsernames = data.Members
+						.Where(m => !string.IsNullOrEmpty(m.EmailOrUsername))
+						.Select(m => m.EmailOrUsername!)
+						.ToList();
+
+					var users = await userManager.Users
+						.Where(u => memberEmailsOrUsernames.Contains(u.Email!)
+								 || memberEmailsOrUsernames.Contains(u.UserName!))
+						.ToListAsync();
+
+					foreach (var memberData in data.Members)
+					{
+						if (memberData.EmailOrUsername == null)
+							return Results.BadRequest("Email or username is required for all members");
+
+						var memberUser = users.FirstOrDefault(u =>
+							u.Email == memberData.EmailOrUsername || u.UserName == memberData.EmailOrUsername);
+
+						if (memberUser == null)
+							return Results.BadRequest($"Member '{memberData.EmailOrUsername}' not found");
+
+						if (memberUser.Id == userId)
+							continue; 
+
+						workspace.Members.Add(new WorkSpaceMember
+						{
+							UserId = memberUser.Id,
+							Role = WorkSpaceRole.Member 
+						});
+					}
+				}
+
+				await db.Workspaces.AddAsync(workspace);
+				await db.SaveChangesAsync();
+
+				return Results.Ok(new
+				{
+					workspace.Id,
+					workspace.Title,
+					workspace.Description,
+					workspace.OwnerId,
+					MembersCount = workspace.Members.Count
+				});
+			}).RequireAuthorization()
+				.WithSummary("Creates a new workspace").WithTags("Workspace Management");
+
+			//returns a list of workspaces the user is a member of, including the workspace id, title, description, owner id and members count. If the user is not a member of any workspace, it returns an empty list.
+			app.MapGet("/workspaces/short", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims) =>
+			{
+				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
+
+				if (userId is null)
+				{
+					return Results.BadRequest("Id not found");
+				}
+
+				var workspaces = await db.Workspaces
+					.Where(w => w.Members.Any(m => m.UserId == userId))
+					.Select(w => new
+					{
+						w.Id,
+						w.Title,
+						w.Description,
+						w.CreatedAt,
+						w.OwnerId,
+						MembersCount = w.Members.Count,
+						Members = w.Members.Select(m => new
+						{
+							m.UserId,
+							m.User!.UserName,
+							m.User.ProfilePictureUrl,
+							Role = (m.Role == WorkSpaceRole.Member) ? "Member" : (m.Role == WorkSpaceRole.Admin) ? "Admin" : "Owner"
+						})
+					})
+					.ToListAsync();
+
+				return Results.Ok(workspaces);
+			}).RequireAuthorization()
+				.WithSummary("Returns a list of workspaces the user is a member of").WithTags("Workspace Management");
+
+			//returns the details of a workspace
+			app.MapGet("/workspace/{id}", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, int id) =>
+			{ 
+				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
+
+				if (userId is null)
+				{
+					return Results.BadRequest("Id not found");
+				}
+
+				var user = await db.Users.FindAsync(userId);
+
+				var workspace = await db.Workspaces
+					.Include(w => w.Members)
+					.ThenInclude(m => m.User)
+					.FirstOrDefaultAsync(w => w.Id == id);
+
+				if (workspace == null)
+				{
+					return Results.NotFound("Workspace not found");
+				}
+
+				var owner = workspace.Members.FirstOrDefault(m => m.Role == WorkSpaceRole.Owner);
+
+				if (owner == null || owner.UserId != userId)
+				{
+					return Results.BadRequest("You are not a member of this workspace");
+				}
+
+				workspace.Members = workspace.Members.Where(m => m.UserId != userId).ToList();
+
+				var full_workpace = new workspaceDto.FullWorkspace
+				{
+					Id = workspace.Id,
+					PublicId = workspace.PublicId.ToString(),
+					Title = workspace.Title,
+					Description = workspace.Description,
+					CreatedAt = (DateOnly)workspace.CreatedAt!,
+					Owner = new workspaceDto.FullWorkspaceMember
+					{
+						Id = owner.UserId,
+						UserName = owner.User!.UserName!,
+						Email = owner.User!.Email,
+						Role = WorkSpaceRole.Owner,
+						ProfilePictureUrl = owner.User!.ProfilePictureUrl!
+					},
+					Members = workspace.Members.Select(m => new workspaceDto.FullWorkspaceMember
+					{
+						Id = m.UserId!,
+						UserName = m.User!.UserName!,
+						Email = m.User.Email,
+						Role = m.Role,
+						ProfilePictureUrl = m.User!.ProfilePictureUrl!
+					}).ToList()
+				};
+
+				return Results.Ok(full_workpace);
+			}).RequireAuthorization().WithSummary("Returns full info on workspace based on Id").WithTags("Workspace Management");
+			
+			//returns the list of possible users user might be searching
+			app.MapPost("search/members/add", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, MemberSearch model, UserManager<ApplicationUser> userManager) =>
+			{
+				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
+
+				if (userId is null) return Results.BadRequest("User id not found");
+
+				var user = await userManager.FindByIdAsync(userId);
+
+				if (user == null) return Results.BadRequest("User not found");
+
+				if (model.emailOrUsername.Length < 3)
+				{
+					return Results.BadRequest("Not enough data");
+				}
+
+				var possible_users = await userManager.Users.Where(u => u.Email!.Contains(model.emailOrUsername) || u.UserName!.Contains(model.emailOrUsername)).ToListAsync();
+
+				if (possible_users is null || possible_users.Count == 0)
+				{
+					return Results.BadRequest("No users found");
+				}
+
+				var transformed_users = possible_users.Select(u => new
+				{
+					u.UserName,
+					u.Email,
+					u.ProfilePictureUrl
+				}).ToList();
+
+				return Results.Ok(transformed_users);
+			}).RequireAuthorization().WithSummary("Retruns list of possible users you might be searching for").WithTags("Workspace Management");
+		}
 	}
+
+	public record MemberSearch(string emailOrUsername);
 }

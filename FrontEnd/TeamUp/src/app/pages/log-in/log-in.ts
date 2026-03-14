@@ -43,6 +43,24 @@ export class LogIn {
     }
   }
 
+  forgot_password() {
+    if (!this.userData.emailOrUsername) {
+      this.errorMessage = 'Please enter your email or username.';
+      return;
+    }
+
+    this.auth.forgotPassword(this.userData.emailOrUsername).subscribe({
+      next: (response) => {
+        console.log('Password reset email sent:', response);
+        this.closeResetConfirm();
+      },
+      error: (error) => {
+        console.error('Password reset failed:', error);
+        this.errorMessage = error.error || 'Password reset failed. Please try again.';
+      }
+    });
+  }
+
   toggleDarkMode() {
     this.isDarkMode = !this.isDarkMode;
 
@@ -83,7 +101,23 @@ export class LogIn {
   }
 
   sendResetEmail() {
-    
+    if (!this.userData.emailOrUsername) {
+      this.errorMessage = 'Please enter your email or username.';
+      return;
+    }
+
+    localStorage.setItem('resetEmail', this.userData.emailOrUsername);
+
+    this.auth.forgotPassword(this.userData.emailOrUsername).subscribe({
+      next: (response) => {
+        console.log('Password reset email sent:', response);
+        this.closeResetConfirm();
+      }     ,
+      error: (error) => {
+        console.error('Password reset failed:', error);
+        this.errorMessage = error.error || 'Password reset failed. Please try again.';
+      }
+    });
   }
 
 }

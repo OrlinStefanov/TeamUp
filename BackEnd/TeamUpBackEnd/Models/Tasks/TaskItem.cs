@@ -1,0 +1,28 @@
+﻿using TeamUpBackEnd.Models.WorkspaceRelated;
+
+namespace TeamUpBackEnd.Models.Tasks
+{
+	public class TaskItem
+	{
+		public int Id { get; set; }
+		public Guid PublicId { get; set; } = Guid.NewGuid();
+		public string? Title { get; set; }
+		public string? Description { get; set; }
+		public DateTime? DueDate { get; set; }
+		public DateTime? StartDate { get; set; }	
+		public TaskStatus Status { get; set; } = TaskStatus.ToDo;
+
+		public int WorkSpaceId { get; set; }
+		public WorkSpace? WorkSpace { get; set; }
+
+		public ICollection<TaskAssignment>? Assignments { get; set; }
+	}
+
+	public enum TaskStatus
+	{
+		ToDo,
+		InProgress,
+		Done,
+		Overdue
+	}
+}

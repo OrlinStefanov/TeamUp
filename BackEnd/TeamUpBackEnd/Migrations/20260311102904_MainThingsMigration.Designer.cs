@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using TeamUpBackEnd.DbContext;
@@ -11,13 +12,15 @@ using TeamUpBackEnd.DbContext;
 namespace TeamUpBackEnd.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260311102904_MainThingsMigration")]
+    partial class MainThingsMigration
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.5")
+                .HasAnnotation("ProductVersion", "10.0.4")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -422,8 +425,8 @@ namespace TeamUpBackEnd.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<DateOnly?>("CreatedAt")
-                        .HasColumnType("date");
+                    b.Property<DateTime?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Description")
                         .HasColumnType("text");
@@ -628,11 +631,11 @@ namespace TeamUpBackEnd.Migrations
 
             modelBuilder.Entity("TeamUpBackEnd.Models.WorkspaceRelated.WorkSpace", b =>
                 {
-                    b.HasOne("TeamUpBackEnd.Models.ApplicationUser", "Owner")
+                    b.HasOne("TeamUpBackEnd.Models.ApplicationUser", "owner")
                         .WithMany()
                         .HasForeignKey("OwnerId");
 
-                    b.Navigation("Owner");
+                    b.Navigation("owner");
                 });
 
             modelBuilder.Entity("TeamUpBackEnd.Models.WorkspaceRelated.WorkSpaceMember", b =>

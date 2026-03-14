@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { LoginUser, RegisterUser, User } from './auth-types';
+import { LoginUser, RegisterUser, ResetUser, User } from './auth-types';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, tap } from 'rxjs';
 
 
 @Injectable({
@@ -11,7 +11,7 @@ import { BehaviorSubject } from 'rxjs';
 export class Auth {
   public getUserId: any;
   public me_credentials: any;
-  
+
   constructor(private http: HttpClient) {
     this.loadUserFromStorage();
   };
@@ -23,7 +23,18 @@ export class Auth {
 
   login(user : LoginUser)
   {
-    return this.http.post<{ token: string }>(`${this.apiUrl}/login`, user, { withCredentials: true, headers: { 'Content-Type': 'application/json' } });
+    return this.http.post<{ token: string }>(`${this.apiUrl}/login`, user, { withCredentials: true, headers: { 'Content-Type': 'application/json' } }).pipe(
+      // Store the token and update user state on successful login
+      tap(response => {
+        const _token = response.token;
+        if (_token)
+        {
+          localStorage.setItem(this.tokenKey, _token);
+          const decodedUser = this.decodeToken(_token);
+          this.userSubject.next(decodedUser);
+        }
+      })
+    );
   }
 
   logout() {
@@ -39,7 +50,20 @@ export class Auth {
   //returns the user information based on the token
   me()
   {
+    this.me_credentials = this.decodeToken(this.getToken()!);
+    this.userSubject.next(this.me_credentials);
     return this.http.get(`${this.apiUrl}/me`, { withCredentials: true, headers: { 'Content-Type': 'application/json' } });
+  }
+
+  //forgot password
+  forgotPassword(emailOrUsername: string) {
+    return this.http.post(`${this.apiUrl}/forgot-password`, { emailOrUsername }, { withCredentials: true, headers: { 'Content-Type': 'application/json' } });
+  }
+
+  //reset password
+  resetPassword(user : ResetUser)
+  {
+    return this.http.post(`${this.apiUrl}/reset-password`, user, { withCredentials: true, headers: { 'Content-Type': 'application/json' } });
   }
 
   //-----------------------Decoding the token--------------------------------------------

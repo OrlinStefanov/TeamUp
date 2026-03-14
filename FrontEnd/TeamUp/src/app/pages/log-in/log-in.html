@@ -55,7 +55,7 @@
             <p style="margin-left: 10px; margin-top: 2px;" class="text-red-500 text-sm">{{ errorMessage }}</p>
           </div>
 
-      <div class="flex-1">
+      <div *ngIf="userData.emailOrUsername.length > 0" class="flex-1">
         <a (click)="openResetConfirm()" class="text-sm" style="color: #a64bfb;">Forgot Password?</a>
       </div>
 
@@ -73,13 +73,15 @@
 
   <div *ngIf="showConfirmReset" class="confirm-overlay">
       <div class="confirm-box">
-        <h3>Reset <span style="color: #a64bfb; text-shadow: #a64bfb 0 0 10px;">Password</span></h3>
-        <p>Are you sure you want to receive a password reset email<span style="color: #a64bfb;">?</span></p>
+        <form (ngSubmit)="sendResetEmail()">
+          <h3>Reset <span style="color: #a64bfb; text-shadow: #a64bfb 0 0 10px;">Password</span></h3>
+          <p>Are you sure you want to receive a password reset email<span style="color: #a64bfb;">?</span></p>
 
-        <div class="confirm-actions">
-          <button class="btn-primary" (click)="sendResetEmail()">Yes, send it</button>
-          <button class="btn-cancel" (click)="closeResetConfirm()">Cancel</button>
-        </div>
+          <div class="confirm-actions">
+            <button class="btn-primary" type="submit">Yes, send it</button>
+            <button class="btn-cancel" (click)="closeResetConfirm()">Cancel</button>
+          </div>
+        </form>
       </div>
     </div>
 </div>

@@ -19,3 +19,9 @@ export interface User {
     email: string;
     exp: number;
 }
+
+export interface ResetUser {
+    emailOrUsername: string;
+    token : string;
+    newPassword : string;
+}
