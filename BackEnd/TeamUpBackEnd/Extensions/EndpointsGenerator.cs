@@ -10,6 +10,8 @@ using TeamUpBackEnd.Services;
 
 using user_data = TeamUpBackEnd.DTO.UserDataDTO;
 using workspaceDto = TeamUpBackEnd.DTO.WorkspaceDTO;
+using taskDTO = TeamUpBackEnd.DTO.TaskItemsDTO;
+using TeamUpBackEnd.Models.Tasks;
 
 namespace TeamUpBackEnd.Extensions
 {
@@ -19,6 +21,7 @@ namespace TeamUpBackEnd.Extensions
 		{
 			UserEndpoints(app);
 			WorkspaceEndpoints(app);
+			TaskEndpoints(app);
 		}
 
 		public static void UserEndpoints(WebApplication app)
@@ -297,7 +300,7 @@ namespace TeamUpBackEnd.Extensions
 		public static void WorkspaceEndpoints(WebApplication app)
 		{
 			//creates a new workspace and adds the owner as a member with the owner role. If there are additional members provided in the request, it adds them as members with the member role.
-			app.MapPost("/create/worspace" , [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, UserManager<ApplicationUser> userManager, workspaceDto.CreateWorkspace data) =>
+			app.MapPost("/create/worspace", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, UserManager<ApplicationUser> userManager, workspaceDto.CreateWorkspace data) =>
 			{
 				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -354,12 +357,12 @@ namespace TeamUpBackEnd.Extensions
 							return Results.BadRequest($"Member '{memberData.EmailOrUsername}' not found");
 
 						if (memberUser.Id == userId)
-							continue; 
+							continue;
 
 						workspace.Members.Add(new WorkSpaceMember
 						{
 							UserId = memberUser.Id,
-							Role = WorkSpaceRole.Member 
+							Role = WorkSpaceRole.Member
 						});
 					}
 				}
@@ -414,7 +417,7 @@ namespace TeamUpBackEnd.Extensions
 
 			//returns the details of a workspace
 			app.MapGet("/workspace/{id}", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, int id) =>
-			{ 
+			{
 				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
 
 				if (userId is null)
@@ -470,7 +473,7 @@ namespace TeamUpBackEnd.Extensions
 
 				return Results.Ok(full_workpace);
 			}).RequireAuthorization().WithSummary("Returns full info on workspace based on Id").WithTags("Workspace Management");
-			
+
 			//returns the list of possible users user might be searching
 			app.MapPost("search/members/add", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, MemberSearch model, UserManager<ApplicationUser> userManager) =>
 			{
@@ -503,6 +506,129 @@ namespace TeamUpBackEnd.Extensions
 
 				return Results.Ok(transformed_users);
 			}).RequireAuthorization().WithSummary("Retruns list of possible users you might be searching for").WithTags("Workspace Management");
+		}
+
+		public static void TaskEndpoints(WebApplication app)
+		{
+			//creates a new task 
+			app.MapPost("/create/tasks", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, UserManager<ApplicationUser> userManager, taskDTO.CreateTaskItemDTO data) =>
+			{
+				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
+
+				if (userId is null)
+				{
+					return Results.BadRequest("Id not found");
+				}
+
+				var user = await userManager.FindByIdAsync(userId);
+
+				if (user is null)
+				{
+					return Results.BadRequest("User not found");
+				}
+
+				var workspace = await db.Workspaces
+					.Include(w => w.Members)
+					.FirstOrDefaultAsync(w => w.Id == data.WorkspaceId);
+
+				if (workspace == null)
+				{
+					return Results.BadRequest("Workspace not found");
+				}
+
+				if (!workspace.Members.Any(m => m.UserId == userId))
+				{
+					return Results.BadRequest("You are not a member of this workspace");
+				}
+
+				var task = new TaskItem
+				{
+					Title = data.Title,
+					Description = data.Description,
+					DueDate = data.DueDate,
+					StartDate = data.StartDate,
+					Status = data.Status,
+					WorkSpaceId = data.WorkspaceId
+				};
+
+				db.Tasks.Add(task);
+				await db.SaveChangesAsync();
+				
+				if (data.AssignedUserIds != null && data.AssignedUserIds.Count > 0)
+				{
+					foreach (var assignedUserId in data.AssignedUserIds)
+					{
+						var assignedUser = await userManager.FindByIdAsync(assignedUserId);
+						if (assignedUser != null && workspace.Members.Any(m => m.UserId == assignedUserId))
+						{
+							db.TaskAssignments.Add(new TaskAssignment
+							{
+								TaskItemId = task.Id,
+								UserId = assignedUserId
+							});
+						}
+					}
+
+					await db.SaveChangesAsync();
+				}
+
+				return Results.Ok(new
+				{
+					task.PublicId,
+					task.Title,
+					task.Description,
+					task.DueDate,
+					task.StartDate,
+					Status = (data.Status == TasksStatus.ToDo) ? "ToDo" : (data.Status == TasksStatus.InProgress) ? "InProgress" : (data.Status == TasksStatus.Done) ? "Done" : "Overdue"
+				});
+			}).RequireAuthorization()
+				.WithSummary("Creates a new task").WithTags("Task Management");
+
+			//get all tasks in workspace
+			app.MapGet("/tasks/{workspaceId}", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, int workspaceId) =>
+			{
+				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
+
+				if (userId is null)
+				{
+					return Results.BadRequest("Id not found");
+				}
+
+				var workspace = await db.Workspaces
+					.Include(w => w.Members)
+					.Include(w => w.Tasks)
+					.ThenInclude(t => t.Assignments)
+					.FirstOrDefaultAsync(w => w.Id == workspaceId);
+
+				if (workspace == null)
+				{
+					return Results.BadRequest("Workspace not found");
+				}
+
+				if (!workspace.Members.Any(m => m.UserId == userId))
+				{
+					return Results.BadRequest("You are not a member of this workspace");
+				}
+
+				var tasks = workspace.Tasks.Select(t => new
+				{
+					t.PublicId,
+					t.Title,
+					t.Description,
+					t.DueDate,
+					t.StartDate,
+					Status = (t.Status == TasksStatus.ToDo) ? "ToDo" : (t.Status == TasksStatus.InProgress) ? "InProgress" : (t.Status == TasksStatus.Done) ? "Done" : "Overdue",
+					AssignedUsers = t.Assignments!.Select(a => new
+					{
+						a.User!.UserName,
+						a.User.Email,
+						a.User.ProfilePictureUrl
+					}).ToList()
+				}).ToList();
+
+				return Results.Ok(tasks);
+			}).RequireAuthorization()
+				.WithSummary("Get all tasks in workspace").WithTags("Task Management");
 		}
 	}
 

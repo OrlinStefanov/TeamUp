@@ -74,8 +74,6 @@ namespace TeamUpBackEnd.DbContext
 				.HasForeignKey(cm => cm.UserId)
 				.OnDelete(DeleteBehavior.Cascade);
 
-
-
 			// ConversationMember composite key
 			modelBuilder.Entity<ConversationMember>()
 				.HasKey(cm => new { cm.ConversationId, cm.UserId });
