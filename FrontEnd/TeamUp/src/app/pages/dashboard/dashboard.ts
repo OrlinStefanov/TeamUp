@@ -3,7 +3,6 @@ import { ElementRef, Renderer2, ViewChild } from '@angular/core';
 import { Auth } from '../../services/auth/auth';
 import { FormsModule } from '@angular/forms';
 import { CommonModule, NgIf } from '@angular/common';
-import { CommonModule } from '@angular/common';
 
 
 @Component({
@@ -25,11 +24,6 @@ export class Dashboard {
 
     //orcho added
     userProfile : any = null;
-    workspaces = [
-      { name: 'Design Team' },
-      { name: 'Marketing' },
-      { name: 'Development' }
-    ];
 
     constructor(private renderer: Renderer2, private auth: Auth) {}
 
