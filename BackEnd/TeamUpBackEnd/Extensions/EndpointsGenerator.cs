@@ -657,7 +657,7 @@ namespace TeamUpBackEnd.Extensions
 				.WithSummary("Creates a new task").WithTags("Task Management");
 
 			//get all tasks in workspace
-			app.MapGet("/tasks/{workspaceId}", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, int workspaceId) =>
+			app.MapGet("/tasks/{workspaceId}", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, string workspaceId) =>
 			{
 				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -670,7 +670,8 @@ namespace TeamUpBackEnd.Extensions
 					.Include(w => w.Members)
 					.Include(w => w.Tasks)
 					.ThenInclude(t => t.Assignments)
-					.FirstOrDefaultAsync(w => w.Id == workspaceId);
+					.ThenInclude(u => u.User)
+					.FirstOrDefaultAsync(w => w.PublicId.ToString() == workspaceId);
 
 				if (workspace == null)
 				{
@@ -689,7 +690,13 @@ namespace TeamUpBackEnd.Extensions
 					t.Description,
 					t.DueDate,
 					t.StartDate,
-					Status = (t.Status == TasksStatus.ToDo) ? "ToDo" : (t.Status == TasksStatus.InProgress) ? "InProgress" : (t.Status == TasksStatus.Done) ? "Done" : "Overdue",
+					Status = t.Status switch
+					{
+						TasksStatus.ToDo => "ToDo",
+						TasksStatus.InProgress => "InProgress",
+						TasksStatus.Done => "Done",
+						_ => "Overdue"
+					},
 					AssignedUsers = t.Assignments!.Select(a => new
 					{
 						a.User!.UserName,

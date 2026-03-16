@@ -1,4 +1,4 @@
-.page{
+/*.page{
   min-height:100vh;
   display:flex;
   align-items:center;
@@ -398,8 +398,8 @@
 
 .header-row {
     display: flex;
-    justify-content: space-between; /* заглавие/параграф вляво, бутон вдясно */
-    align-items: flex-start;        /* за да е горе */
+    justify-content: space-between; 
+    align-items: flex-start;        
 }
 
 .form-group{
@@ -517,3 +517,4 @@
 .flex-1{ flex:1; }
 .gap-3{ gap:12px; }
 
+*/
