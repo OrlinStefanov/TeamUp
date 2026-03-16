@@ -1,92 +1,76 @@
-<head>
-    <title>Dashboard - TeamUp</title>
-</head>
-
 <div #pageDiv class="page" [ngClass]="{'light-mode': !isDarkMode, 'dark-mode': isDarkMode}">
-<!--    <nav class="side-navbar">
-        <div class="logo-appName">
-            <img src="teamUpLogo.png" alt="TeamUp Logo" class="logo">
-            <h5 class="app-name">Team Up</h5>
-            <button class="btn-add">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-lg" viewBox="0 0 16 16">
-                    <path fill-rule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2"/>
-                </svg>
-            </button>
-        </div>
-
-        <div class="nav-center">
-            <div class="nav-section">
-                <div class="dashboard">
-                    <a class="sub-nav-link" href="/dashboard">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-house" viewBox="0 0 16 16">
-                            <path d="M8.707 1.5a1 1 0 0 0-1.414 0L.646 8.146a.5.5 0 0 0 .708.708L2 8.207V13.5A1.5 1.5 0 0 0 3.5 15h9a1.5 1.5 0 0 0 1.5-1.5V8.207l.646.647a.5.5 0 0 0 .708-.708L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293zM13 7.207V13.5a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5V7.207l5-5z"/>
-                        </svg>
-                        Dashboard
-                    </a>
-                </div>
-
-                <div class="personal">
-                    <a class="sub-nav-link" href="/dashboard">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person" viewBox="0 0 16 16">
-                            <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0m4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4m-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10s-3.516.68-4.168 1.332c-.678.678-.83 1.418-.832 1.664z"/>
-                        </svg>
-                        Personal
-                    </a>
-                </div>
-        </div>
-            <div class="workspaces" >
-                <p class="workspaces-par" style="color: #bbb;">
-                Workspaces</p>
-                <!--(click)="showDropDown()" or (click)="openCreateWorkspace()"
-                <button class="btn-add"  (click)="showDropDown()">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-lg" viewBox="0 0 16 16">
-                        <path fill-rule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2"/>
-                    </svg>
-                </button>
-
-                <div class="dropdown" [ngClass]=" {'show': showDropdown, 'hide': !showDropdown}" (mouseleave)="closeMenu()">
-                    <button class="createBtn" (click)="openCreateWorkspace()" style="font-size: 12px;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-plus-lg" viewBox="0 0 16 16">
-                            <path fill-rule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2"/>
-                        </svg>
-                        Create   
-                    </button>
-                </div>
-            </div>
-
-            <div class="workspace-list">
-                <div class="workspace-item" *ngFor="let workspace of workspaces">
-                {{ workspace.title }}
-                </div>
-            </div>
-        </div>
-
-        <div class="nav-footer">
-            <img src="{{userProfile.profilePictureUrl}}" alt="TeamUp Logo" class="logo">
-            <p class="userName">{{userProfile.userName}}</p>
-            <button class="settingsBtn" (click)="showSettingsDropDown()">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-gear" viewBox="0 0 16 16">
-                    <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492M5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0"/>
-                    <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115z"/>
-                </svg>
-            </button>
-        </div>
-    </nav>
--->
     <div class="workspace-content">
+
         <div class="workspace-header">
             <h2>Welcome to your dashboard, {{userProfile.userName}}!</h2>
             <p>Here you can manage your workspaces, view recent activity, and stay updated with your team's progress.</p>
         </div>
-        <div *ngFor="let workspace of workspaces">
-            <div class="workspace-card">
-                <h3>{{ workspace.title }}</h3>
-                <p>{{ workspace.description }}</p>
-                <a href="/workspace/{{workspace.publicId}}/tasks" class="btn-primary">Go to workspace</a>
+
+        <!-- ако има workspaces -->
+        <div *ngIf="workspaces.length > 0; else emptyState">
+            <div *ngFor="let workspace of workspaces">
+                <div class="workspace-card">
+                    <h3>{{ workspace.name }}</h3>
+                    <p>{{ workspace.description }}</p>
+                    <a href="/workspace/{{workspace.publicId}}/tasks" class="btn-primary">
+                        Go to workspace
+                    </a>
+                </div>
             </div>
         </div>
+
+        <!-- ако няма workspaces -->
+        <ng-template #emptyState>
+
+            <div class="empty-dashboard">
+
+                <h1>Welcome to <span style="color: #a64bfb;">Team Up</span></h1>
+
+                <p class="subtitle">
+                    Your gamified workspace for developer teams. Ship code, earn points,
+                    and compete with your crew.
+                </p>
+
+                <div class="steps-grid">
+
+                    <div class="step-card purple">
+                        <h4>STEP 1</h4>
+                        <h3>Create or join a workspace</h3>
+                        <p>Start fresh with your own workspace or join an existing team.</p>
+                    </div>
+
+                    <div class="step-card cyan">
+                        <h4>STEP 2</h4>
+                        <h3>Invite your team</h3>
+                        <p>Add teammates via email or invite link.</p>
+                    </div>
+
+                    <div class="step-card pink">
+                        <h4>STEP 3</h4>
+                        <h3>Complete tasks & earn points</h3>
+                        <p>Track progress on boards and earn points.</p>
+                    </div>
+
+                    <div class="step-card yellow">
+                        <h4>STEP 4</h4>
+                        <h3>Climb the leaderboard</h3>
+                        <p>Compete with your team and build streaks.</p>
+                    </div>
+
+                </div>
+
+                <div class="actions">
+                    <button class="btn-primary" (click)="openCreateWorkspace()">
+                        + Create Workspace
+                    </button>
+                </div>
+
+            </div>
+
+        </ng-template>
+
+        </div>
     </div>
-</div>
     <div *ngIf="showCreateWorkspace" class="confirm-overlay">
             <form #createWorkspaceForm="ngForm" (ngSubmit)="createWorkspace()">
                 <div class="header-row">
