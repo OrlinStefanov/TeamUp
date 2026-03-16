@@ -73,7 +73,6 @@
         </div>
     </nav>
 -->
-    <a>Here is the content for the dashboard.</a>
     <div class="workspace-content">
         <div class="workspace-header">
             <h2>Welcome to your dashboard, {{userProfile.userName}}!</h2>
@@ -83,7 +82,7 @@
             <div class="workspace-card">
                 <h3>{{ workspace.title }}</h3>
                 <p>{{ workspace.description }}</p>
-                <a href="/workspace/{{workspace.publicId}}" class="btn-primary">Go to workspace</a>
+                <a href="/workspace/{{workspace.publicId}}/tasks" class="btn-primary">Go to workspace</a>
             </div>
         </div>
     </div>
@@ -125,12 +124,4 @@
                     <button class="btn-primary" type="submit" [disabled]="createWorkspaceForm.invalid">Create workspace</button>
                 </div>
             </form>
-    </div>
-
-    <div *ngFor="let workspace of workspaces">
-        <div class="workspace-card">
-            <h3>{{ workspace.title }}</h3>
-            <p>{{ workspace.description }}</p>
-            <a href="/workspace/{{workspace.publicId}}" class="btn-primary">Go to workspace</a>
         </div>
-    </div>
