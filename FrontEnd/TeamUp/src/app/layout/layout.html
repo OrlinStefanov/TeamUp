@@ -1,0 +1,148 @@
+<div class="page" [ngClass]="{'light-mode': !isDarkMode, 'dark-mode': isDarkMode}">
+  
+  <div 
+    class="mobile-overlay"
+    [class.show]="isSidebarOpen"
+    (click)="isSidebarOpen = false">
+  </div>
+
+  <nav class="mobile-sidebar" [class.show]="isSidebarOpen">
+    <div class="mobile-sidebar-header">
+      <div class="logo-appName mb-0">
+        <img src="teamUpLogo.png" alt="TeamUp Logo" class="logo" />
+        <h5>Team Up</h5>
+      </div>
+      <button class="close-btn" type="button" (click)="isSidebarOpen = false">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" width="24">
+            <path d="M20.25 7c0-.69-.56-1.25-1.25-1.25H9.75v12.5H19c.69 0 1.25-.56 1.25-1.25zM3.75 17c0 .69.56 1.25 1.25 1.25h3.25V5.75H5c-.69 0-1.25.56-1.25 1.25zm18 0A2.75 2.75 0 0 1 19 19.75H5A2.75 2.75 0 0 1 2.25 17V7A2.75 2.75 0 0 1 5 4.25h14A2.75 2.75 0 0 1 21.75 7z"/>
+        </svg>
+      </button>
+    </div>
+
+    <ul class="nav-section list-unstyled w-100">
+      <li>
+        <a class="nav-link-custom" routerLink="/dashboard" routerLinkActive="active" (click)="isSidebarOpen = false">
+          <span class="nav-icon">📊</span>
+          <span>Dashboard</span>
+        </a>
+      </li>
+      <li>
+        <a class="nav-link-custom" routerLink="/tasks" routerLinkActive="active" (click)="isSidebarOpen = false">
+          <span class="nav-icon">✅</span>
+          <span>Tasks</span>
+        </a>
+      </li>
+      <p class="workspace-title" *ngIf="!isDesktopSidebarCollapsed">Workspaces</p>
+
+			<ul class="workspace-list list-unstyled">
+				<li *ngFor="let workspace of workspaces">
+					<a class="workspace-item"
+						(click)="getWorkspaces()">
+						
+						<span class="workspace-icon">
+						{{ workspace.name.charAt(0) }}
+						</span>
+
+						<span class="workspace-name" *ngIf="!isDesktopSidebarCollapsed">
+						{{ workspace.name }}
+						</span>
+
+					</a>
+				</li>
+			</ul>
+    	</ul>
+
+    <div class="nav-footer" *ngIf="userProfile">
+      <img [src]="userProfile.profilePictureUrl" alt="Profile" class="logo" />
+      <p class="userName">{{userProfile.userName}}</p>
+      <button class="settingsBtn" type="button">⚙️</button>
+    </div>
+  </nav>
+
+  <div class="container-fluid px-0">
+    <div class="row g-0 min-vh-100 flex-nowrap">
+
+      <nav class="col-auto d-none d-md-flex side-navbar" [class.collapsed]="isDesktopSidebarCollapsed">
+        <div class="sidebar-top w-100">
+          <div class="logo-row">
+            <div class="logo-appName mb-0">
+              <img src="teamUpLogo.png" alt="TeamUp Logo" class="logo" />
+              <h5 *ngIf="!isDesktopSidebarCollapsed">Team Up</h5>
+            </div>
+            <button class="desktop-menu-btn" type="button" (click)="toggleDesktopSidebar()">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" width="24">
+                <path d="M20.25 7c0-.69-.56-1.25-1.25-1.25H9.75v12.5H19c.69 0 1.25-.56 1.25-1.25zM3.75 17c0 .69.56 1.25 1.25 1.25h3.25V5.75H5c-.69 0-1.25.56-1.25 1.25zm18 0A2.75 2.75 0 0 1 19 19.75H5A2.75 2.75 0 0 1 2.25 17V7A2.75 2.75 0 0 1 5 4.25h14A2.75 2.75 0 0 1 21.75 7z"/>
+              </svg>
+            </button>
+          </div>
+
+          <ul class="nav-section list-unstyled w-100">
+            <li>
+              <a class="nav-link-custom" routerLink="/dashboard" routerLinkActive="active">
+                <span class="nav-icon">📊</span>
+                <span>Dashboard</span>
+              </a>
+            </li>
+            <li>
+              <a class="nav-link-custom" routerLink="/tasks" routerLinkActive="active">
+                <span class="nav-icon">✅</span>
+                <span>Personal</span>
+              </a>
+            </li>
+          </ul>
+
+		  <p class="workspace-title" *ngIf="!isDesktopSidebarCollapsed">Workspaces</p>
+
+			<ul class="workspace-list list-unstyled">
+				<li *ngFor="let workspace of workspaces">
+				<a class="workspace-item"
+					(click)="getWorkspaces()">
+					
+					<span class="workspace-icon">
+					{{ workspace.name.charAt(0) }}
+					</span>
+
+					<span class="workspace-name" *ngIf="!isDesktopSidebarCollapsed">
+					{{ workspace.name }}
+					</span>
+
+				</a>
+				</li>
+			</ul>
+        </div>
+
+        <div class="nav-footer" *ngIf="userProfile">
+          <img [src]="userProfile.profilePictureUrl" alt="Profile" class="logo" />
+          <p class="userName" *ngIf="!isDesktopSidebarCollapsed">{{userProfile.userName}}</p>
+          <button class="settingsBtn" type="button" *ngIf="!isDesktopSidebarCollapsed">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492"/>
+              <path d="M5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0"/>
+            </svg>
+          </button>
+        </div>
+      </nav>
+
+      <div class="col content-wrapper">
+        
+        <div class="mobile-topbar d-flex d-md-none">
+          <button class="menu-toggle" type="button" (click)="toggleSidebar()">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" width="24">
+              <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
+            </svg>
+          </button>
+
+          <div class="logo-appName mobile-brand mb-0">
+            <img src="teamUpLogo.png" alt="TeamUp Logo" class="logo" />
+            <h5>Team Up</h5>
+          </div>
+        </div>
+
+        <main class="content">
+          <router-outlet></router-outlet>
+        </main>
+      </div>
+
+    </div>
+  </div>
+</div>
