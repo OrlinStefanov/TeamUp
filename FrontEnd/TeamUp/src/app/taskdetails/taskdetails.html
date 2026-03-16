@@ -1,0 +1,114 @@
+<div class="container-fluid">
+  <div class="row" style="border-top: 2px solid whitesmoke;">
+    <div class="col-12 mt-4">
+      <h4>Task Board</h4>
+    </div>
+    <div class="col-12" style="margin-top: -10px;">
+      <p class="text-muted">{{tasks.length}} {{ tasks.length === 1 ? 'task' : 'tasks' }}</p>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-12" style="border-top: 2px solid whitesmoke;">
+      <div class="row mt-2">
+        <div class="col-12 d-flex flex-row gap-4">
+          <!-- To Do Column -->
+          <div class="flex-fill" style="min-width:250px;">
+            <div class="d-flex align-items-center mb-3" style="border-bottom: 2px solid rgb(209, 209, 209); height: 60px;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-circle mt-1" viewBox="0 0 16 16">
+                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+              </svg>
+              <h4 style="margin-left: 10px;" class="mb-0">To Do</h4>
+              <span class="badge bg-secondary ms-auto mt-2">{{ tasksToDo.length }}</span>
+            </div>
+            <div>
+              <div class="mb-4" *ngFor="let task of tasksToDo">
+                <div class="card h-100">
+                  <div class="card-body">
+                    <h5 class="card-title">{{ task.title }}</h5>
+                    <p class="card-text">{{ task.description }}</p>
+                  </div>
+                  <div class="card-footer text-muted">
+                    Due: {{ task.dueDate | date:'mediumDate' }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- In Progress Column -->
+          <div class="flex-fill" style="min-width:250px;">
+            <div class="d-flex align-items-center mb-3" style="border-bottom: 2px solid rgb(3, 255, 255); height: 60px;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" style="color: rgb(3, 255, 255);" fill="currentColor" class="bi bi-clock mt-1" viewBox="0 0 16 16">
+                <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71z"/>
+                <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0"/>
+              </svg>
+              <h4 style="margin-left: 10px;" class="mb-0">In Progress</h4>
+              <span class="badge bg-secondary ms-auto mt-2">{{ tasksInProgress.length }}</span>
+            </div>
+            <div>
+              <div class="mb-4" *ngFor="let task of tasksInProgress">
+                <div class="card h-100">
+                  <div class="card-body">
+                    <h5 class="card-title">{{ task.title }}</h5>
+                    <p class="card-text">{{ task.description }}</p>
+                  </div>
+                  <div class="card-footer text-muted">
+                    Due: {{ task.dueDate | date:'mediumDate' }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Done Column -->
+          <div class="flex-fill" style="min-width:250px;">
+            <div class="d-flex align-items-center mb-3" style="border-bottom: 2px solid rgb(0, 255, 0); height: 60px;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" style="color: rgb(0, 255, 0);" fill="currentColor" class="bi bi-check-circle mt-1" viewBox="0 0 16 16">
+                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                <path d="M10.97 6.97a.75.75 0 0 0-1.08-1.04L7.477 8.417l-1.384-1.384a.75.75 0 1 0-1.06 1.06l2 2a.75.75 0 0 0 1.08 0l3-3z"/>
+              </svg>
+              <h4 style="margin-left: 10px;" class="mb-0">Done</h4>
+              <span class="badge bg-secondary ms-auto mt-2">{{ tasksCompleted.length }}</span>
+            </div>
+            <div>
+              <div class="mb-4" *ngFor="let task of tasksCompleted">
+                <div class="card h-100">
+                  <div class="card-body">
+                    <h5 class="card-title">{{ task.title }}</h5>
+                    <p class="card-text">{{ task.description }}</p>
+                  </div>
+                  <div class="card-footer text-muted">
+                    Due: {{ task.dueDate | date:'mediumDate' }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Overdue Column -->
+          <div class="flex-fill" style="min-width:250px;">
+            <div class="d-flex align-items-center mb-3" style="border-bottom: 2px solid rgb(255, 0, 0); height: 60px;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" style="color: rgb(255, 0, 0);" fill="currentColor" class="bi bi-exclamation-circle" viewBox="0 0 16 16">
+                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0M7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0z"/>
+              </svg>
+              <h4 style="margin-left: 10px;" class="mb-0">Overdue</h4>
+              <span class="badge bg-secondary ms-auto mt-2">{{ tasksOverdue.length }}</span>
+            </div>
+            <div>
+              <div class="mb-4" *ngFor="let task of tasksOverdue">
+                <div class="card h-100 border-danger">
+                  <div class="card-body">
+                    <h5 class="card-title">{{ task.title }}</h5>
+                    <p class="card-text">{{ task.description }}</p>
+                  </div>
+                  <div class="card-footer text-danger">
+                    Due: {{ task.dueDate | date:'mediumDate' }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -25,3 +25,13 @@ export interface ResetUser {
     token : string;
     newPassword : string;
 }
+
+export interface UserProfile {
+    id: string;
+    username: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    birthDate: Date;
+    phoneNumber: string;
+}

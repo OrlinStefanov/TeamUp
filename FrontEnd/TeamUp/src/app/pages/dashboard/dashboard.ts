@@ -2,14 +2,15 @@ import { Component } from '@angular/core';
 import { ElementRef, Renderer2, ViewChild } from '@angular/core';
 import { Auth } from '../../services/auth/auth';
 import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
+import { CommonModule, NgIf } from '@angular/common';
 
 @Component({
   selector: 'app-dashboard',
-  imports: [FormsModule, CommonModule],
+  imports: [FormsModule, CommonModule, NgIf],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
+
 export class Dashboard {
     @ViewChild('pageDiv') pageDiv!: ElementRef;
 
@@ -19,28 +20,35 @@ export class Dashboard {
     showCreateWorkspace = false;
     timeout: any;
 
-    workspaces = [
-      { name: 'Design Team' },
-      { name: 'Marketing' },
-      { name: 'Development' }
-    ];
+    workspaces : any[] = []; // тук ще държим списъка с workspaces, който ще се зарежда от бекенда
+
+    //orcho added
+    userProfile : any = null;
 
     constructor(private renderer: Renderer2, private auth: Auth) {}
 
     ngOnInit() {
-    this.auth.me();
+      this.userProfile = this.auth.getCurrentUser();
+      this.getWorkspaces();
 
-    const savedMode = localStorage.getItem('darkMode');
+      const savedMode = localStorage.getItem('darkMode');
 
-    if (savedMode !== null) {
-      this.isDarkMode = savedMode === 'true';
+      if (savedMode !== null) {
+        this.isDarkMode = savedMode === 'true';
+      }
+
+      if (this.isDarkMode) {
+        this.renderer.addClass(this.pageDiv.nativeElement, 'dark-mode');
+      } else {
+        this.renderer.addClass(this.pageDiv.nativeElement, 'light-mode');
+      }
     }
 
-    if (this.isDarkMode) {
-      this.renderer.addClass(this.pageDiv.nativeElement, 'dark-mode');
-    } else {
-      this.renderer.addClass(this.pageDiv.nativeElement, 'light-mode');
-    }
+  getWorkspaces() {
+    this.auth.getWorkspaces().subscribe((response: any) => {
+      this.workspaces = response;
+      console.log('Workspaces:', this.workspaces);
+    });
   }
 
   toggleDarkMode() {
@@ -86,7 +94,15 @@ export class Dashboard {
   }
 
   signOut(){
-    this.auth.logout();
+    this.auth.logout().subscribe({
+      next: () => {
+        console.log('Logged out successfully');
+        window.location.href = '/dashboard';
+      },
+      error: (error) => {
+        console.error('Logout failed:', error);
+      }
+    });
   }
   
   createWorkspace(){
@@ -105,5 +121,4 @@ export class Dashboard {
 
     
   }
-
 }

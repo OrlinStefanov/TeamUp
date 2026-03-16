@@ -10,7 +10,7 @@ namespace TeamUpBackEnd.Models.Tasks
 		public string? Description { get; set; }
 		public DateTime? DueDate { get; set; }
 		public DateTime? StartDate { get; set; }	
-		public TaskStatus Status { get; set; } = TaskStatus.ToDo;
+		public TasksStatus Status { get; set; } = TasksStatus.ToDo;
 
 		public int WorkSpaceId { get; set; }
 		public WorkSpace? WorkSpace { get; set; }
@@ -18,7 +18,7 @@ namespace TeamUpBackEnd.Models.Tasks
 		public ICollection<TaskAssignment>? Assignments { get; set; }
 	}
 
-	public enum TaskStatus
+	public enum TasksStatus
 	{
 		ToDo,
 		InProgress,

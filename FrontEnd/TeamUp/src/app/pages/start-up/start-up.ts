@@ -20,6 +20,7 @@ export class StartUp {
     setTimeout(() => {
       this.showStartup = false; 
       this.router.navigate(['/dashboard']);
+      console.log('Navigating to dashboard...');
     }, 3000); 
   }
 
