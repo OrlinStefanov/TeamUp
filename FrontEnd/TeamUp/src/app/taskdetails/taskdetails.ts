@@ -15,6 +15,12 @@ export class Taskdetails {
   tasks : any[] = [];
   user_data : any = null;
 
+  //different status for task
+  tasksToDo : any[] = [];
+  tasksInProgress : any[] = []
+  tasksCompleted : any[] = [];
+  tasksOverdue : any[] = [];
+
   constructor(private auth : Auth) {}
 
   ngOnInit() {
@@ -28,6 +34,11 @@ export class Taskdetails {
     this.auth.getWorkspaceTasks(workspaceId).subscribe((response: any) => {
       this.tasks = response;
       console.log('Tasks:', this.tasks);
+      // Categorize tasks by status
+      this.tasksToDo = this.tasks.filter(t => t.status == 'ToDo');
+      this.tasksInProgress = this.tasks.filter(t => t.status == 'In Progress');
+      this.tasksCompleted = this.tasks.filter(t => t.status == 'Done');
+      this.tasksOverdue = this.tasks.filter(t => t.status == 'Overdue');
     });
 
     this.user_data = this.auth.getCurrentUser();
