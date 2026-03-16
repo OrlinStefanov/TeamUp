@@ -4,6 +4,7 @@ import { RegisterUser } from '../../services/auth/auth-types';
 import { Auth } from '../../services/auth/auth';
 import { FormsModule } from '@angular/forms';
 import { NgIf } from '@angular/common';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-sign-up',
@@ -32,7 +33,7 @@ export class SignUp {
 
   errorMessage : string = '';
 
-  constructor(private renderer: Renderer2, private auth: Auth) {}
+  constructor(private renderer: Renderer2, private auth: Auth, private router: Router) {}
 
   ngOnInit() {
     this.auth.me();
@@ -72,7 +73,7 @@ export class SignUp {
     this.auth.register(this.userData).subscribe({
       next: (response) => {
         console.log('Registration successful:', response);
-        window.location.href = '/dashboard';
+        this.router.navigate(['/dashboard']);
       },
       error: (error) => {
         console.error('Registration failed:', error);

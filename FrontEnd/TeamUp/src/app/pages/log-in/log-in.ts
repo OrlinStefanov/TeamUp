@@ -4,6 +4,7 @@ import { LoginUser, RegisterUser } from '../../services/auth/auth-types';
 import { Auth } from '../../services/auth/auth';
 import { FormsModule } from '@angular/forms';
 import { NgIf } from '@angular/common';
+import { Router } from '@angular/router';
 
 
 @Component({
@@ -25,7 +26,7 @@ export class LogIn {
 
   errorMessage : string = '';
 
-  constructor(private renderer: Renderer2, private auth: Auth) {}
+  constructor(private renderer: Renderer2, private auth: Auth, private router: Router) {}
 
   ngOnInit() {
     this.auth.me();
@@ -83,7 +84,7 @@ export class LogIn {
     this.auth.login(this.userData).subscribe({
       next: (response) => {
         console.log('Login successful:', response);
-        window.location.href = '/dashboard';
+        this.router.navigate(['/dashboard']);
       },
       error: (error) => {
         console.error('Login failed:', error);

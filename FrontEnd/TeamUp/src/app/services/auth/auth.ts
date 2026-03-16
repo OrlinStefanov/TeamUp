@@ -21,6 +21,15 @@ export class Auth {
   private userSubject = new BehaviorSubject<any | null>(null);
   user$ = this.userSubject.asObservable();
 
+  setUser(user : any)
+  {
+    this.userSubject.next(user);
+  }
+
+  getCurrentUser() {
+    return this.userSubject.value;
+  }
+
   login(user : LoginUser)
   {
     return this.http.post<{ token: string }>(`${this.apiUrl}/login`, user, { withCredentials: true, headers: { 'Content-Type': 'application/json' } }).pipe(
@@ -69,6 +78,10 @@ export class Auth {
   //workspace related 
   getWorkspaces() {
     return this.http.get(`${this.apiUrl}/workspaces/short`, { withCredentials: true, headers: { 'Content-Type': 'application/json' } });
+  }
+
+  getfullworkspaceInfo(workspaceId: string) {
+    return this.http.get(`${this.apiUrl}/workspace/info/${workspaceId}`, { withCredentials: true, headers: { 'Content-Type': 'application/json' } });
   }
 
   //-----------------------Decoding the token--------------------------------------------
