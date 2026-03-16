@@ -15,9 +15,7 @@ export class Layout {
   isDesktopSidebarCollapsed = false;
   isDarkMode = false;
 
-  workspaces : any[] = [{ id: 1, name: 'Team Up' },
-  { id: 2, name: 'School Project' },
-  { id: 3, name: 'Startup' }];
+  workspaces : any[] = [];
 
   constructor(private auth: Auth) {}
 
@@ -32,7 +30,6 @@ export class Layout {
 
   toggleSidebar() {
     this.isSidebarOpen = !this.isSidebarOpen;
-    console.log('Sidebar open:', this.isSidebarOpen);
   }
 
   toggleDesktopSidebar() {
