@@ -1,0 +1,33 @@
+.logo-appName {
+  display: inline-flex;
+  align-items: center; 
+  gap: 5px; 
+  margin-bottom: 20px;
+  width: 100%; 
+}
+
+.logo {
+  width: 23px;
+  height: 23px;
+  display: block; 
+}
+
+.logo-appName h5 {
+  margin: 0;         
+  padding: 0;
+  line-height: 1;   
+  display: inline-block;
+  font-size: 1rem;
+  margin-left: 5px;
+}
+
+.sidebar {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.nav-footer {
+    margin-top: auto;
+    padding: 1rem;
+}

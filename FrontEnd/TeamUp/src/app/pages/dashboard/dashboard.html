@@ -3,7 +3,7 @@
 </head>
 
 <div #pageDiv class="page" [ngClass]="{'light-mode': !isDarkMode, 'dark-mode': isDarkMode}">
-    <nav class="side-navbar">
+<!--    <nav class="side-navbar">
         <div class="logo-appName">
             <img src="teamUpLogo.png" alt="TeamUp Logo" class="logo">
             <h5 class="app-name">Team Up</h5>
@@ -37,7 +37,7 @@
             <div class="workspaces" >
                 <p class="workspaces-par" style="color: #bbb;">
                 Workspaces</p>
-                <!--(click)="showDropDown()" or (click)="openCreateWorkspace()"-->
+                <!--(click)="showDropDown()" or (click)="openCreateWorkspace()"
                 <button class="btn-add"  (click)="showDropDown()">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-lg" viewBox="0 0 16 16">
                         <path fill-rule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2"/>
@@ -72,8 +72,21 @@
             </button>
         </div>
     </nav>
-
+-->
     <a>Here is the content for the dashboard.</a>
+    <div class="workspace-content">
+        <div class="workspace-header">
+            <h2>Welcome to your dashboard, {{userProfile.userName}}!</h2>
+            <p>Here you can manage your workspaces, view recent activity, and stay updated with your team's progress.</p>
+        </div>
+        <div *ngFor="let workspace of workspaces">
+            <div class="workspace-card">
+                <h3>{{ workspace.title }}</h3>
+                <p>{{ workspace.description }}</p>
+                <a href="/workspace/{{workspace.publicId}}" class="btn-primary">Go to workspace</a>
+            </div>
+        </div>
+    </div>
 </div>
     <div *ngIf="showCreateWorkspace" class="confirm-overlay">
             <form #createWorkspaceForm="ngForm" (ngSubmit)="createWorkspace()">
@@ -112,4 +125,12 @@
                     <button class="btn-primary" type="submit" [disabled]="createWorkspaceForm.invalid">Create workspace</button>
                 </div>
             </form>
+    </div>
+
+    <div *ngFor="let workspace of workspaces">
+        <div class="workspace-card">
+            <h3>{{ workspace.title }}</h3>
+            <p>{{ workspace.description }}</p>
+            <a href="/workspace/{{workspace.publicId}}" class="btn-primary">Go to workspace</a>
+        </div>
     </div>

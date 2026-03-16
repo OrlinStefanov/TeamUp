@@ -4,13 +4,13 @@ import { Auth } from '../../services/auth/auth';
 import { FormsModule } from '@angular/forms';
 import { CommonModule, NgIf } from '@angular/common';
 
-
 @Component({
   selector: 'app-dashboard',
-  imports: [FormsModule, CommonModule],
+  imports: [FormsModule, CommonModule, NgIf],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
+
 export class Dashboard {
     @ViewChild('pageDiv') pageDiv!: ElementRef;
 
@@ -28,25 +28,21 @@ export class Dashboard {
     constructor(private renderer: Renderer2, private auth: Auth) {}
 
     ngOnInit() {
-    this.auth.me().subscribe(user => {
-      this.userProfile = user;
-      console.log('Current user:', user);
-    });
+      this.userProfile = this.auth.getCurrentUser();
+      this.getWorkspaces();
 
-    this.getWorkspaces();
+      const savedMode = localStorage.getItem('darkMode');
 
-    const savedMode = localStorage.getItem('darkMode');
+      if (savedMode !== null) {
+        this.isDarkMode = savedMode === 'true';
+      }
 
-    if (savedMode !== null) {
-      this.isDarkMode = savedMode === 'true';
+      if (this.isDarkMode) {
+        this.renderer.addClass(this.pageDiv.nativeElement, 'dark-mode');
+      } else {
+        this.renderer.addClass(this.pageDiv.nativeElement, 'light-mode');
+      }
     }
-
-    if (this.isDarkMode) {
-      this.renderer.addClass(this.pageDiv.nativeElement, 'dark-mode');
-    } else {
-      this.renderer.addClass(this.pageDiv.nativeElement, 'light-mode');
-    }
-  }
 
   getWorkspaces() {
     this.auth.getWorkspaces().subscribe((response: any) => {
