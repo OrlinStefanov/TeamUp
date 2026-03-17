@@ -48,11 +48,11 @@
 						(click)="getWorkspaces()">
 						
 						<span class="workspace-icon">
-						{{ workspace.name.charAt(0) }}
+						{{ workspace.title.charAt(0) }}
 						</span>
 
 						<span class="workspace-name" *ngIf="!isDesktopSidebarCollapsed">
-						{{ workspace.name }}
+						{{ workspace.title }}
 						</span>
 
 					</a>

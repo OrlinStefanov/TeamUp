@@ -21,7 +21,7 @@ export class Dashboard {
     timeout: any;
 
     workspaces : any[] = [
-      {
+    /*  {
     publicId: 1,
     title: 'Team Up',
     description: 'Main team workspace'
@@ -35,7 +35,7 @@ export class Dashboard {
     publicId: 3,
     title: 'Startup',
     description: 'Startup development workspace'
-  }
+  }*/
     ]; // тук ще държим списъка с workspaces, който ще се зарежда от бекенда
 
     //orcho added
@@ -45,7 +45,7 @@ export class Dashboard {
 
     ngOnInit() {
       this.userProfile = this.auth.getCurrentUser();
-      //this.getWorkspaces();
+      this.getWorkspaces();
 
       const savedMode = localStorage.getItem('darkMode');
 
@@ -134,7 +134,5 @@ export class Dashboard {
       console.log(this.workspaces);
       this.showCreateWorkspace = false;
     }
-
-    
   }
 }
