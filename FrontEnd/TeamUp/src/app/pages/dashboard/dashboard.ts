@@ -1,77 +1,61 @@
-import { Component } from '@angular/core';
-import { ElementRef, Renderer2, ViewChild } from '@angular/core';
+import { Component, ElementRef, Renderer2, ViewChild, AfterViewInit } from '@angular/core';
 import { Auth } from '../../services/auth/auth';
 import { FormsModule } from '@angular/forms';
-import { CommonModule, NgIf } from '@angular/common';
+import { CommonModule, NgFor, NgIf } from '@angular/common';
+import { RouterModule } from '@angular/router';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-dashboard',
-  imports: [FormsModule, CommonModule, NgIf],
+  imports: [
+    FormsModule,
+    CommonModule,
+    RouterModule,
+    NgIf,
+    NgFor
+  ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
+export class Dashboard implements AfterViewInit {
+  @ViewChild('pageDiv') pageDiv?: ElementRef;
 
-export class Dashboard {
-    @ViewChild('pageDiv') pageDiv!: ElementRef;
+  isDarkMode = false;
+  showDropdown = false;
+  showSettingsDropdown = false;
+  showCreateWorkspace = false;
 
-    isDarkMode: boolean = false;
-    showDropdown = false;
-    showSettingsDropdown = false;
-    showCreateWorkspace = false;
-    timeout: any;
+  user$!: Observable<any>;
+  workspaces$!: Observable<any[]>;
 
-    workspaces : any[] = [
-    /*  {
-    publicId: 1,
-    title: 'Team Up',
-    description: 'Main team workspace'
-  },
-  {
-    publicId: 2,
-    title: 'School Project',
-    description: 'University collaboration'
-  },
-  {
-    publicId: 3,
-    title: 'Startup',
-    description: 'Startup development workspace'
-  }*/
-    ]; // тук ще държим списъка с workspaces, който ще се зарежда от бекенда
+  newWorkspaceName = '';
+  newWorkspaceDesc = '';
+  newWorkspaceInvite = '';
 
-    //orcho added
-    userProfile : any = null;
+  constructor(private renderer: Renderer2, private auth: Auth) {}
 
-    constructor(private renderer: Renderer2, private auth: Auth) {}
+  ngOnInit() {
+    this.user$ = this.auth.user$;
+    this.workspaces$ = this.auth.workspaces$;
 
-    ngOnInit() {
-      this.userProfile = this.auth.getCurrentUser();
-      this.getWorkspaces();
+    this.auth.getWorkspaces().subscribe();
 
-      const savedMode = localStorage.getItem('darkMode');
+    const savedMode = localStorage.getItem('darkMode');
+    this.isDarkMode = savedMode === 'true';
+  }
 
-      if (savedMode !== null) {
-        this.isDarkMode = savedMode === 'true';
-      }
-
-      if (this.isDarkMode) {
-        this.renderer.addClass(this.pageDiv.nativeElement, 'dark-mode');
-      } else {
-        this.renderer.addClass(this.pageDiv.nativeElement, 'light-mode');
-      }
-    }
-
-  getWorkspaces() {
-    this.auth.getWorkspaces().subscribe((response: any) => {
-      this.workspaces = response;
-      console.log('Workspaces:', this.workspaces);
-    });
+  ngAfterViewInit() {
+    this.applyTheme();
   }
 
   toggleDarkMode() {
     this.isDarkMode = !this.isDarkMode;
-
     localStorage.setItem('darkMode', String(this.isDarkMode));
+    this.applyTheme();
+  }
 
+  applyTheme() {
+    if (!this.pageDiv) return;
     if (this.isDarkMode) {
       this.renderer.removeClass(this.pageDiv.nativeElement, 'light-mode');
       this.renderer.addClass(this.pageDiv.nativeElement, 'dark-mode');
@@ -81,58 +65,22 @@ export class Dashboard {
     }
   }
 
-  showDropDown() {
-    this.showDropdown = !this.showDropdown;
+  showDropDown() { this.showDropdown = !this.showDropdown; }
+  showSettingsDropDown() { this.showSettingsDropdown = !this.showSettingsDropdown; }
+  openCreateWorkspace() { this.showCreateWorkspace = true; }
+  closeCreateWorkspace() { this.showCreateWorkspace = false; }
+
+  signOut() {
+    this.auth.logout().subscribe(() => window.location.href = '/login');
   }
 
-  showSettingsDropDown() {
-    this.showSettingsDropdown = !this.showSettingsDropdown;
-  }
+  createWorkspace() {
+    const value = this.newWorkspaceName.trim();
+    if (!value) return;
 
-  openCreateWorkspace(){
-    this.showCreateWorkspace = true;
-  }
-
-  closeCreateWorkspace(){
+    this.newWorkspaceName = '';
+    this.newWorkspaceDesc = '';
+    this.newWorkspaceInvite = '';
     this.showCreateWorkspace = false;
-  }
-
-  closeMenu() {
-    this.timeout = setTimeout(() => {
-      this.showDropdown = false;
-    }, 90);
-  }
-
-  closeSettingsMenu() {
-    this.timeout = setTimeout(() => {
-      this.showSettingsDropdown = false;
-    }, 90);
-  }
-
-  signOut(){
-    this.auth.logout().subscribe({
-      next: () => {
-        console.log('Logged out successfully');
-        window.location.href = '/dashboard';
-      },
-      error: (error) => {
-        console.error('Logout failed:', error);
-      }
-    });
-  }
-  
-  createWorkspace(){
-    const input = document.getElementsByName("workspaceName")[0] as HTMLInputElement;
-
-    if (!input) return; // ако няма input, спираме
-
-    const value: string = input.value.trim();
-
-    if (value) {
-      this.workspaces.push({ name: value }); // добавяме новия workspace
-      input.value = ''; // чистим input
-      console.log(this.workspaces);
-      this.showCreateWorkspace = false;
-    }
   }
 }

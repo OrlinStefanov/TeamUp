@@ -1,22 +1,22 @@
 <div #pageDiv class="page" [ngClass]="{'light-mode': !isDarkMode, 'dark-mode': isDarkMode}">
-    <div class="workspace-content" *ngIf="workspaces.length > 0">
+    <div class="workspace-content">
 
         <div class="workspace-header">
-            <h2>Welcome to your dashboard, {{userProfile.userName}}!</h2>
+            <h2>Welcome to your dashboard, {{(user$ | async)?.userName}}!</h2>
             <p>Here you can manage your workspaces, view recent activity, and stay updated with your team's progress.</p>
         </div>
 
         <!-- ако има workspaces -->
-        <div *ngIf="workspaces.length > 0; else emptyState">
-            <div *ngFor="let workspace of workspaces">
-                <div class="workspace-card">
-                    <h3>{{ workspace.title }}</h3>
-                    <p>{{ workspace.description }}</p>
-                    <a href="/workspace/{{workspace.publicId}}/tasks" class="btn-primary">
-                        Go to workspace
-                    </a>
-                </div>
+        <div *ngIf="(workspaces$ | async); else emptyState">
+        <div *ngFor="let workspace of (workspaces$ | async)">
+            <div class="workspace-card">
+            <h3>{{ workspace.title }}</h3>
+            <p>{{ workspace.description }}</p>
+            <a [routerLink]="['/workspace', workspace.publicId, 'tasks']" class="btn-primary">
+                Go to workspace
+            </a>
             </div>
+        </div>
         </div>
 
         <!-- ако няма workspaces -->
