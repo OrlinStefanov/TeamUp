@@ -19,7 +19,20 @@ export class Auth {
   private apiUrl = 'https://localhost:7094';
   private tokenKey = 'token';
   private userSubject = new BehaviorSubject<any | null>(null);
+  private currentWorkspace = new BehaviorSubject< any | null>(null);
+
+  workspace$ = this.currentWorkspace.asObservable();
   user$ = this.userSubject.asObservable();
+
+  setWorkspace(w : any)
+  {
+    this.currentWorkspace.next(w);
+  }
+
+  getWorkspace()
+  {
+    return this.currentWorkspace.value;
+  }
 
   setUser(user : any)
   {

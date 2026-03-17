@@ -21,6 +21,7 @@ export class Layout {
 
   ngOnInit() {
     this.userProfile = this.auth.getCurrentUser();
+    this.getWorkspaces();
 
     const savedMode = localStorage.getItem('darkMode');
     if (savedMode !== null) {
