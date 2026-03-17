@@ -1,20 +1,19 @@
 <div #pageDiv class="page" [ngClass]="{'light-mode': !isDarkMode, 'dark-mode': isDarkMode}">
     <div class="workspace-content">
 
-        <div class="workspace-header">
-            <h2>Welcome to your dashboard, {{(user$ | async)?.userName}}!</h2>
-            <p>Here you can manage your workspaces, view recent activity, and stay updated with your team's progress.</p>
-        </div>
-
         <!-- ако има workspaces -->
-        <div *ngIf="(workspaces$ | async); else emptyState">
-        <div *ngFor="let workspace of (workspaces$ | async)">
-            <div class="workspace-card">
-            <h3>{{ workspace.title }}</h3>
-            <p>{{ workspace.description }}</p>
-            <a [routerLink]="['/workspace', workspace.publicId, 'tasks']" class="btn-primary">
-                Go to workspace
-            </a>
+        <div *ngIf="workspaces.length > 0; else emptyState">
+            <div class="workspace-header">
+                <h2>Welcome to your dashboard, {{userProfile.userName}}!</h2>
+            </div>
+            <div *ngFor="let workspace of workspaces">
+                <div class="workspace-card">
+                    <h3>{{ workspace.name }}</h3>
+                    <p>{{ workspace.description }}</p>
+                    <a href="/workspace/{{workspace.publicId}}/tasks" class="btn-primary">
+                        Go to workspace
+                    </a>
+                </div>
             </div>
         </div>
         </div>
@@ -33,27 +32,32 @@
 
                 <div class="steps-grid">
 
-                    <div class="step-card purple">
-                        <h4>STEP 1</h4>
-                        <h3>Create or join a workspace</h3>
+                    <div class="step-card">
+                        <div class="step-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" width="24">
+                                <path d="M20.25 7c0-.69-.56-1.25-1.25-1.25H9.75v12.5H19c.69 0 1.25-.56 1.25-1.25zM3.75 17c0 .69.56 1.25 1.25 1.25h3.25V5.75H5c-.69 0-1.25.56-1.25 1.25zm18 0A2.75 2.75 0 0 1 19 19.75H5A2.75 2.75 0 0 1 2.25 17V7A2.75 2.75 0 0 1 5 4.25h14A2.75 2.75 0 0 1 21.75 7z"/>
+                            </svg>
+                            <h6>STEP 1</h6>
+                        </div>
+                        <h5>Create or join a workspace</h5>
                         <p>Start fresh with your own workspace or join an existing team.</p>
                     </div>
 
-                    <div class="step-card cyan">
-                        <h4>STEP 2</h4>
-                        <h3>Invite your team</h3>
+                    <div class="step-card">
+                        <h6>STEP 2</h6>
+                        <h5>Invite your team</h5>
                         <p>Add teammates via email or invite link.</p>
                     </div>
 
-                    <div class="step-card pink">
-                        <h4>STEP 3</h4>
-                        <h3>Complete tasks & earn points</h3>
+                    <div class="step-card">
+                        <h6>STEP 3</h6>
+                        <h5>Complete tasks & earn points</h5>
                         <p>Track progress on boards and earn points.</p>
                     </div>
 
-                    <div class="step-card yellow">
-                        <h4>STEP 4</h4>
-                        <h3>Climb the leaderboard</h3>
+                    <div class="step-card">
+                        <h6>STEP 4</h6>
+                        <h5>Climb the leaderboard</h5>
                         <p>Compete with your team and build streaks.</p>
                     </div>
 
@@ -71,41 +75,43 @@
 
         </div>
     </div>
-    <div *ngIf="showCreateWorkspace" class="confirm-overlay">
+<div *ngIf="showCreateWorkspace" class="createWorkspace-overlay">
             <form #createWorkspaceForm="ngForm" (ngSubmit)="createWorkspace()">
-                <div class="header-row">
-                    <div>
-                        <h4>
-                            Create <span style="color: #a64bfb; text-shadow: #a64bfb 0 0 10px">workspace</span>
-                        </h4>
-                        <p>Set up a new workspace and invite your team<span class="highlight">.</span></p>
-                    </div>
-                    <button class="btn-cancel" (click)="closeCreateWorkspace()">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-lg" viewBox="0 0 16 16">
-                            <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/>
-                        </svg>
-                    </button>
-                </div>
-                <div class="flex gap-3">
-                    <div class="flex-1">
-                        <label class="form-label">Workspace name</label>
-                        <input type="text" class="form-control" placeholder="Enter workspace name" name="workspaceName" required>
-                    </div>
-                </div>
-                <div class="flex gap-3" style="margin-top: 3%;">
-                    <div class="flex-1">
-                        <label class="form-label">Workspace description</label>
-                        <textarea type="text" class="form-control" placeholder="Enter workspace description" name="workspaceDesc" style="min-height: 75px;"></textarea>
-                    </div>
-                </div>
-                <div class="flex gap-3"style="margin-top: 3%;">
-                    <div class="flex-1">
-                        <label class="form-label">Invite people</label>
-                        <input type="text" class="form-control" placeholder="Enter email or username" name="invitePeople">
+                <div class="createWorkspace-box">
+                    <div class="header-row">
+                        <div>
+                            <h4>
+                                Create <span style="color: #a64bfb; text-shadow: #a64bfb 0 0 10px">workspace</span>
+                            </h4>
+                            <p>Set up a new workspace and invite your team<span style="color: #a64bfb; text-shadow: #a64bfb;">.</span></p>
                         </div>
-                </div>
-                <div class="confirm-actions">
-                    <button class="btn-primary" type="submit" [disabled]="createWorkspaceForm.invalid">Create workspace</button>
+                        <button class="btn-cancel" (click)="closeCreateWorkspace()">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-lg" viewBox="0 0 16 16">
+                                <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="flex gap-3">
+                        <div class="flex-1">
+                            <label class="form-label">Workspace name</label>
+                            <input type="text" class="form-control" placeholder="Enter workspace name" name="workspaceName" required [(ngModel)]="workspace.title">
+                        </div>
+                    </div>
+                    <div class="flex gap-3" style="margin-top: 3%;">
+                        <div class="flex-1">
+                            <label class="form-label">Workspace description</label>
+                            <textarea type="text" class="form-control" placeholder="Enter workspace description" name="workspaceDesc" style="min-height: 75px;" [(ngModel)]="workspace.description"></textarea>
+                        </div>
+                    </div>
+                    <div class="flex gap-3"style="margin-top: 3%;">
+                        <div class="flex-1">
+                            <label class="form-label">Invite people</label>
+                            <input type="text" class="form-control" placeholder="Enter email or username" name="invitePeople" [(ngModel)]="inviteInput">
+                            </div>
+                    </div>
+                    <div class="createWorkspace-actions">
+                        <button class="btn-primary" type="submit" [disabled]="createWorkspaceForm.invalid">Create workspace</button>
+                    </div>
                 </div>
             </form>
         </div>
