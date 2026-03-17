@@ -703,7 +703,7 @@ namespace TeamUpBackEnd.Extensions
 
 				foreach (var t in workspace.Tasks)
 				{
-					if (t.DueDate <  DateTime.UtcNow)
+					if (t.DueDate < DateTime.UtcNow)
 					{
 						t.Status = TasksStatus.Overdue;
 					}
@@ -716,6 +716,7 @@ namespace TeamUpBackEnd.Extensions
 					t.Description,
 					t.DueDate,
 					t.StartDate,
+					t.UpadeAt,
 					t.Points,
 					Status = t.Status switch
 					{
