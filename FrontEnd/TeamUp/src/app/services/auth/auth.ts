@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { LoginUser, RegisterUser, ResetUser, User } from './auth-types';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, tap } from 'rxjs';
+import { BehaviorSubject, finalize, Observable, of, shareReplay, tap } from 'rxjs';
 
 
 @Injectable({
@@ -9,6 +9,7 @@ import { BehaviorSubject, tap } from 'rxjs';
 })
 
 export class Auth {
+
   public getUserId: any;
   public me_credentials: any;
 
@@ -21,27 +22,21 @@ export class Auth {
   private userSubject = new BehaviorSubject<any | null>(null);
   user$ = this.userSubject.asObservable();
 
-  setUser(user : any)
-  {
-    this.userSubject.next(user);
-  }
+  private workspaceSubject = new BehaviorSubject<any[]>([]);
+  workspaces$ = this.workspaceSubject.asObservable();
 
-  getCurrentUser() {
-    return this.userSubject.value;
-  }
+  private workspaceCache = new Map<string, any>();
+  private tasksCache = new Map<string, any[]>();
 
-  login(user : LoginUser)
-  {
-    return this.http.post<{ token: string }>(`${this.apiUrl}/login`, user, { withCredentials: true, headers: { 'Content-Type': 'application/json' } }).pipe(
-      // Store the token and update user state on successful login
-      tap(response => {
-        const _token = response.token;
-        if (_token)
-        {
-          localStorage.setItem(this.tokenKey, _token);
-          const decodedUser = this.decodeToken(_token);
-          this.userSubject.next(decodedUser);
-        }
+  // prevent duplicate calls (important)
+  private workspaceRequests = new Map<string, Observable<any>>();
+  private taskRequests = new Map<string, Observable<any>>();
+
+  login(user: LoginUser) {
+    return this.http.post<{ token: string }>(`${this.apiUrl}/login`, user).pipe(
+      tap(res => {
+        localStorage.setItem(this.tokenKey, res.token);
+        this.userSubject.next(this.decodeToken(res.token));
       })
     );
   }
@@ -49,7 +44,16 @@ export class Auth {
   logout() {
     localStorage.removeItem(this.tokenKey);
     this.userSubject.next(null);
-    return this.http.post(`${this.apiUrl}/logout`, { withCredentials: true, headers: { 'Content-Type': 'application/json' } }, {  });
+
+    this.workspaceCache.clear();
+    this.tasksCache.clear();
+    this.workspaceSubject.next([]);
+
+    return this.http.post(`${this.apiUrl}/logout`, {});
+  }
+
+  getCurrentUser() {
+    return this.userSubject.value;
   }
 
   register(user: RegisterUser) {
@@ -76,16 +80,57 @@ export class Auth {
   }
 
   //workspace related 
-  getWorkspaces() {
-    return this.http.get(`${this.apiUrl}/workspaces/short`, { withCredentials: true, headers: { 'Content-Type': 'application/json' } });
+  getWorkspaces(forceRefresh = false): Observable<any[]> {
+    if (!forceRefresh && this.workspaceSubject.value.length > 0) {
+      return of(this.workspaceSubject.value);
+    }
+
+    return this.http.get<any[]>(`${this.apiUrl}/workspaces/short`).pipe(
+      tap(ws => this.workspaceSubject.next(ws)),
+      shareReplay(1)
+    );
   }
 
-  getfullworkspaceInfo(workspaceId: string) {
-    return this.http.get(`${this.apiUrl}/workspace/info/${workspaceId}`, { withCredentials: true, headers: { 'Content-Type': 'application/json' } });
+  getWorkspaceInfo(id: string): Observable<any> {
+    if (this.workspaceCache.has(id)) {
+      return of(this.workspaceCache.get(id));
+    }
+
+    if (this.workspaceRequests.has(id)) {
+      return this.workspaceRequests.get(id)!;
+    }
+
+    const request$ = this.http.get(`${this.apiUrl}/workspace/info/${id}`).pipe(
+      tap(data => this.workspaceCache.set(id, data)),
+      finalize(() => this.workspaceRequests.delete(id)),
+      shareReplay(1)
+    );
+
+    this.workspaceRequests.set(id, request$);
+    return request$;
   }
 
-  getWorkspaceTasks(workspaceId: string) {
-    return this.http.get(`${this.apiUrl}/tasks/${workspaceId}`, { withCredentials: true, headers: { 'Content-Type': 'application/json' } });
+  getWorkspaceTasks(id: string): Observable<any[]> {
+    if (this.tasksCache.has(id)) {
+      return of(this.tasksCache.get(id)!);
+    }
+
+    if (this.taskRequests.has(id)) {
+      return this.taskRequests.get(id)!;
+    }
+
+    const request$ = this.http.get<any[]>(`${this.apiUrl}/tasks/${id}`).pipe(
+      tap(tasks => this.tasksCache.set(id, tasks)),
+      finalize(() => this.taskRequests.delete(id)),
+      shareReplay(1)
+    );
+
+    this.taskRequests.set(id, request$);
+    return request$;
+  }
+
+  getCachedWorkspaceById(id: string): any | undefined {
+    return this.workspaceSubject.value.find(w => w.publicId === id);
   }
 
   createWorkspace(workspaceName: any) {
