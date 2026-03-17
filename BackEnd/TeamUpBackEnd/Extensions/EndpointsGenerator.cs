@@ -620,8 +620,15 @@ namespace TeamUpBackEnd.Extensions
 					DueDate = data.DueDate,
 					StartDate = data.StartDate,
 					Status = data.Status,
+					Difficulty = data.Difficulty == default ? TaskDifficulty.Easy : data.Difficulty,
+					Points = data.Points,
 					WorkSpaceId = data.WorkspaceId
 				};
+
+				if (task.Points == 0)
+				{
+					
+				}
 
 				db.Tasks.Add(task);
 				await db.SaveChangesAsync();
@@ -651,7 +658,15 @@ namespace TeamUpBackEnd.Extensions
 					task.Description,
 					task.DueDate,
 					task.StartDate,
-					Status = (data.Status == TasksStatus.ToDo) ? "ToDo" : (data.Status == TasksStatus.InProgress) ? "InProgress" : (data.Status == TasksStatus.Done) ? "Done" : "Overdue"
+					task.Points,
+					Status = (data.Status == TasksStatus.ToDo) ? "ToDo" : (data.Status == TasksStatus.InProgress) ? "InProgress" : (data.Status == TasksStatus.Done) ? "Done" : "Overdue",
+					Difficulty = task.Difficulty switch
+					{
+						TaskDifficulty.Easy => "Easy",
+						TaskDifficulty.Medium => "Medium",
+						TaskDifficulty.Hard => "Hard",
+						_ => "Very Hard"
+					}
 				});
 			}).RequireAuthorization()
 				.WithSummary("Creates a new task").WithTags("Task Management");
@@ -690,12 +705,20 @@ namespace TeamUpBackEnd.Extensions
 					t.Description,
 					t.DueDate,
 					t.StartDate,
+					t.Points,
 					Status = t.Status switch
 					{
 						TasksStatus.ToDo => "ToDo",
 						TasksStatus.InProgress => "InProgress",
 						TasksStatus.Done => "Done",
 						_ => "Overdue"
+					},
+					Difficulty = t.Difficulty switch
+					{
+						TaskDifficulty.Easy => "Easy",
+						TaskDifficulty.Medium => "Medium",
+						TaskDifficulty.Hard => "Hard",
+						_ => "Very Hard"
 					},
 					AssignedUsers = t.Assignments!.Select(a => new
 					{
