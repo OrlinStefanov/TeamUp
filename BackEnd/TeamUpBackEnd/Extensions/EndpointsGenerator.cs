@@ -1,18 +1,18 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Reflection.Metadata.Ecma335;
 using System.Security.Claims;
 using TeamUpBackEnd.DbContext;
-using TeamUpBackEnd.Models;
-using TeamUpBackEnd.Models.WorkspaceRelated;
 using TeamUpBackEnd.Helpers;
+using TeamUpBackEnd.Models;
+using TeamUpBackEnd.Models.Tasks;
+using TeamUpBackEnd.Models.WorkspaceRelated;
 using TeamUpBackEnd.Services;
-
+using static TeamUpBackEnd.DTO.TaskItemsDTO;
+using taskDTO = TeamUpBackEnd.DTO.TaskItemsDTO;
 using user_data = TeamUpBackEnd.DTO.UserDataDTO;
 using workspaceDto = TeamUpBackEnd.DTO.WorkspaceDTO;
-using taskDTO = TeamUpBackEnd.DTO.TaskItemsDTO;
-using TeamUpBackEnd.Models.Tasks;
-using System.Reflection.Metadata.Ecma335;
 
 namespace TeamUpBackEnd.Extensions
 {
@@ -627,7 +627,10 @@ namespace TeamUpBackEnd.Extensions
 
 				if (task.Points == 0)
 				{
-					
+					if (task.Difficulty == TaskDifficulty.Easy) task.Points = 50;
+					if (task.Difficulty == TaskDifficulty.Medium) task.Points = 75;
+					if (task.Difficulty == TaskDifficulty.Hard) task.Points = 100;
+					if (task.Difficulty == TaskDifficulty.VeryHard) task.Points = 150;
 				}
 
 				db.Tasks.Add(task);
@@ -684,7 +687,7 @@ namespace TeamUpBackEnd.Extensions
 				var workspace = await db.Workspaces
 					.Include(w => w.Members)
 					.Include(w => w.Tasks)
-					.ThenInclude(t => t.Assignments)
+					.ThenInclude(t => t.Assignments!)
 					.ThenInclude(u => u.User)
 					.FirstOrDefaultAsync(w => w.PublicId.ToString() == workspaceId);
 
@@ -696,6 +699,14 @@ namespace TeamUpBackEnd.Extensions
 				if (!workspace.Members.Any(m => m.UserId == userId))
 				{
 					return Results.BadRequest("You are not a member of this workspace");
+				}
+
+				foreach (var t in workspace.Tasks)
+				{
+					if (t.DueDate <  DateTime.UtcNow)
+					{
+						t.Status = TasksStatus.Overdue;
+					}
 				}
 
 				var tasks = workspace.Tasks.Select(t => new
@@ -731,6 +742,86 @@ namespace TeamUpBackEnd.Extensions
 				return Results.Ok(tasks);
 			}).RequireAuthorization()
 				.WithSummary("Get all tasks in workspace").WithTags("Task Management");
+
+			//edit tasks
+			app.MapPut("/edit/tasks/{taskid}", [Authorize] async (
+				AppDbContext db,
+				ClaimsPrincipal userClaims,
+				UserManager<ApplicationUser> userManager,
+				string taskid,
+				EditTaskDTO dto) =>
+			{
+				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
+				if (userId == null)
+					return Results.BadRequest("User Id not found");
+
+				var task = await db.Tasks
+					.Include(t => t.WorkSpace)
+						.ThenInclude(w => w.Members)
+					.Include(t => t.Assignments!)
+						.ThenInclude(a => a.User)
+					.FirstOrDefaultAsync(t => t.PublicId.ToString() == taskid);
+
+				if (task == null)
+					return Results.BadRequest("Task not found");
+
+				var member = task.WorkSpace!.Members.FirstOrDefault(m => m.UserId == userId);
+				if (member == null)
+					return Results.BadRequest("You are not part of this workspace");
+
+				if (member.Role != WorkSpaceRole.Owner && member.Role != WorkSpaceRole.Admin)
+					return Results.BadRequest("You don't have permission to edit this task");
+
+				if (!string.IsNullOrWhiteSpace(dto.Title))
+					task.Title = dto.Title;
+
+				if (dto.Description != null)
+					task.Description = dto.Description;
+
+					task.StartDate = dto.StartDate;
+					task.Points = dto.Points;
+				task.Status = (TasksStatus)dto.Status!;
+
+				if (dto.Difficulty.HasValue)
+					task.Difficulty = dto.Difficulty.Value;
+
+				if (dto.AssignedUsers != null)
+				{
+					db.TaskAssignments.RemoveRange(task.Assignments!);
+
+					var workspaceUserIds = task.WorkSpace.Members
+						.Select(m => m.UserId)
+						.ToList();
+
+					var users = await userManager.Users
+						.Where(u =>
+							(dto.AssignedUsers.Contains(u.Email!) ||
+							 dto.AssignedUsers.Contains(u.UserName!)) &&
+							workspaceUserIds.Contains(u.Id))
+						.ToListAsync();
+
+					var newAssignments = users.Select(u => new TaskAssignment
+					{
+						UserId = u.Id,
+						TaskItemId = task.Id
+					}).ToList();
+
+					await db.TaskAssignments.AddRangeAsync(newAssignments);
+				}
+
+				task.UpadeAt = DateTime.UtcNow;
+
+				await db.SaveChangesAsync();
+
+				return Results.Ok(new
+				{
+					message = "Task updated successfully",
+					task.PublicId,
+					task.Title,
+					task.Status
+				});
+			}).RequireAuthorization()
+				.WithSummary("Edit task by public Id").WithTags("Task Management");
 		}
 	}
 
