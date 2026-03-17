@@ -87,6 +87,10 @@ export class Auth {
   getWorkspaceTasks(workspaceId: string) {
     return this.http.get(`${this.apiUrl}/tasks/${workspaceId}`, { withCredentials: true, headers: { 'Content-Type': 'application/json' } });
   }
+
+  createWorkspace(workspaceName: any) {
+    return this.http.post(`${this.apiUrl}/create/workspace`, { workspaceName }, { withCredentials: true, headers: { 'Content-Type': 'application/json' } });
+  }
   //-----------------------Decoding the token--------------------------------------------
   getToken(): string | null {
     return localStorage.getItem(this.tokenKey);

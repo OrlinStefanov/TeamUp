@@ -20,23 +20,13 @@ export class Dashboard {
     showCreateWorkspace = false;
     timeout: any;
 
-    workspaces : any[] = [
-      {
-    publicId: 1,
-    title: 'Team Up',
-    description: 'Main team workspace'
-  },
-  {
-    publicId: 2,
-    title: 'School Project',
-    description: 'University collaboration'
-  },
-  {
-    publicId: 3,
-    title: 'Startup',
-    description: 'Startup development workspace'
-  }
-    ]; // тук ще държим списъка с workspaces, който ще се зарежда от бекенда
+    workspaces : any[] = []; // тук ще държим списъка с workspaces, който ще се зарежда от бекенда
+    workspace = {
+      title: '',
+      description: ''
+    };
+
+    inviteInput: string = '';
 
     //orcho added
     userProfile : any = null;
@@ -120,21 +110,43 @@ export class Dashboard {
       }
     });
   }
-  
-  createWorkspace(){
-    const input = document.getElementsByName("workspaceName")[0] as HTMLInputElement;
-
-    if (!input) return; // ако няма input, спираме
-
-    const value: string = input.value.trim();
-
-    if (value) {
-      this.workspaces.push({ name: value }); // добавяме новия workspace
-      input.value = ''; // чистим input
-      console.log(this.workspaces);
-      this.showCreateWorkspace = false;
+  createWorkspace() {
+    if (!this.workspace.title.trim()) {
+      console.log("Workspace name is required");
+      return;
     }
 
-    
+    const currentUser = this.auth.getCurrentUser();
+
+    const members = this.inviteInput
+      ? [{
+          emailOrUsername: this.inviteInput,
+          role: 0
+        }]
+      : [];
+
+    const payload = {
+      title: this.workspace.title,
+      description: this.workspace.description,
+      members
+    };
+
+    this.auth.createWorkspace(payload).subscribe({
+      next: (res: any) => {
+        console.log('Workspace created:', res);
+
+        // OPTIONAL: push to UI
+        this.workspaces.push(res);
+
+        // reset form
+        this.workspace = { title: '', description: '' };
+        this.inviteInput = '';
+
+        this.showCreateWorkspace = false;
+      },
+      error: (err) => {
+        console.error('Error creating workspace:', err);
+      }
+    });
   }
 }
