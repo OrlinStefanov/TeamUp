@@ -382,6 +382,101 @@ namespace TeamUpBackEnd.Extensions
 			}).RequireAuthorization()
 				.WithSummary("Creates a new workspace").WithTags("Workspace Management");
 
+			//edits the workspace
+			app.MapPut("/edit/workspace", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, UserManager<ApplicationUser> userManager, workspaceDto.EditWorkspace data) =>
+			{
+				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
+
+				if (userId is null) return Results.BadRequest("User id not found");
+
+				if (string.IsNullOrEmpty(data.PublicId)) return Results.BadRequest("Workspace id is required");
+
+				var workspace = await db.Workspaces
+					.Include(w => w.Members)
+					.FirstOrDefaultAsync(w => w.PublicId.ToString() == data.PublicId);
+
+				if (workspace is null)	return Results.NotFound("Workspace not found");
+
+				if (workspace.OwnerId != userId) return Results.Forbid();
+
+				if (!string.IsNullOrWhiteSpace(data.Title))
+					workspace.Title = data.Title;
+
+				if (!string.IsNullOrWhiteSpace(data.Description))
+					workspace.Description = data.Description;
+
+				if (data.Members != null && data.Members.Count > 0)
+				{
+					var identifiers = data.Members
+						.Where(m => !string.IsNullOrEmpty(m.EmailOrUsername))
+						.Select(m => m.EmailOrUsername!)
+						.ToList();
+
+					var users = await userManager.Users
+						.Where(u => identifiers.Contains(u.Email!) || identifiers.Contains(u.UserName!))
+						.ToListAsync();
+
+					foreach (var memberDto in data.Members)
+					{
+						if (memberDto.EmailOrUsername == null)
+							return Results.BadRequest("Email or username is required");
+
+						var user = users.FirstOrDefault(u =>
+							u.Email == memberDto.EmailOrUsername ||
+							u.UserName == memberDto.EmailOrUsername);
+
+						if (user == null)
+							return Results.BadRequest($"User '{memberDto.EmailOrUsername}' not found");
+
+						if (user.Id == workspace.OwnerId)
+							continue;
+
+						var existingMember = workspace.Members
+							.FirstOrDefault(m => m.UserId == user.Id);
+
+						if (existingMember == null)
+						{
+							workspace.Members.Add(new WorkSpaceMember
+							{
+								UserId = user.Id,
+								Role = memberDto.Role
+							});
+						}
+						else
+						{
+							existingMember.Role = memberDto.Role;
+						}
+					}
+
+					var incomingUserIds = users.Select(u => u.Id).ToHashSet();
+
+					var membersToRemove = workspace.Members
+						.Where(m => m.UserId != workspace.OwnerId && !incomingUserIds.Contains(m.UserId!))
+						.ToList();
+
+					foreach (var member in membersToRemove)
+					{
+						workspace.Members.Remove(member);
+					}
+				}
+
+				workspace.UpdatedAt = DateOnly.FromDateTime(DateTime.Now);
+
+				await db.SaveChangesAsync();
+
+				return Results.Ok(new
+				{
+					workspace.PublicId,
+					workspace.Title,
+					workspace.Description,
+					workspace.OwnerId,
+					workspace.CreatedAt,
+					workspace.UpdatedAt,
+					MembersCount = workspace.Members.Count
+				});
+
+			}).WithSummary("Edits a workspace").WithTags("Workspace Management");
+
 			//returns a list of workspaces the user is a member of, including the workspace id, title, description, owner id and members count. If the user is not a member of any workspace, it returns an empty list.
 			app.MapGet("/workspaces/short", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims) =>
 			{
@@ -401,6 +496,7 @@ namespace TeamUpBackEnd.Extensions
 						w.Title,
 						w.Description,
 						w.CreatedAt,
+						w.UpdatedAt,
 						w.OwnerId,
 						MembersCount = w.Members.Count,
 						Members = w.Members.Select(m => new
@@ -455,6 +551,7 @@ namespace TeamUpBackEnd.Extensions
 					Title = workspace.Title,
 					Description = workspace.Description,
 					CreatedAt = (DateOnly)workspace.CreatedAt!,
+					UpdatedAt = (DateOnly)workspace.UpdatedAt!,
 					Owner = new workspaceDto.FullWorkspaceMember
 					{
 						Id = owner.UserId,
@@ -524,6 +621,7 @@ namespace TeamUpBackEnd.Extensions
 					Title = workspace.Title,
 					Description = workspace.Description,
 					CreatedAt = (DateOnly)workspace.CreatedAt!,
+					UpdatedAt = (DateOnly)workspace.UpdatedAt!,
 					Owner = new workspaceDto.FullWorkspaceMember
 					{
 						Id = owner.UserId,
