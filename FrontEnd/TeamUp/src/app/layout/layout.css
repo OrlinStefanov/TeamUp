@@ -150,13 +150,6 @@
   cursor: pointer;
 }
 
-.nav-link-custom:hover span,
-.workspace-item:hover span,
-.nav-link-custom.active span,
-.workspace-item.active span {
-  color: #a64bfb;
-}
-
 .nav-icon {
   min-width: 20px;
   text-align: center;

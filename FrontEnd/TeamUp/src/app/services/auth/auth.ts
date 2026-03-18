@@ -133,8 +133,8 @@ export class Auth {
     return this.workspaceSubject.value.find(w => w.publicId === id);
   }
 
-  createWorkspace(workspaceName: any) {
-    return this.http.post(`${this.apiUrl}/create/workspace`, { workspaceName }, { withCredentials: true, headers: { 'Content-Type': 'application/json' } });
+  createWorkspace(workspace: any) {
+    return this.http.post(`${this.apiUrl}/create/workspace`, { workspace }, { withCredentials: true, headers: { 'Content-Type': 'application/json' } });
   }
   //-----------------------Decoding the token--------------------------------------------
   getToken(): string | null {

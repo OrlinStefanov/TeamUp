@@ -35,3 +35,15 @@ export interface UserProfile {
     birthDate: Date;
     phoneNumber: string;
 }
+
+export interface WorkspaceMember {
+    emailOrUsername: string;
+    role: number;
+}
+
+export interface Workspace {
+    title: string;
+    description: string;
+    ownerId: string;
+    members: WorkspaceMember[];
+}

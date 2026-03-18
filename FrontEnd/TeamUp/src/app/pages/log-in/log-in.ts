@@ -84,6 +84,7 @@ export class LogIn {
     this.auth.login(this.userData).subscribe({
       next: (response) => {
         console.log('Login successful:', response);
+        localStorage.setItem('token', response.token);
         this.router.navigate(['/dashboard']);
       },
       error: (error) => {

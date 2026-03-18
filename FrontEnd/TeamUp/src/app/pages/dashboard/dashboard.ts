@@ -1,6 +1,7 @@
 import { Component, ElementRef, Renderer2, ViewChild, AfterViewInit } from '@angular/core';
 import { Auth } from '../../services/auth/auth';
 import { FormsModule } from '@angular/forms';
+import { Workspace, WorkspaceMember } from '../../services/auth/auth-types';
 import { CommonModule, NgFor, NgIf } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { Observable } from 'rxjs';
@@ -24,10 +25,19 @@ export class Dashboard implements AfterViewInit {
   showDropdown = false;
   showSettingsDropdown = false;
   showCreateWorkspace = false;
+  timeout: any;
 
   user$!: Observable<any>;
   workspaces$!: Observable<any[]>;
 
+    workspaces : any[] = []; // тук ще държим списъка с workspaces, който ще се зарежда от бекенда
+    workspace: Workspace = {
+      title: '',
+      description: '',
+      ownerId: '',
+      members: []
+    };
+      inviteInput: string = '';
   newWorkspaceName = '';
   newWorkspaceDesc = '';
   newWorkspaceInvite = '';
@@ -39,7 +49,6 @@ export class Dashboard implements AfterViewInit {
     this.workspaces$ = this.auth.workspaces$;
 
     this.auth.getWorkspaces().subscribe();
-
     const savedMode = localStorage.getItem('darkMode');
     this.isDarkMode = savedMode === 'true';
   }
@@ -65,22 +74,71 @@ export class Dashboard implements AfterViewInit {
     }
   }
 
-  showDropDown() { this.showDropdown = !this.showDropdown; }
-  showSettingsDropDown() { this.showSettingsDropdown = !this.showSettingsDropdown; }
-  openCreateWorkspace() { this.showCreateWorkspace = true; }
-  closeCreateWorkspace() { this.showCreateWorkspace = false; }
 
-  signOut() {
-    this.auth.logout().subscribe(() => window.location.href = '/login');
+  closeMenu() {
+    this.timeout = setTimeout(() => {
+      this.showDropdown = false;
+    }, 90);
   }
 
-  createWorkspace() {
-    const value = this.newWorkspaceName.trim();
-    if (!value) return;
-
-    this.newWorkspaceName = '';
-    this.newWorkspaceDesc = '';
-    this.newWorkspaceInvite = '';
+  openCreateWorkspace() {
+    this.showCreateWorkspace = true;
+  }
+  closeCreateWorkspace() {
     this.showCreateWorkspace = false;
+  }
+
+  closeSettingsMenu() {
+    this.timeout = setTimeout(() => {
+      this.showSettingsDropdown = false;
+    }, 90);
+  }
+
+  signOut(){
+    this.auth.logout().subscribe({
+      next: () => {
+        console.log('Logged out successfully');
+        window.location.href = '/dashboard';
+      },
+      error: (error) => {
+        console.error('Logout failed:', error);
+      }
+    });
+  }
+  createWorkspace() {
+    if (!this.workspace.title.trim()) {
+      console.log("Workspace name is required");
+      return;
+    }
+
+    const currentUser = this.auth.getCurrentUser();
+
+    if (currentUser) {
+      this.workspace.members.push({role: 0, emailOrUsername: this.inviteInput});
+    }
+
+    const payload = {
+      title: this.workspace.title,
+      description: this.workspace.description,
+      members: this.workspace.members
+    };
+
+    this.auth.createWorkspace(payload).subscribe({
+      next: (res: any) => {
+        console.log('Workspace created:', res);
+
+        // OPTIONAL: push to UI
+        this.workspaces.push(res);
+
+        // reset form
+        this.workspace = { title: '', description: '', ownerId: '', members: [] };
+        this.inviteInput = '';
+
+        this.showCreateWorkspace = false;
+      },
+      error: (err) => {
+        console.error('Error creating workspace:', err);
+      }
+    });
   }
 }
