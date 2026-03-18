@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { Auth } from '../services/auth/auth';
 import { RouterOutlet, RouterLinkWithHref } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-layout',
@@ -14,10 +15,11 @@ export class Layout {
   isSidebarOpen = false;
   isDesktopSidebarCollapsed = false;
   isDarkMode = false;
+  activeLink: string = '';
 
   workspaces : any[] = [];
 
-  constructor(private auth: Auth) {}
+  constructor(private auth: Auth, private router: Router) {}
 
   ngOnInit() {
     this.userProfile = this.auth.getCurrentUser();
@@ -41,5 +43,13 @@ export class Layout {
       this.workspaces = response;
       console.log('Workspaces:', this.workspaces);
     });
+  }
+
+  setActive(link: string) {
+    this.activeLink = link;
+  }
+
+  isActive(url: string) {
+    return this.router.url === url;
   }
 }

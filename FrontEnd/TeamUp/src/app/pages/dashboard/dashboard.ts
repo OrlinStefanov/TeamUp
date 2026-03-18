@@ -3,6 +3,7 @@ import { ElementRef, Renderer2, ViewChild } from '@angular/core';
 import { Auth } from '../../services/auth/auth';
 import { FormsModule } from '@angular/forms';
 import { CommonModule, NgIf } from '@angular/common';
+import { Workspace, WorkspaceMember } from '../../services/auth/auth-types';
 
 @Component({
   selector: 'app-dashboard',
@@ -21,9 +22,11 @@ export class Dashboard {
     timeout: any;
 
     workspaces : any[] = []; // тук ще държим списъка с workspaces, който ще се зарежда от бекенда
-    workspace = {
+    workspace: Workspace = {
       title: '',
-      description: ''
+      description: '',
+      ownerId: '',
+      members: []
     };
 
     inviteInput: string = '';
@@ -35,7 +38,7 @@ export class Dashboard {
 
     ngOnInit() {
       this.userProfile = this.auth.getCurrentUser();
-      //this.getWorkspaces();
+      this.getWorkspaces();
 
       const savedMode = localStorage.getItem('darkMode');
 
@@ -118,17 +121,14 @@ export class Dashboard {
 
     const currentUser = this.auth.getCurrentUser();
 
-    const members = this.inviteInput
-      ? [{
-          emailOrUsername: this.inviteInput,
-          role: 0
-        }]
-      : [];
+    if (currentUser) {
+      this.workspace.members.push({role: 0, emailOrUsername: this.inviteInput});
+    }
 
     const payload = {
       title: this.workspace.title,
       description: this.workspace.description,
-      members
+      members: this.workspace.members
     };
 
     this.auth.createWorkspace(payload).subscribe({
@@ -139,7 +139,7 @@ export class Dashboard {
         this.workspaces.push(res);
 
         // reset form
-        this.workspace = { title: '', description: '' };
+        this.workspace = { title: '', description: '', ownerId: '', members: [] };
         this.inviteInput = '';
 
         this.showCreateWorkspace = false;
