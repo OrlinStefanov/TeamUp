@@ -52,6 +52,11 @@ export class Auth {
     return this.http.post(`${this.apiUrl}/logout`, {});
   }
 
+  setUser(user : any)
+  {
+    this.userSubject.next(user);
+  }
+
   getCurrentUser() {
     return this.userSubject.value;
   }
