@@ -2,13 +2,13 @@
     <div class="workspace-content">
 
         <!-- ако има workspaces -->
-        <div *ngIf="workspaces.length > 0; else emptyState">
+        <div *ngIf="(workspaces$ | async)?.length ?? 0 > 0; else emptyState">
             <div class="workspace-header">
                 <h2>Welcome to your dashboard, {{(user$ | async)?.userName}}!</h2>
             </div>
-            <div *ngFor="let workspace of workspaces">
+            <div *ngFor="let workspace of (workspaces$ | async)">
                 <div class="workspace-card">
-                    <h3>{{ workspace.name }}</h3>
+                    <h3>{{ workspace.title }}</h3>
                     <p>{{ workspace.description }}</p>
                     <a href="/workspace/{{workspace.publicId}}/tasks" class="btn-primary">
                         Go to workspace
@@ -93,13 +93,13 @@
                     <div class="flex gap-3">
                         <div class="flex-1">
                             <label class="form-label">Workspace name</label>
-                            <input type="text" class="form-control" placeholder="Enter workspace name" name="workspaceName" required [(ngModel)]="workspace.title">
+                            <input type="text" class="form-control" placeholder="Enter workspace name" name="title" required [(ngModel)]="workspace.title">
                         </div>
                     </div>
                     <div class="flex gap-3" style="margin-top: 3%;">
                         <div class="flex-1">
                             <label class="form-label">Workspace description</label>
-                            <textarea type="text" class="form-control" placeholder="Enter workspace description" name="workspaceDesc" style="min-height: 75px;" [(ngModel)]="workspace.description"></textarea>
+                            <textarea type="text" class="form-control" placeholder="Enter workspace description" name="description" style="min-height: 75px;" [(ngModel)]="workspace.description"></textarea>
                         </div>
                     </div>
                     <div class="flex gap-3"style="margin-top: 3%;">
