@@ -28,9 +28,7 @@ export class Dashboard implements AfterViewInit {
   timeout: any;
 
   user$!: Observable<any>;
-  workspaces$!: Observable<any[]>;
-
-    workspaces : any[] = []; // тук ще държим списъка с workspaces, който ще се зарежда от бекенда
+  workspaces$!: Observable<any[]>; // тук ще държим списъка с workspaces, който ще се зарежда от бекенда
     workspace: Workspace = {
       title: '',
       description: '',
@@ -113,31 +111,22 @@ export class Dashboard implements AfterViewInit {
 
     const currentUser = this.auth.getCurrentUser();
 
-    if (currentUser) {
-      this.workspace.members.push({role: 0, emailOrUsername: this.inviteInput});
+    if (this.inviteInput.trim()) {
+      this.workspace.members.push({
+        role: 0,
+        emailOrUsername: this.inviteInput
+      });
     }
+    
+    console.log('Creating workspace:', this.workspace);
 
-    const payload = {
-      title: this.workspace.title,
-      description: this.workspace.description,
-      members: this.workspace.members
-    };
+    this.auth.createWorkspace(this.workspace).subscribe({
+      next: () => {
+        this.auth.getWorkspaces(true).subscribe();
 
-    this.auth.createWorkspace(payload).subscribe({
-      next: (res: any) => {
-        console.log('Workspace created:', res);
-
-        // OPTIONAL: push to UI
-        this.workspaces.push(res);
-
-        // reset form
         this.workspace = { title: '', description: '', ownerId: '', members: [] };
         this.inviteInput = '';
-
         this.showCreateWorkspace = false;
-      },
-      error: (err) => {
-        console.error('Error creating workspace:', err);
       }
     });
   }

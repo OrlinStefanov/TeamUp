@@ -134,7 +134,10 @@ export class Auth {
   }
 
   createWorkspace(workspace: any) {
-    return this.http.post(`${this.apiUrl}/create/workspace`, { workspace }, { withCredentials: true, headers: { 'Content-Type': 'application/json' } });
+    return this.http.post(`${this.apiUrl}/create/workspace`, workspace, {
+      withCredentials: true,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
   //-----------------------Decoding the token--------------------------------------------
   getToken(): string | null {

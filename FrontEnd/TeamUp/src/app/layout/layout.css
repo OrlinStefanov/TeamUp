@@ -57,17 +57,25 @@
 }
 
 .side-navbar {
-  min-height: 100vh;
+  height: 100vh;
   padding: 18px 14px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   background: rgba(255, 255, 255, 0.04);
-  border-right: 1px solid #4c97ff;
-  box-shadow: 0 0 4px #4c97ff;
   backdrop-filter: blur(10px);
   transition: width 0.3s ease, padding 0.3s ease;
   overflow: hidden;
+}
+
+.page.dark-mode .side-navbar{
+  border-right: 1px solid #333;
+  box-shadow: 0 0 4px #333;
+}
+
+.page.light-mode .side-navbar{
+  border-right: 1px solid #bbb;
+  box-shadow: 0 0 4px #bbb;
 }
 
 .side-navbar.collapsed {

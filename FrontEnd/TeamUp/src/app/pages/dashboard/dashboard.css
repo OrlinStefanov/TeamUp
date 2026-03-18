@@ -1,9 +1,11 @@
 /* Page Layout */
 .page {
-  min-height: 100vh;
+  margin: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow-x: hidden;
+  margin-top: 10%;
 }
 
 /* Theme Modes */
@@ -156,7 +158,8 @@ textarea.form-control {
 }
 
 /*Empty-dahboard*/
-.empty-dashboard{
+.empty-dashboard {
+  top: 0;
   text-align: center;
 }
 
