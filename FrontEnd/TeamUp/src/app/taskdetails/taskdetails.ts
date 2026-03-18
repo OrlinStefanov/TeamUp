@@ -26,7 +26,7 @@ export class Taskdetails {
   ngOnInit() {
     const workspaceId = window.location.pathname.split('/')[2]; // assuming URL is /workspace/{id}/tasks
     
-    this.auth.getfullworkspaceInfo(workspaceId).subscribe((response: any) => {
+    this.auth.getWorkspaceInfo(workspaceId).subscribe((response: any) => {
       this.worksapce_info = response;
       console.log('Workspace Info:', this.worksapce_info);
     });

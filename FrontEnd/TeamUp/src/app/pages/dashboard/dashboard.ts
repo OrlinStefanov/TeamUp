@@ -1,25 +1,34 @@
-import { Component } from '@angular/core';
-import { ElementRef, Renderer2, ViewChild } from '@angular/core';
+import { Component, ElementRef, Renderer2, ViewChild, AfterViewInit } from '@angular/core';
 import { Auth } from '../../services/auth/auth';
 import { FormsModule } from '@angular/forms';
-import { CommonModule, NgIf } from '@angular/common';
 import { Workspace, WorkspaceMember } from '../../services/auth/auth-types';
+import { CommonModule, NgFor, NgIf } from '@angular/common';
+import { RouterModule } from '@angular/router';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-dashboard',
-  imports: [FormsModule, CommonModule, NgIf],
+  imports: [
+    FormsModule,
+    CommonModule,
+    RouterModule,
+    NgIf,
+    NgFor
+  ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
+export class Dashboard implements AfterViewInit {
+  @ViewChild('pageDiv') pageDiv?: ElementRef;
 
-export class Dashboard {
-    @ViewChild('pageDiv') pageDiv!: ElementRef;
+  isDarkMode = false;
+  showDropdown = false;
+  showSettingsDropdown = false;
+  showCreateWorkspace = false;
+  timeout: any;
 
-    isDarkMode: boolean = false;
-    showDropdown = false;
-    showSettingsDropdown = false;
-    showCreateWorkspace = false;
-    timeout: any;
+  user$!: Observable<any>;
+  workspaces$!: Observable<any[]>;
 
     workspaces : any[] = []; // тук ще държим списъка с workspaces, който ще се зарежда от бекенда
     workspace: Workspace = {
@@ -28,43 +37,34 @@ export class Dashboard {
       ownerId: '',
       members: []
     };
+      inviteInput: string = '';
+  newWorkspaceName = '';
+  newWorkspaceDesc = '';
+  newWorkspaceInvite = '';
 
-    inviteInput: string = '';
+  constructor(private renderer: Renderer2, private auth: Auth) {}
 
-    //orcho added
-    userProfile : any = null;
+  ngOnInit() {
+    this.user$ = this.auth.user$;
+    this.workspaces$ = this.auth.workspaces$;
 
-    constructor(private renderer: Renderer2, private auth: Auth) {}
+    this.auth.getWorkspaces().subscribe();
+    const savedMode = localStorage.getItem('darkMode');
+    this.isDarkMode = savedMode === 'true';
+  }
 
-    ngOnInit() {
-      this.userProfile = this.auth.getCurrentUser();
-      this.getWorkspaces();
-
-      const savedMode = localStorage.getItem('darkMode');
-
-      if (savedMode !== null) {
-        this.isDarkMode = savedMode === 'true';
-      }
-
-      if (this.isDarkMode) {
-        this.renderer.addClass(this.pageDiv.nativeElement, 'dark-mode');
-      } else {
-        this.renderer.addClass(this.pageDiv.nativeElement, 'light-mode');
-      }
-    }
-
-  getWorkspaces() {
-    this.auth.getWorkspaces().subscribe((response: any) => {
-      this.workspaces = response;
-      console.log('Workspaces:', this.workspaces);
-    });
+  ngAfterViewInit() {
+    this.applyTheme();
   }
 
   toggleDarkMode() {
     this.isDarkMode = !this.isDarkMode;
-
     localStorage.setItem('darkMode', String(this.isDarkMode));
+    this.applyTheme();
+  }
 
+  applyTheme() {
+    if (!this.pageDiv) return;
     if (this.isDarkMode) {
       this.renderer.removeClass(this.pageDiv.nativeElement, 'light-mode');
       this.renderer.addClass(this.pageDiv.nativeElement, 'dark-mode');
@@ -74,26 +74,18 @@ export class Dashboard {
     }
   }
 
-  showDropDown() {
-    this.showDropdown = !this.showDropdown;
-  }
-
-  showSettingsDropDown() {
-    this.showSettingsDropdown = !this.showSettingsDropdown;
-  }
-
-  openCreateWorkspace(){
-    this.showCreateWorkspace = true;
-  }
-
-  closeCreateWorkspace(){
-    this.showCreateWorkspace = false;
-  }
 
   closeMenu() {
     this.timeout = setTimeout(() => {
       this.showDropdown = false;
     }, 90);
+  }
+
+  openCreateWorkspace() {
+    this.showCreateWorkspace = true;
+  }
+  closeCreateWorkspace() {
+    this.showCreateWorkspace = false;
   }
 
   closeSettingsMenu() {

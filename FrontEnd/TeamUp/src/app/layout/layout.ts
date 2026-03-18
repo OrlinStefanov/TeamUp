@@ -1,8 +1,8 @@
 import { Component } from '@angular/core';
 import { Auth } from '../services/auth/auth';
-import { RouterOutlet, RouterLinkWithHref } from '@angular/router';
+import { RouterOutlet, RouterLinkWithHref, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-layout',
@@ -11,7 +11,6 @@ import { Router } from '@angular/router';
   styleUrl: './layout.css',
 })
 export class Layout {
-  userProfile: any = null;
   isSidebarOpen = false;
   isDesktopSidebarCollapsed = false;
   isDarkMode = false;
@@ -20,9 +19,15 @@ export class Layout {
   workspaces : any[] = [];
 
   constructor(private auth: Auth, private router: Router) {}
+  
+  user$!: Observable<any>;
+  workspaces$!: Observable<any[]>;
 
   ngOnInit() {
-    this.userProfile = this.auth.getCurrentUser();
+    this.user$ = this.auth.user$;
+    this.workspaces$ = this.auth.workspaces$;
+
+    this.auth.getWorkspaces().subscribe();
 
     const savedMode = localStorage.getItem('darkMode');
     if (savedMode !== null) {
@@ -38,11 +43,8 @@ export class Layout {
     this.isDesktopSidebarCollapsed = !this.isDesktopSidebarCollapsed;
   }
 
-  getWorkspaces() {
-    this.auth.getWorkspaces().subscribe((response: any) => {
-      this.workspaces = response;
-      console.log('Workspaces:', this.workspaces);
-    });
+  openWorkspace(id: string) {
+    this.router.navigate(['/workspace', id, 'tasks']);
   }
 
   setActive(link: string) {

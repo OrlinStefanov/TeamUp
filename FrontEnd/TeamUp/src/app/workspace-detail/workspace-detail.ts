@@ -1,30 +1,43 @@
-import { Component } from '@angular/core';
-import { NgFor } from '@angular/common';
+import { Component, OnInit } from '@angular/core';
+import { CommonModule, NgFor } from '@angular/common';
+import { RouterModule, Router, ActivatedRoute } from '@angular/router';
+import { RouterOutlet, RouterLink } from '@angular/router';
 import { Auth } from '../services/auth/auth';
-import { RouterLink } from "@angular/router";
-import { Router } from '@angular/router';
-import { RouterOutlet } from '@angular/router';
 
 @Component({
   selector: 'app-workspace-detail',
-  imports: [RouterLink, RouterOutlet],
+  imports: [CommonModule, NgFor, RouterModule, RouterOutlet, RouterLink],
   templateUrl: './workspace-detail.html',
   styleUrl: './workspace-detail.css',
+  standalone: true
 })
+export class WorkspaceDetail implements OnInit {
+  workspace_info: any = null;
+  user_data: any = null;
+  workspaceId: string = '';
 
-export class WorkspaceDetail {
-  worksapce_info : any = null;
-  user_data : any = null;
+  constructor(
+    private auth: Auth,
+    private router: Router,
+    private route: ActivatedRoute
+  ) {}
 
-  constructor(private auth : Auth, private route : Router) {}
+  ngOnInit() {
+    this.route.paramMap.subscribe(params => {
+      const id = params.get('id');
+      if (id) {
+        this.workspaceId = id;
 
-  ngOnInit()
-  {
-    const workspaceId = window.location.pathname.split('/')[2];
+        // Try cached short workspace first
+        this.workspace_info = this.auth.getCachedWorkspaceById(id);
 
-    this.auth.getfullworkspaceInfo(workspaceId).subscribe((response: any) => {
-      this.worksapce_info = response;
-      console.log('Workspace Info:', this.worksapce_info);
+        // If more details needed, fetch full workspace info
+        if (!this.workspace_info) {
+          this.auth.getWorkspaceInfo(id).subscribe(ws => {
+            this.workspace_info = ws;
+          });
+        }
+      }
     });
 
     this.user_data = this.auth.getCurrentUser();

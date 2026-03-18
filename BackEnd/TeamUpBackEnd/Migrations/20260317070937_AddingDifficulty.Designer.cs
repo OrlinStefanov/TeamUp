@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using TeamUpBackEnd.DbContext;
@@ -11,9 +12,11 @@ using TeamUpBackEnd.DbContext;
 namespace TeamUpBackEnd.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260317070937_AddingDifficulty")]
+    partial class AddingDifficulty
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -409,9 +412,6 @@ namespace TeamUpBackEnd.Migrations
 
                     b.Property<string>("Title")
                         .HasColumnType("text");
-
-                    b.Property<DateTime?>("UpadeAt")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("WorkSpaceId")
                         .HasColumnType("integer");

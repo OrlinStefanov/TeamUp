@@ -45,16 +45,16 @@
       <p class="workspace-title" *ngIf="!isDesktopSidebarCollapsed">Workspaces</p>
 
 			<ul class="workspace-list list-unstyled">
-				<li *ngFor="let workspace of workspaces">
+				<li *ngFor="let workspace of (workspaces$ | async)">
 					<a class="workspace-item"
-						(click)="getWorkspaces()">
+						(click)="openWorkspace(workspace.publicId)">
 						
 						<span class="workspace-icon">
-						{{ workspace.name.charAt(0) }}
+						{{ workspace?.title?.charAt(0) }}
 						</span>
 
 						<span class="workspace-name" *ngIf="!isDesktopSidebarCollapsed">
-						{{ workspace.name }}
+						{{ workspace.title }}
 						</span>
 
 					</a>
@@ -62,9 +62,9 @@
 			</ul>
     	</ul>
 
-    <div class="nav-footer" *ngIf="userProfile">
-      <img [src]="userProfile.profilePictureUrl" alt="Profile" class="logo" />
-      <p class="userName">{{userProfile.userName}}</p>
+    <div class="nav-footer" *ngIf="(user$ | async) as user">
+      <img [src]="user.profilePictureUrl" alt="Profile" class="logo" />
+      <p class="userName">{{user.userName}}</p>
       <button class="settingsBtn" type="button">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-gear" viewBox="0 0 16 16">
           <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492M5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0"/>
@@ -119,16 +119,16 @@
 		  <p class="workspace-title" *ngIf="!isDesktopSidebarCollapsed">Workspaces</p>
 
 			<ul class="workspace-list list-unstyled">
-				<li *ngFor="let workspace of workspaces">
+				<li *ngFor="let workspace of (workspaces$ | async)">
 				<a class="workspace-item"
-					(click)="getWorkspaces()">
+					(click)="openWorkspace(workspace.publicId)">
 					
 					<span class="workspace-icon">
-					{{ workspace.name.charAt(0) }}
+					{{ workspace.title.charAt(0) }}
 					</span>
 
 					<span class="workspace-name" *ngIf="!isDesktopSidebarCollapsed">
-					{{ workspace.name }}
+					{{ workspace.title }}
 					</span>
 
 				</a>
@@ -136,9 +136,9 @@
 			</ul>
         </div>
 
-        <div class="nav-footer" *ngIf="userProfile">
-          <img [src]="userProfile.profilePictureUrl" alt="Profile" class="logo" />
-          <p class="userName" *ngIf="!isDesktopSidebarCollapsed">{{userProfile.userName}}</p>
+        <div class="nav-footer" *ngIf="(user$ | async) as user">
+          <img [src]="user.profilePictureUrl" alt="Profile" class="logo" />
+          <p class="userName" *ngIf="!isDesktopSidebarCollapsed">{{user.userName}}</p>
           <button class="settingsBtn" type="button" *ngIf="!isDesktopSidebarCollapsed">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-gear" viewBox="0 0 16 16">
               <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492M5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0"/>
