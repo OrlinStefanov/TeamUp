@@ -1,13 +1,14 @@
-import { Component, ElementRef, Renderer2, ViewChild, AfterViewInit, TemplateRef } from '@angular/core';
+import { Component, ElementRef, Renderer2, ViewChild, AfterViewInit, OnInit } from '@angular/core';
 import { Auth } from '../../services/auth/auth';
 import { FormsModule } from '@angular/forms';
 import { Workspace, WorkspaceMember } from '../../services/auth/auth-types';
-import { CommonModule, NgFor, NgIf, NgIfContext } from '@angular/common';
+import { CommonModule, NgFor, NgIf } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-dashboard',
+  standalone: true, // Assuming standalone based on your imports
   imports: [
     FormsModule,
     CommonModule,
@@ -18,13 +19,14 @@ import { Observable } from 'rxjs';
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
-export class Dashboard implements AfterViewInit {
+export class Dashboard implements OnInit, AfterViewInit {
   @ViewChild('pageDiv') pageDiv?: ElementRef;
 
   isDarkMode = false;
   showDropdown = false;
   showSettingsDropdown = false;
   showCreateWorkspace = false;
+  showJoinWorkspace = false; // Added for Join Modal
   timeout: any;
 
   suggestions: any[] = [];
@@ -33,17 +35,22 @@ export class Dashboard implements AfterViewInit {
   private searchTimeout: any;
 
   user$!: Observable<any>;
-  workspaces$!: Observable<any[]>; // тук ще държим списъка с workspaces, който ще се зарежда от бекенда
-    workspace: Workspace = {
-      title: '',
-      description: '',
-      ownerId: '',
-      members: []
-    };
-      inviteInput: string = '';
-  newWorkspaceName = '';
-  newWorkspaceDesc = '';
-  newWorkspaceInvite = '';
+  workspaces$!: Observable<any[]>;
+  
+  workspace: Workspace = {
+    title: '',
+    description: '',
+    ownerId: '',
+    members: []
+  };
+
+  // Added for Join Workspace form data
+  joinInput = {
+    inviteCode: '',
+    workspaceLink: ''
+  };
+
+  inviteInput: string = '';
 
   constructor(private renderer: Renderer2, private auth: Auth) {}
 
@@ -77,59 +84,52 @@ export class Dashboard implements AfterViewInit {
     }
   }
 
-
-  closeMenu() {
-    this.timeout = setTimeout(() => {
-      this.showDropdown = false;
-    }, 90);
-  }
-
   openCreateWorkspace() {
     this.showCreateWorkspace = true;
   }
+  
   closeCreateWorkspace() {
     this.showCreateWorkspace = false;
-  }
-
-  closeSettingsMenu() {
-    this.timeout = setTimeout(() => {
-      this.showSettingsDropdown = false;
-    }, 90);
-  }
-
-  signOut(){
-    this.auth.logout().subscribe({
-      next: () => {
-        console.log('Logged out successfully');
-        window.location.href = '/dashboard';
-      },
-      error: (error) => {
-        console.error('Logout failed:', error);
-      }
-    });
+    this.workspace = { title: '', description: '', ownerId: '', members: [] };
+    this.invitedMembers = [];
+    this.inviteInput = '';
   }
 
   createWorkspace() {
-    if (!this.workspace.title.trim()) {
-      console.log("Workspace name is required");
-      return;
-    }
+    if (!this.workspace.title.trim()) return;
 
     this.workspace.members = [...this.invitedMembers];
-
-    console.log('Creating workspace:', this.workspace);
-
     this.auth.createWorkspace(this.workspace).subscribe({
       next: () => {
         this.auth.getWorkspaces(true).subscribe();
-
-        this.workspace = { title: '', description: '', ownerId: '', members: [] };
-        this.invitedMembers = [];
-        this.inviteInput = '';
-        this.suggestions = [];
-        this.showCreateWorkspace = false;
+        this.closeCreateWorkspace();
       }
     });
+  }
+
+  openJoinWorkspace() {
+    this.showJoinWorkspace = true;
+  }
+
+  closeJoinWorkspace() {
+    this.showJoinWorkspace = false;
+    this.joinInput = { inviteCode: '', workspaceLink: '' };
+  }
+
+  joinWorkspace() {
+    const identifier = this.joinInput.inviteCode || this.joinInput.workspaceLink;
+    
+    if (!identifier) return;
+
+    console.log('Attempting to join with:', identifier);
+    /*this.auth.joinWorkspace(identifier).subscribe({
+    next: () => {
+         this.auth.getWorkspaces(true).subscribe();
+         this.closeJoinWorkspace();
+       }
+    });*/
+    
+    this.closeJoinWorkspace();
   }
 
   onInviteInputChange(value: string) {
@@ -156,16 +156,22 @@ export class Dashboard implements AfterViewInit {
 
   selectUser(user: any) {
     this.invitedMembers.push({
-      role: 0, // member role
+      role: 0, 
       emailOrUsername: user.userName
     });
-
     this.inviteInput = '';
     this.suggestions = [];
   }
 
-
   removeMember(member: WorkspaceMember) {
     this.invitedMembers = this.invitedMembers.filter(m => m !== member);
+  }
+
+  signOut(){
+    this.auth.logout().subscribe({
+      next: () => {
+        window.location.href = '/dashboard';
+      }
+    });
   }
 }
