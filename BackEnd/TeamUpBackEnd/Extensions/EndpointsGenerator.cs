@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection.Metadata.Ecma335;
@@ -377,6 +378,7 @@ namespace TeamUpBackEnd.Extensions
 					workspace.Title,
 					workspace.Description,
 					workspace.OwnerId,
+					workspace.JoinCode,
 					MembersCount = workspace.Members.Count
 				});
 			}).RequireAuthorization()
@@ -535,14 +537,21 @@ namespace TeamUpBackEnd.Extensions
 					return Results.NotFound("Workspace not found");
 				}
 
-				var owner = workspace.Members.FirstOrDefault(m => m.Role == WorkSpaceRole.Owner);
-
-				if (owner == null || owner.UserId != userId)
+				if (!workspace.Members.Any(m => m.UserId == userId))
 				{
 					return Results.BadRequest("You are not a member of this workspace");
 				}
 
-				workspace.Members = workspace.Members.Where(m => m.UserId != userId).ToList();
+				var owner = workspace.Members.FirstOrDefault(m => m.Role == WorkSpaceRole.Owner);
+
+				if (owner is null)
+				{
+					return Results.BadRequest("Owner not found");
+				}
+
+				var membersWithoutOwner = workspace.Members
+					.Where(m => m.UserId != owner.UserId)
+					.ToList();
 
 				var full_workpace = new workspaceDto.FullWorkspace
 				{
@@ -551,16 +560,16 @@ namespace TeamUpBackEnd.Extensions
 					Title = workspace.Title,
 					Description = workspace.Description,
 					CreatedAt = (DateOnly)workspace.CreatedAt!,
-					UpdatedAt = (DateOnly)workspace.UpdatedAt!,
+					JoinCode = workspace.JoinCode,
 					Owner = new workspaceDto.FullWorkspaceMember
 					{
-						Id = owner.UserId,
+						Id = owner.UserId!,
 						UserName = owner.User!.UserName!,
 						Email = owner.User!.Email,
 						Role = WorkSpaceRole.Owner,
 						ProfilePictureUrl = owner.User!.ProfilePictureUrl!
 					},
-					Members = workspace.Members.Select(m => new workspaceDto.FullWorkspaceMember
+					Members = membersWithoutOwner.Select(m => new workspaceDto.FullWorkspaceMember
 					{
 						Id = m.UserId!,
 						UserName = m.User!.UserName!,
@@ -600,6 +609,11 @@ namespace TeamUpBackEnd.Extensions
 					return Results.NotFound("Workspace not found");
 				}
 
+				if (!workspace.Members.Any(m => m.UserId == userId))
+				{
+					return Results.BadRequest("You are not a member of this workspace");
+				}
+
 				var owner = workspace.Members.FirstOrDefault(m => m.Role == WorkSpaceRole.Owner);
 
 				if (owner is null)
@@ -607,12 +621,9 @@ namespace TeamUpBackEnd.Extensions
 					return Results.BadRequest("Owner not found");
 				}
 
-				workspace.Members = workspace.Members.Where(m => m.UserId != owner.UserId).ToList();
-
-				if (workspace.Members.All(m => m.UserId != userId))
-				{
-					return Results.BadRequest("You are not a member of this workspace");
-				}
+				var membersWithoutOwner = workspace.Members
+					.Where(m => m.UserId != owner.UserId)
+					.ToList();
 
 				var full_workpace = new workspaceDto.FullWorkspace
 				{
@@ -621,16 +632,16 @@ namespace TeamUpBackEnd.Extensions
 					Title = workspace.Title,
 					Description = workspace.Description,
 					CreatedAt = (DateOnly)workspace.CreatedAt!,
-					UpdatedAt = (DateOnly)workspace.UpdatedAt!,
+					JoinCode = workspace.JoinCode,
 					Owner = new workspaceDto.FullWorkspaceMember
 					{
-						Id = owner.UserId,
+						Id = owner.UserId!,
 						UserName = owner.User!.UserName!,
 						Email = owner.User!.Email,
 						Role = WorkSpaceRole.Owner,
 						ProfilePictureUrl = owner.User!.ProfilePictureUrl!
 					},
-					Members = workspace.Members.Select(m => new workspaceDto.FullWorkspaceMember
+					Members = membersWithoutOwner.Select(m => new workspaceDto.FullWorkspaceMember
 					{
 						Id = m.UserId!,
 						UserName = m.User!.UserName!,
@@ -645,7 +656,7 @@ namespace TeamUpBackEnd.Extensions
 			}).RequireAuthorization().WithSummary("Returns full info on workspace based on publicId").WithTags("Workspace Management");
 
 			//returns the list of possible users user might be searching
-			app.MapPost("search/members/add", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, MemberSearch model, UserManager<ApplicationUser> userManager) =>
+			app.MapPost("/search/members/add", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, MemberSearch model, UserManager<ApplicationUser> userManager) =>
 			{
 				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -676,6 +687,76 @@ namespace TeamUpBackEnd.Extensions
 
 				return Results.Ok(transformed_users);
 			}).RequireAuthorization().WithSummary("Retruns list of possible users you might be searching for").WithTags("Workspace Management");
+				
+			//user joins into workspace using a special code
+			app.MapPost("/join/workspace", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, UserManager<ApplicationUser> userManager, JoinCodeDTO model) =>
+			{
+				if (string.IsNullOrEmpty(model.join_code))
+				{
+					return Results.BadRequest("Invalid code");
+				}
+
+				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
+
+				if (userId is null) return Results.BadRequest("User id not found");
+
+				var user = userManager.FindByIdAsync(userId);
+
+				if (user is null) return Results.BadRequest("User not found");
+
+				var workspace = await db.Workspaces
+					.Include(w => w.Members)
+					.FirstOrDefaultAsync(j => j.JoinCode!.Equals(model.join_code));
+
+				if (workspace is null) return Results.BadRequest("Woorkspace with this code does not exist");
+
+				if (workspace.Members.Any(u => u.UserId == userId))
+				{
+					return Results.BadRequest("User is already in the workspace");
+				}
+
+				workspace.Members.Add(new WorkSpaceMember
+				{
+					UserId = userId,
+					Role = WorkSpaceRole.Member
+				});
+
+				await db.SaveChangesAsync();
+
+				return Results.Ok(new
+				{
+					publicId = workspace.PublicId,
+					title = workspace.Title
+				});
+
+			}).RequireAuthorization().WithSummary("User joins the workspace by enterning a code").WithTags("Workspace Management");
+
+			//regenerating the workspace join code
+			app.MapPost("/regenerating/join_code", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, UserManager<ApplicationUser> userManager, string publicId) =>
+			{
+				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
+
+				if (userId is null) return Results.BadRequest("User id not found");
+
+				var user = userManager.FindByIdAsync(userId);
+
+				if (user is null) return Results.BadRequest("User not found");
+
+				var workspace = await db.Workspaces
+					.Include(w => w.Members)
+					.FirstOrDefaultAsync(w => w.PublicId.ToString() == publicId);
+
+				if (workspace is null) return Results.BadRequest("Workspace not found");
+
+				if (workspace.OwnerId != userId) return Results.Forbid();
+
+				workspace.JoinCode = WorkspaceAuthorization.GenerateJoinCode();
+
+				await db.SaveChangesAsync();
+
+				return Results.Ok("JoinCode changed to " + workspace.JoinCode);
+
+			}).RequireAuthorization().WithSummary("Regenerates the join code in the workspace").WithTags("Workspace Management");
 		}
 
 		public static void TaskEndpoints(WebApplication app)
@@ -925,4 +1006,5 @@ namespace TeamUpBackEnd.Extensions
 	}
 
 	public record MemberSearch(string emailOrUsername);
+	public record JoinCodeDTO(string join_code);
 }
