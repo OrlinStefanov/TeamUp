@@ -2,6 +2,15 @@
     <div class="workspace-content">
 
         <!-- ако има workspaces -->
+        <div *ngIf="(workspaces$ | async); else emptyState">
+        <div *ngFor="let workspace of (workspaces$ | async)">
+            <div class="workspace-card">
+            <h3>{{ workspace.title }}</h3>
+            <p>{{ workspace.description }}</p>
+            <a [routerLink]="['/workspace', workspace.publicId, 'tasks']" class="btn-primary">
+                Go to workspace
+            </a>
+
         <div *ngIf="(workspaces$ | async)?.length ?? 0 > 0; else emptyState">
             <div class="workspace-header">
                 <h2>Welcome to your dashboard, {{(user$ | async)?.userName}}!</h2>
@@ -17,6 +26,7 @@
             </div>
         </div>
         </div>
+    </div>
 
         <!-- ако няма workspaces -->
         <ng-template #emptyState>
@@ -101,16 +111,21 @@
                             <label class="form-label">Workspace description</label>
                             <textarea type="text" class="form-control" placeholder="Enter workspace description" name="description" style="min-height: 75px;" [(ngModel)]="workspace.description"></textarea>
                         </div>
+                </div>
+                <div class="confirm-actions">
+                    <button class="btn-primary" type="submit" [disabled]="createWorkspaceForm.invalid">Create workspace</button>
                     </div>
                     <div class="flex gap-3"style="margin-top: 3%;">
                         <div class="flex-1">
                             <label class="form-label">Invite people</label>
-                            <input type="text" class="form-control" placeholder="Enter email or username" name="invitePeople" [(ngModel)]="inviteInput">
+                            <input type="text" class="form-control" placeholder="Enter email or username" name="invitePeople" [(ngModel)]="inviteInput" 
+                            (ngModelChange)="onInviteInputChange($event)">
                             </div>
                     </div>
                     <div class="createWorkspace-actions">
                         <button class="btn-primary" type="submit" [disabled]="createWorkspaceForm.invalid">Create workspace</button>
                     </div>
+
                 </div>
             </form>
         </div>

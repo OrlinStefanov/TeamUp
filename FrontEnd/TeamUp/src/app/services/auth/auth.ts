@@ -144,6 +144,15 @@ export class Auth {
       headers: { 'Content-Type': 'application/json' }
     });
   }
+
+
+  searchUsers(emailOrUsername: string)
+  {
+    return this.http.post(`${this.apiUrl}/search/members/add`, emailOrUsername, {
+      withCredentials: true,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
   //-----------------------Decoding the token--------------------------------------------
   getToken(): string | null {
     return localStorage.getItem(this.tokenKey);

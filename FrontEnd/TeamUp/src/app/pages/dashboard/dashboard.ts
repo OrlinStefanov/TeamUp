@@ -27,6 +27,11 @@ export class Dashboard implements AfterViewInit {
   showCreateWorkspace = false;
   timeout: any;
 
+  suggestions: any[] = [];
+  invitedMembers: WorkspaceMember[] = [];
+
+  private searchTimeout: any;
+
   user$!: Observable<any>;
   workspaces$!: Observable<any[]>; // тук ще държим списъка с workspaces, който ще се зарежда от бекенда
     workspace: Workspace = {
@@ -130,4 +135,5 @@ export class Dashboard implements AfterViewInit {
       }
     });
   }
+}
 }
