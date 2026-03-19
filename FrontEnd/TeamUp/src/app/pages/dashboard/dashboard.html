@@ -1,131 +1,174 @@
 <div #pageDiv class="page" [ngClass]="{'light-mode': !isDarkMode, 'dark-mode': isDarkMode}">
-    <div class="workspace-content">
+  <div class="container-fluid workspace-content">
+    <div class="row">
+        <ng-container *ngIf="workspaces$ | async as workspaces; else emptyState">
 
-        <!-- ако има workspaces -->
-        <div *ngIf="(workspaces$ | async); else emptyState">
-        <div *ngFor="let workspace of (workspaces$ | async)">
-            <div class="workspace-card">
-            <h3>{{ workspace.title }}</h3>
-            <p>{{ workspace.description }}</p>
-            <a [routerLink]="['/workspace', workspace.publicId, 'tasks']" class="btn-primary">
-                Go to workspace
-            </a>
+        <div class="col-12" *ngIf="workspaces.length > 0; else emptyState">
 
-        <div *ngIf="(workspaces$ | async)?.length ?? 0 > 0; else emptyState">
             <div class="workspace-header">
-                <h2>Welcome to your dashboard, {{(user$ | async)?.userName}}!</h2>
+            <h2>Welcome to your dashboard, {{ (user$ | async)?.userName }}!</h2>
             </div>
-            <div *ngFor="let workspace of (workspaces$ | async)">
-                <div class="workspace-card">
-                    <h3>{{ workspace.title }}</h3>
-                    <p>{{ workspace.description }}</p>
-                    <a href="/workspace/{{workspace.publicId}}/tasks" class="btn-primary">
-                        Go to workspace
-                    </a>
-                </div>
+
+            <div *ngFor="let workspace of workspaces">
+            <div class="workspace-card">
+                <h3>{{ workspace.title }}</h3>
+                <p>{{ workspace.description }}</p>
+
+                <a [routerLink]="['/workspace', workspace.publicId, 'tasks']" class="btn-primary">
+                Go to workspace
+                </a>
             </div>
+            </div>
+
         </div>
-        </div>
-    </div>
 
-        <!-- ако няма workspaces -->
-        <ng-template #emptyState>
-
-            <div class="empty-dashboard">
-
-                <h1>Welcome to <span style="color: #a64bfb;">Team Up</span></h1>
-
-                <p class="subtitle">
-                    Your gamified workspace for developer teams. Ship code, earn points,
-                    and compete with your crew.
-                </p>
-
-                <div class="steps-grid">
-
-                    <div class="step-card">
-                        <div class="step-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" width="24">
-                                <path d="M20.25 7c0-.69-.56-1.25-1.25-1.25H9.75v12.5H19c.69 0 1.25-.56 1.25-1.25zM3.75 17c0 .69.56 1.25 1.25 1.25h3.25V5.75H5c-.69 0-1.25.56-1.25 1.25zm18 0A2.75 2.75 0 0 1 19 19.75H5A2.75 2.75 0 0 1 2.25 17V7A2.75 2.75 0 0 1 5 4.25h14A2.75 2.75 0 0 1 21.75 7z"/>
-                            </svg>
-                            <h6>STEP 1</h6>
-                        </div>
-                        <h5>Create or join a workspace</h5>
-                        <p>Start fresh with your own workspace or join an existing team.</p>
-                    </div>
-
-                    <div class="step-card">
-                        <h6>STEP 2</h6>
-                        <h5>Invite your team</h5>
-                        <p>Add teammates via email or invite link.</p>
-                    </div>
-
-                    <div class="step-card">
-                        <h6>STEP 3</h6>
-                        <h5>Complete tasks & earn points</h5>
-                        <p>Track progress on boards and earn points.</p>
-                    </div>
-
-                    <div class="step-card">
-                        <h6>STEP 4</h6>
-                        <h5>Climb the leaderboard</h5>
-                        <p>Compete with your team and build streaks.</p>
-                    </div>
-
-                </div>
-
+        <div class="row">
+            <div class="col-12">
                 <div class="actions">
                     <button class="btn-primary" (click)="openCreateWorkspace()">
                         + Create Workspace
                     </button>
                 </div>
-
             </div>
-
-        </ng-template>
-
         </div>
-<div *ngIf="showCreateWorkspace" class="createWorkspace-overlay">
-            <form #createWorkspaceForm="ngForm" (ngSubmit)="createWorkspace()">
-                <div class="createWorkspace-box">
-                    <div class="header-row">
-                        <div>
-                            <h4>
-                                Create <span style="color: #a64bfb; text-shadow: #a64bfb 0 0 10px">workspace</span>
-                            </h4>
-                            <p>Set up a new workspace and invite your team<span style="color: #a64bfb; text-shadow: #a64bfb;">.</span></p>
-                        </div>
-                        <button class="btn-cancel" (click)="closeCreateWorkspace()">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-lg" viewBox="0 0 16 16">
-                                <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/>
-                            </svg>
-                        </button>
-                    </div>
-                    <div class="flex gap-3">
-                        <div class="flex-1">
-                            <label class="form-label">Workspace name</label>
-                            <input type="text" class="form-control" placeholder="Enter workspace name" name="title" required [(ngModel)]="workspace.title">
-                        </div>
-                    </div>
-                    <div class="flex gap-3" style="margin-top: 3%;">
-                        <div class="flex-1">
-                            <label class="form-label">Workspace description</label>
-                            <textarea type="text" class="form-control" placeholder="Enter workspace description" name="description" style="min-height: 75px;" [(ngModel)]="workspace.description"></textarea>
-                        </div>
-                </div>
-                <div class="confirm-actions">
-                    <button class="btn-primary" type="submit" [disabled]="createWorkspaceForm.invalid">Create workspace</button>
-                    </div>
-                    <div class="flex gap-3"style="margin-top: 3%;">
-                        <div class="flex-1">
-                            <label class="form-label">Invite people</label>
-                            <input type="text" class="form-control" placeholder="Enter email or username" name="invitePeople" [(ngModel)]="inviteInput" 
-                            (ngModelChange)="onInviteInputChange($event)">
-                            </div>
-                    </div>
-                    <div class="createWorkspace-actions">
-                        <button class="btn-primary" type="submit" [disabled]="createWorkspaceForm.invalid">Create workspace</button>
-                    </div>
 
-                </div>
-            </form>
+        </ng-container>
+    </div>
+
+    <ng-template #emptyState>
+      <div class="empty-dashboard">
+
+        <h1>Welcome to <span style="color: #a64bfb;">Team Up</span></h1>
+
+        <p class="subtitle">
+          Your gamified workspace for developer teams. Ship code, earn points,
+          and compete with your crew.
+        </p>
+
+        <div class="steps-grid">
+          <div class="step-card">
+            <h6>STEP 1</h6>
+            <h5>Create or join a workspace</h5>
+            <p>Start fresh with your own workspace or join an existing team.</p>
+          </div>
+
+          <div class="step-card">
+            <h6>STEP 2</h6>
+            <h5>Invite your team</h5>
+            <p>Add teammates via email or invite link.</p>
+          </div>
+
+          <div class="step-card">
+            <h6>STEP 3</h6>
+            <h5>Complete tasks & earn points</h5>
+            <p>Track progress on boards and earn points.</p>
+          </div>
+
+          <div class="step-card">
+            <h6>STEP 4</h6>
+            <h5>Climb the leaderboard</h5>
+            <p>Compete with your team and build streaks.</p>
+          </div>
         </div>
+
+        <div class="actions">
+          <button class="btn-primary" (click)="openCreateWorkspace()">
+            + Create Workspace
+          </button>
+        </div>
+
+      </div>
+    </ng-template>
+
+  </div>
+</div>
+
+ <div *ngIf="showCreateWorkspace" class="createWorkspace-overlay">
+
+    <form #createWorkspaceForm="ngForm" (ngSubmit)="createWorkspace()">
+
+      <div class="createWorkspace-box">
+
+        <!-- HEADER -->
+        <div class="header-row">
+          <div>
+            <h4>
+              Create 
+              <span style="color: #a64bfb;">workspace</span>
+            </h4>
+            <p>Set up a new workspace and invite your team.</p>
+          </div>
+
+          <button type="button" class="btn-cancel" (click)="closeCreateWorkspace()">
+            ✕
+          </button>
+        </div>
+
+        <!-- NAME -->
+        <div class="flex gap-3">
+          <div class="flex-1">
+            <label class="form-label">Workspace name</label>
+            <input 
+              type="text"
+              class="form-control"
+              name="title"
+              required
+              [(ngModel)]="workspace.title">
+          </div>
+        </div>
+
+        <!-- DESCRIPTION -->
+        <div class="flex gap-3" style="margin-top: 3%;">
+          <div class="flex-1">
+            <label class="form-label">Workspace description</label>
+            <textarea 
+              class="form-control"
+              name="description"
+              [(ngModel)]="workspace.description">
+            </textarea>
+          </div>
+        </div>
+
+        <!-- INVITE -->
+        <div class="flex gap-3" style="margin-top: 3%;">
+          <div class="flex-1">
+            <label class="form-label">Invite people</label>
+            <input 
+              type="text"
+              class="form-control"
+              name="invitePeople"
+              [(ngModel)]="inviteInput"
+              (ngModelChange)="onInviteInputChange($event)">
+          </div>
+        <!-- Suggestions dropdown -->
+            <ul *ngIf="suggestions.length > 0" class="suggestions-dropdown">
+                <li *ngFor="let user of suggestions" (click)="selectUser(user)">
+                    <img [src]="user.profilePictureUrl" alt="Profile" class="rounded-circle" width="24" height="24" />
+                    <span>{{ user.userName }} ({{ user.email }})</span>
+                </li>
+            </ul>
+
+            <!-- Selected members -->
+            <div *ngIf="invitedMembers.length > 0" class="selected-members mt-2">
+                <span class="badge bg-primary me-1" *ngFor="let member of invitedMembers">
+                    {{ member.emailOrUsername }}
+                    <button type="button" class="btn-close btn-close-white btn-sm" (click)="removeMember(member)"></button>
+                </span>
+            </div>
+        </div>
+
+        <!-- ACTION -->
+        <div class="createWorkspace-actions">
+          <button 
+            class="btn-primary"
+            type="submit"
+            [disabled]="createWorkspaceForm.invalid">
+            Create workspace
+          </button>
+        </div>
+
+      </div>
+
+    </form>
+
+  </div>

@@ -656,17 +656,21 @@ namespace TeamUpBackEnd.Extensions
 			}).RequireAuthorization().WithSummary("Returns full info on workspace based on publicId").WithTags("Workspace Management");
 
 			//returns the list of possible users user might be searching
-			app.MapGet("/search/members", [Authorize] async (string query, UserManager<ApplicationUser> userManager) =>
+			app.MapGet("/search/members", [Authorize] async (ClaimsPrincipal userClaims, HttpContext httpContext, UserManager<ApplicationUser> userManager) =>
 			{
+				var query = httpContext.Request.Query["query"].ToString();
+
 				if (string.IsNullOrWhiteSpace(query) || query.Length < 2)
 				{
 					return Results.Ok(new List<object>());
 				}
 
-				var possible_users = await userManager.Users
+				var currentUserId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
+
+				var possibleUsers = await userManager.Users
 					.Where(u =>
-						EF.Functions.Like(u.Email!, $"%{query}%") ||
-						EF.Functions.Like(u.UserName!, $"%{query}%")
+						(EF.Functions.Like(u.Email!, $"%{query}%") || EF.Functions.Like(u.UserName!, $"%{query}%"))
+						&& u.Id != currentUserId 
 					)
 					.Select(u => new
 					{
@@ -677,8 +681,11 @@ namespace TeamUpBackEnd.Extensions
 					.Take(10)
 					.ToListAsync();
 
-				return Results.Ok(possible_users);
-			}).RequireAuthorization().WithSummary("Retruns list of possible users you might be searching for").WithTags("Workspace Management");
+				return Results.Ok(possibleUsers);
+			})
+			.RequireAuthorization()
+			.WithSummary("Returns a list of possible users you might be searching for")
+			.WithTags("Workspace Management");
 				
 			//user joins into workspace using a special code
 			app.MapPost("/join/workspace", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, UserManager<ApplicationUser> userManager, JoinCodeDTO model) =>
