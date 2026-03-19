@@ -14,5 +14,9 @@ namespace TeamUpBackEnd.Helpers
 
 			return member?.Role;
 		}
+		public static string GenerateJoinCode()
+		{
+			return Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper();
+		}
 	}
 }

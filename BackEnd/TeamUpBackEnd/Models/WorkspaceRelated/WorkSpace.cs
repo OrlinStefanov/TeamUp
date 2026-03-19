@@ -1,6 +1,8 @@
 ﻿using TeamUpBackEnd.Models.Tasks;
 using TeamUpBackEnd.Models.Chat;
 
+using Helper = TeamUpBackEnd.Helpers.WorkspaceAuthorization;
+
 namespace TeamUpBackEnd.Models.WorkspaceRelated
 {
 	public class WorkSpace
@@ -10,6 +12,7 @@ namespace TeamUpBackEnd.Models.WorkspaceRelated
 		public string? Title { get; set; }
 		public string? Description { get; set; }
 		public string? OwnerId { get; set; }
+		public string? JoinCode { get; set; } = Helper.GenerateJoinCode();
 		public ApplicationUser? Owner { get; set; }
 
 		public DateOnly? CreatedAt { get; set; }

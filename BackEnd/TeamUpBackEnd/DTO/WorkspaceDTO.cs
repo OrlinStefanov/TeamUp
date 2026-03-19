@@ -38,6 +38,7 @@ namespace TeamUpBackEnd.DTO
 			public string? Description { get; set; }
 			public DateOnly CreatedAt { get; set; }
 			public DateOnly UpdatedAt { get; set; }
+			public string? JoinCode { get; set; }
 
 			public FullWorkspaceMember? Owner { get; set; }
 			public List<FullWorkspaceMember> Members { get; set; } = new List<FullWorkspaceMember>();
