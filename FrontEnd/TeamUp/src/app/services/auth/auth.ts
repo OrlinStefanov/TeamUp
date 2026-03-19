@@ -138,6 +138,23 @@ export class Auth {
     return this.workspaceSubject.value.find(w => w.publicId === id);
   }
 
+<<<<<<< Updated upstream
+=======
+  createWorkspace(workspace: any) {
+    return this.http.post(`${this.apiUrl}/create/workspace`, workspace, {
+      withCredentials: true,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+
+  searchUsers(emailOrUsername: string)
+  {
+    return this.http.post(`${this.apiUrl}/search/members/add`, emailOrUsername, {
+      withCredentials: true,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+>>>>>>> Stashed changes
   //-----------------------Decoding the token--------------------------------------------
   getToken(): string | null {
     return localStorage.getItem(this.tokenKey);

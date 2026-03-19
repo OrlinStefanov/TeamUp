@@ -656,36 +656,28 @@ namespace TeamUpBackEnd.Extensions
 			}).RequireAuthorization().WithSummary("Returns full info on workspace based on publicId").WithTags("Workspace Management");
 
 			//returns the list of possible users user might be searching
-			app.MapPost("/search/members/add", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, MemberSearch model, UserManager<ApplicationUser> userManager) =>
+			app.MapGet("/search/members", [Authorize] async (string query, UserManager<ApplicationUser> userManager) =>
 			{
-				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
-
-				if (userId is null) return Results.BadRequest("User id not found");
-
-				var user = await userManager.FindByIdAsync(userId);
-
-				if (user == null) return Results.BadRequest("User not found");
-
-				if (model.emailOrUsername.Length < 3)
+				if (string.IsNullOrWhiteSpace(query) || query.Length < 2)
 				{
-					return Results.BadRequest("Not enough data");
+					return Results.Ok(new List<object>());
 				}
 
-				var possible_users = await userManager.Users.Where(u => u.Email!.Contains(model.emailOrUsername) || u.UserName!.Contains(model.emailOrUsername)).ToListAsync();
+				var possible_users = await userManager.Users
+					.Where(u =>
+						EF.Functions.Like(u.Email!, $"%{query}%") ||
+						EF.Functions.Like(u.UserName!, $"%{query}%")
+					)
+					.Select(u => new
+					{
+						u.UserName,
+						u.Email,
+						u.ProfilePictureUrl
+					})
+					.Take(10)
+					.ToListAsync();
 
-				if (possible_users is null || possible_users.Count == 0)
-				{
-					return Results.BadRequest("No users found");
-				}
-
-				var transformed_users = possible_users.Select(u => new
-				{
-					u.UserName,
-					u.Email,
-					u.ProfilePictureUrl
-				}).ToList();
-
-				return Results.Ok(transformed_users);
+				return Results.Ok(possible_users);
 			}).RequireAuthorization().WithSummary("Retruns list of possible users you might be searching for").WithTags("Workspace Management");
 				
 			//user joins into workspace using a special code
