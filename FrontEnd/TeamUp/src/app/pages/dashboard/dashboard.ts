@@ -1,6 +1,7 @@
 import { Component, ElementRef, Renderer2, ViewChild, AfterViewInit } from '@angular/core';
 import { Auth } from '../../services/auth/auth';
 import { FormsModule } from '@angular/forms';
+import { Workspace, WorkspaceMember } from '../../services/auth/auth-types';
 import { CommonModule, NgFor, NgIf } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { Observable } from 'rxjs';
@@ -24,6 +25,7 @@ export class Dashboard implements AfterViewInit {
   showDropdown = false;
   showSettingsDropdown = false;
   showCreateWorkspace = false;
+  timeout: any;
 
   suggestions: any[] = [];
   invitedMembers: WorkspaceMember[] = [];
@@ -31,8 +33,14 @@ export class Dashboard implements AfterViewInit {
   private searchTimeout: any;
 
   user$!: Observable<any>;
-  workspaces$!: Observable<any[]>;
-
+  workspaces$!: Observable<any[]>; // тук ще държим списъка с workspaces, който ще се зарежда от бекенда
+    workspace: Workspace = {
+      title: '',
+      description: '',
+      ownerId: '',
+      members: []
+    };
+      inviteInput: string = '';
   newWorkspaceName = '';
   newWorkspaceDesc = '';
   newWorkspaceInvite = '';
@@ -44,7 +52,6 @@ export class Dashboard implements AfterViewInit {
     this.workspaces$ = this.auth.workspaces$;
 
     this.auth.getWorkspaces().subscribe();
-
     const savedMode = localStorage.getItem('darkMode');
     this.isDarkMode = savedMode === 'true';
   }
@@ -70,27 +77,19 @@ export class Dashboard implements AfterViewInit {
     }
   }
 
-  showDropDown() { this.showDropdown = !this.showDropdown; }
-  showSettingsDropDown() { this.showSettingsDropdown = !this.showSettingsDropdown; }
-  openCreateWorkspace() { this.showCreateWorkspace = true; }
-  closeCreateWorkspace() { this.showCreateWorkspace = false; }
 
-  signOut() {
-    this.auth.logout().subscribe(() => window.location.href = '/login');
+  closeMenu() {
+    this.timeout = setTimeout(() => {
+      this.showDropdown = false;
+    }, 90);
   }
 
-  createWorkspace() {
-    const value = this.newWorkspaceName.trim();
-    if (!value) return;
-
-    this.newWorkspaceName = '';
-    this.newWorkspaceDesc = '';
-    this.newWorkspaceInvite = '';
+  openCreateWorkspace() {
+    this.showCreateWorkspace = true;
+  }
+  closeCreateWorkspace() {
     this.showCreateWorkspace = false;
   }
-<<<<<<< Updated upstream
-}
-=======
 
   closeSettingsMenu() {
     this.timeout = setTimeout(() => {
@@ -109,51 +108,6 @@ export class Dashboard implements AfterViewInit {
       }
     });
   }
-
-  onInviteInputChange(value: string)
-  {
-    clearTimeout(this.searchTimeout);
-
-    if (!value || value.length < 3)
-    {
-      this.suggestions = [];
-      return;
-    }
-
-    this.searchTimeout = setTimeout(() => {
-      this.searchUsers(value);
-    });
-  }
-
-  searchUsers(query: string) 
-  {
-    this.auth.searchUsers(query).subscribe({
-      next: (res : any) => {
-        this.suggestions = res;
-      },
-      error: (err) => {
-        console.error(err);
-        this.suggestions = [];
-      }
-    });
-  }
-
- /* selectUser(user: any) {
-  // prevent duplicates
-  const exists = this.invitedMembers.some(u => u.id === user.id);
-  if (exists) return;
-
-  this.invitedMembers.push({
-    emailOrUsername: user.email ?? user.userName,
-    role: 0 // default Member
-  });
-
-  this.inviteInput = '';
-  this.suggestions = [];
-
-  console.log('Invited:', this.invitedMembers);
-}*/
-
   createWorkspace() {
     if (!this.workspace.title.trim()) {
       console.log("Workspace name is required");
@@ -182,4 +136,4 @@ export class Dashboard implements AfterViewInit {
     });
   }
 }
->>>>>>> Stashed changes
+}

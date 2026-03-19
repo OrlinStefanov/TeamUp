@@ -34,12 +34,6 @@ export interface UserProfile {
     lastName: string;
     birthDate: Date;
     phoneNumber: string;
-<<<<<<< Updated upstream
-=======
-}
-
-export interface SearchedMember {
-    
 }
 
 export interface WorkspaceMember {
@@ -52,5 +46,4 @@ export interface Workspace {
     description: string;
     ownerId: string;
     members: WorkspaceMember[];
->>>>>>> Stashed changes
 }

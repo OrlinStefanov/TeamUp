@@ -14,6 +14,9 @@ export class Layout {
   isSidebarOpen = false;
   isDesktopSidebarCollapsed = false;
   isDarkMode = false;
+  activeLink: string = '';
+
+  workspaces : any[] = [];
 
   constructor(private auth: Auth, private router: Router) {}
   
@@ -42,5 +45,13 @@ export class Layout {
 
   openWorkspace(id: string) {
     this.router.navigate(['/workspace', id, 'tasks']);
+  }
+
+  setActive(link: string) {
+    this.activeLink = link;
+  }
+
+  isActive(url: string) {
+    return this.router.url === url;
   }
 }
