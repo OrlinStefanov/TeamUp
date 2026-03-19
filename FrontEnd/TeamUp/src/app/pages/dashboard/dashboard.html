@@ -70,6 +70,82 @@
             <p>Compete with your team and build streaks.</p>
           </div>
         </div>
+<div *ngIf="showCreateWorkspace" class="createWorkspace-overlay">
+            <form #createWorkspaceForm="ngForm" (ngSubmit)="createWorkspace()">
+                <div class="createWorkspace-box">
+                    <div class="header-row">
+                        <div>
+                            <h4>
+                                Create <span style="color: #a64bfb; text-shadow: #a64bfb 0 0 10px">workspace</span>
+                            </h4>
+                            <p>Set up a new workspace and invite your team<span style="color: #a64bfb; text-shadow: #a64bfb;">.</span></p>
+                        </div>
+                        <button class="btn-cancel" (click)="closeCreateWorkspace()">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-lg" viewBox="0 0 16 16">
+                                <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="flex gap-3">
+                        <div class="flex-1">
+                            <label class="form-label">Workspace name</label>
+                            <input type="text" class="form-control" placeholder="Enter workspace name" name="title" required [(ngModel)]="workspace.title">
+                        </div>
+                    </div>
+                    <div class="flex gap-3" style="margin-top: 3%;">
+                        <div class="flex-1">
+                            <label class="form-label">Workspace description</label>
+                            <textarea type="text" class="form-control" placeholder="Enter workspace description" name="description" style="min-height: 75px;" [(ngModel)]="workspace.description"></textarea>
+                        </div>
+                    </div>
+                    <div class="flex gap-3"style="margin-top: 3%;">
+                        <div class="flex-1">
+                            <label class="form-label">Invite people</label>
+                            <input type="text" class="form-control" placeholder="Enter email or username" name="invitePeople" [(ngModel)]="inviteInput">
+                            </div>
+                    </div>
+                    <div class="createWorkspace-actions">
+                        <button class="btn-primary" type="submit" [disabled]="createWorkspaceForm.invalid">Create workspace</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+    <ng-template #emptyState>
+      <div class="empty-dashboard">
+
+        <h1>Welcome to <span style="color: #a64bfb;">Team Up</span></h1>
+
+        <p class="subtitle">
+          Your gamified workspace for developer teams. Ship code, earn points,
+          and compete with your crew.
+        </p>
+
+        <div class="steps-grid">
+          <div class="step-card">
+            <h6>STEP 1</h6>
+            <h5>Create or join a workspace</h5>
+            <p>Start fresh with your own workspace or join an existing team.</p>
+          </div>
+
+          <div class="step-card">
+            <h6>STEP 2</h6>
+            <h5>Invite your team</h5>
+            <p>Add teammates via email or invite link.</p>
+          </div>
+
+          <div class="step-card">
+            <h6>STEP 3</h6>
+            <h5>Complete tasks & earn points</h5>
+            <p>Track progress on boards and earn points.</p>
+          </div>
+
+          <div class="step-card">
+            <h6>STEP 4</h6>
+            <h5>Climb the leaderboard</h5>
+            <p>Compete with your team and build streaks.</p>
+          </div>
+        </div>
 
         <div class="actions">
           <button class="btn-primary" (click)="openCreateWorkspace()">
