@@ -114,3 +114,138 @@
                 </div>
             </form>
         </div>
+
+    <ng-template #emptyState>
+      <div class="empty-dashboard">
+
+        <h1>Welcome to <span style="color: #a64bfb;">Team Up</span></h1>
+
+        <p class="subtitle">
+          Your gamified workspace for developer teams. Ship code, earn points,
+          and compete with your crew.
+        </p>
+
+        <div class="steps-grid">
+          <div class="step-card">
+            <h6>STEP 1</h6>
+            <h5>Create or join a workspace</h5>
+            <p>Start fresh with your own workspace or join an existing team.</p>
+          </div>
+
+          <div class="step-card">
+            <h6>STEP 2</h6>
+            <h5>Invite your team</h5>
+            <p>Add teammates via email or invite link.</p>
+          </div>
+
+          <div class="step-card">
+            <h6>STEP 3</h6>
+            <h5>Complete tasks & earn points</h5>
+            <p>Track progress on boards and earn points.</p>
+          </div>
+
+          <div class="step-card">
+            <h6>STEP 4</h6>
+            <h5>Climb the leaderboard</h5>
+            <p>Compete with your team and build streaks.</p>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btn-primary" (click)="openCreateWorkspace()">
+            + Create Workspace
+          </button>
+        </div>
+
+      </div>
+    </ng-template>
+
+ <div *ngIf="showCreateWorkspace" class="createWorkspace-overlay">
+
+    <form #createWorkspaceForm="ngForm" (ngSubmit)="createWorkspace()">
+
+      <div class="createWorkspace-box">
+
+        <!-- HEADER -->
+        <div class="header-row">
+          <div>
+            <h4>
+              Create 
+              <span style="color: #a64bfb;">workspace</span>
+            </h4>
+            <p>Set up a new workspace and invite your team.</p>
+          </div>
+
+          <button type="button" class="btn-cancel" (click)="closeCreateWorkspace()">
+            ✕
+          </button>
+        </div>
+
+        <!-- NAME -->
+        <div class="flex gap-3">
+          <div class="flex-1">
+            <label class="form-label">Workspace name</label>
+            <input 
+              type="text"
+              class="form-control"
+              name="title"
+              required
+              [(ngModel)]="workspace.title">
+          </div>
+        </div>
+
+        <!-- DESCRIPTION -->
+        <div class="flex gap-3" style="margin-top: 3%;">
+          <div class="flex-1">
+            <label class="form-label">Workspace description</label>
+            <textarea 
+              class="form-control"
+              name="description"
+              [(ngModel)]="workspace.description">
+            </textarea>
+          </div>
+        </div>
+
+        <!-- INVITE -->
+        <div class="flex gap-3" style="margin-top: 3%;">
+          <div class="flex-1">
+            <label class="form-label">Invite people</label>
+            <input 
+              type="text"
+              class="form-control"
+              name="invitePeople"
+              [(ngModel)]="inviteInput"
+              (ngModelChange)="onInviteInputChange($event)">
+          </div>
+        <!-- Suggestions dropdown -->
+            <ul *ngIf="suggestions.length > 0" class="suggestions-dropdown">
+                <li *ngFor="let user of suggestions" (click)="selectUser(user)">
+                    <img [src]="user.profilePictureUrl" alt="Profile" class="rounded-circle" width="24" height="24" />
+                    <span>{{ user.userName }} ({{ user.email }})</span>
+                </li>
+            </ul>
+
+            <!-- Selected members -->
+            <div *ngIf="invitedMembers.length > 0" class="selected-members mt-2">
+                <span class="badge bg-primary me-1" *ngFor="let member of invitedMembers">
+                    {{ member.emailOrUsername }}
+                    <button type="button" class="btn-close btn-close-white btn-sm" (click)="removeMember(member)"></button>
+                </span>
+            </div>
+        </div>
+
+        <!-- ACTION -->
+        <div class="createWorkspace-actions">
+          <button 
+            class="btn-primary"
+            type="submit"
+            [disabled]="createWorkspaceForm.invalid">
+            Create workspace
+          </button>
+        </div>
+
+      </div>
+
+    </form>
+
+  </div>
