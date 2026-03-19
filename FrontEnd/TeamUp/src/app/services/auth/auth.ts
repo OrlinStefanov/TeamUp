@@ -52,6 +52,11 @@ export class Auth {
     return this.http.post(`${this.apiUrl}/logout`, {});
   }
 
+  setUser(user : any)
+  {
+    this.userSubject.next(user);
+  }
+
   getCurrentUser() {
     return this.userSubject.value;
   }
@@ -139,6 +144,11 @@ export class Auth {
       headers: { 'Content-Type': 'application/json' }
     });
   }
+
+  searchUsers(emailOrUsername: string) {
+    return this.http.get(`${this.apiUrl}/search/members?query=${encodeURIComponent(emailOrUsername)}`);
+  }
+  
   //-----------------------Decoding the token--------------------------------------------
   getToken(): string | null {
     return localStorage.getItem(this.tokenKey);
