@@ -1,8 +1,8 @@
-import { Component, ElementRef, Renderer2, ViewChild, AfterViewInit } from '@angular/core';
+import { Component, ElementRef, Renderer2, ViewChild, AfterViewInit, TemplateRef } from '@angular/core';
 import { Auth } from '../../services/auth/auth';
 import { FormsModule } from '@angular/forms';
 import { Workspace, WorkspaceMember } from '../../services/auth/auth-types';
-import { CommonModule, NgFor, NgIf } from '@angular/common';
+import { CommonModule, NgFor, NgIf, NgIfContext } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { Observable } from 'rxjs';
 
@@ -108,21 +108,15 @@ export class Dashboard implements AfterViewInit {
       }
     });
   }
+
   createWorkspace() {
     if (!this.workspace.title.trim()) {
       console.log("Workspace name is required");
       return;
     }
 
-    const currentUser = this.auth.getCurrentUser();
+    this.workspace.members = [...this.invitedMembers];
 
-    if (this.inviteInput.trim()) {
-      this.workspace.members.push({
-        role: 0,
-        emailOrUsername: this.inviteInput
-      });
-    }
-    
     console.log('Creating workspace:', this.workspace);
 
     this.auth.createWorkspace(this.workspace).subscribe({
@@ -130,10 +124,48 @@ export class Dashboard implements AfterViewInit {
         this.auth.getWorkspaces(true).subscribe();
 
         this.workspace = { title: '', description: '', ownerId: '', members: [] };
+        this.invitedMembers = [];
         this.inviteInput = '';
+        this.suggestions = [];
         this.showCreateWorkspace = false;
       }
     });
   }
-}
+
+  onInviteInputChange(value: string) {
+    if (this.searchTimeout) clearTimeout(this.searchTimeout);
+
+    this.searchTimeout = setTimeout(() => {
+      if (value.length < 2) {
+        this.suggestions = [];
+        return;
+      }
+
+      this.auth.searchUsers(value).subscribe({
+        next: (res: any) => {
+          this.suggestions = res.filter((u: any) =>
+            !this.invitedMembers.some(m => m.emailOrUsername === u.userName)
+          );
+        },
+        error: () => {
+          this.suggestions = [];
+        }
+      });
+    }, 300);
+  }
+
+  selectUser(user: any) {
+    this.invitedMembers.push({
+      role: 0, // member role
+      emailOrUsername: user.userName
+    });
+
+    this.inviteInput = '';
+    this.suggestions = [];
+  }
+
+
+  removeMember(member: WorkspaceMember) {
+    this.invitedMembers = this.invitedMembers.filter(m => m !== member);
+  }
 }

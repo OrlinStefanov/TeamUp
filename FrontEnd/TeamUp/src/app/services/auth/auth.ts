@@ -145,14 +145,10 @@ export class Auth {
     });
   }
 
-
-  searchUsers(emailOrUsername: string)
-  {
-    return this.http.post(`${this.apiUrl}/search/members/add`, emailOrUsername, {
-      withCredentials: true,
-      headers: { 'Content-Type': 'application/json' }
-    });
+  searchUsers(emailOrUsername: string) {
+    return this.http.get(`${this.apiUrl}/search/members?query=${encodeURIComponent(emailOrUsername)}`);
   }
+  
   //-----------------------Decoding the token--------------------------------------------
   getToken(): string | null {
     return localStorage.getItem(this.tokenKey);
