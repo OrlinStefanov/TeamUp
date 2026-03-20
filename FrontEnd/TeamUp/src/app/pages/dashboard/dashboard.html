@@ -22,6 +22,7 @@
 
         </div>
 
+<<<<<<< Updated upstream
         <div class="row">
             <div class="col-12">
                 <div class="actions">
@@ -30,6 +31,36 @@
                     </button>
                 </div>
             </div>
+=======
+    <ng-template #emptyState>
+      <div class="empty-dashboard">
+        <h1>Welcome to <span class="accent">Team Up</span></h1>
+        <p class="subtitle">
+          Your gamified workspace for developer teams. Ship code, earn points, and compete with your crew.
+        </p>
+
+        <div class="steps-grid">
+          <div class="step-card">
+            <h6>STEP 1</h6>
+            <h5>Create or join a workspace</h5>
+            <p>Start fresh with your own workspace or join an existing team.</p>
+          </div>
+          <div class="step-card">
+            <h6>STEP 2</h6>
+            <h5>Invite your team</h5>
+            <p>Add teammates via email or invite link.</p>
+          </div>
+          <div class="step-card">
+            <h6>STEP 3</h6>
+            <h5>Complete tasks & earn points</h5>
+            <p>Track progress on boards and earn points.</p>
+          </div>
+          <div class="step-card">
+            <h6>STEP 4</h6>
+            <h5>Climb the leaderboard</h5>
+            <p>Compete with your team and build streaks.</p>
+          </div>
+>>>>>>> Stashed changes
         </div>
 
         </ng-container>
@@ -81,13 +112,19 @@
     </ng-template>
 
   </div>
-</div>
 
  <div *ngIf="showCreateWorkspace" class="createWorkspace-overlay">
 
     <form #createWorkspaceForm="ngForm" (ngSubmit)="createWorkspace()">
 
+<<<<<<< Updated upstream
       <div class="createWorkspace-box">
+=======
+      <div class="form-group">
+        <label class="form-label">Workspace description</label>
+        <textarea class="form-control" name="description" placeholder="Enter workspace description" [(ngModel)]="workspace.description"></textarea>
+      </div>
+>>>>>>> Stashed changes
 
         <!-- HEADER -->
         <div class="header-row">
@@ -171,4 +208,46 @@
 
     </form>
 
+<<<<<<< Updated upstream
   </div>
+=======
+      <div class="form-group">
+        <label class="form-label label-caps">Invite Code</label>
+        <input 
+          type="text" 
+          class="form-control" 
+          name="inviteCode"
+          placeholder="e.g. ACME-2024-XXYZ" 
+          required
+          [(ngModel)]="joinInput.inviteCode">
+      </div>
+
+      <div class="separator-row">
+        <div class="separator-line"></div>
+        <div class="separator-text">OR PASTE LINK</div>
+        <div class="separator-line"></div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label label-caps">Or Paste Link</label>
+        <input 
+          type="text" 
+          class="form-control faded-input" 
+          name="workspaceLink"
+          placeholder="https://teamup.io/join/..."
+          [(ngModel)]="joinInput.workspaceLink">
+      </div>
+
+      <div class="joinWorkspace-actions">
+        <button 
+          class="btn-primary" 
+          type="submit"
+          [disabled]="joinForm.invalid">
+          Join Workspace <span class="button-arrow">→</span>
+        </button>
+      </div>
+
+    </div>
+  </form>
+</div>
+>>>>>>> Stashed changes

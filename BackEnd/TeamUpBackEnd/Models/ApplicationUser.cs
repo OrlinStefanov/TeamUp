@@ -17,5 +17,6 @@ namespace TeamUpBackEnd.Models
 		public ICollection<ChannelMember> Channels { get; set; } = new List<ChannelMember>();
 		public ICollection<TaskAssignment> Tasks { get; set; } = new List<TaskAssignment>();
 		public ICollection<WorkSpaceMember> Workspaces { get; set; } = new List<WorkSpaceMember>();
+		public ICollection<WorkspaceInvitation> WorkspaceInvitations { get; set; } = new List<WorkspaceInvitation>();
 	}
 }
