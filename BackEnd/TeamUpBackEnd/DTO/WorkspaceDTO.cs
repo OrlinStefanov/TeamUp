@@ -42,6 +42,7 @@ namespace TeamUpBackEnd.DTO
 
 			public FullWorkspaceMember? Owner { get; set; }
 			public List<FullWorkspaceMember> Members { get; set; } = new List<FullWorkspaceMember>();
+			public List<FullWorkspaceInvitations> Invitations { get; set; } = new List<FullWorkspaceInvitations>();
 		}
 
 		public record FullWorkspaceMember
@@ -51,6 +52,19 @@ namespace TeamUpBackEnd.DTO
 			public string? Email { get; set; }
 			public WorkSpaceRole Role { get; set; }
 			public string ProfilePictureUrl { get; set; } = string.Empty;
+		}
+
+		public record FullWorkspaceInvitations
+		{
+			public int Id { get; set; }
+			
+			public string? UserName { get; set; }
+			public string? Emial { get; set; }
+			public WorkSpaceRole? Role { get; set; }
+			public string? ProfilePictureUrl { get; set; }
+
+			public DateOnly? CreatedAt { get; set; }
+			public bool? isAccepted { get; set; }
 		}
 	}
 }

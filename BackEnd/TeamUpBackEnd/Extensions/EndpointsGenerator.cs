@@ -10,6 +10,7 @@ using TeamUpBackEnd.Models;
 using TeamUpBackEnd.Models.Tasks;
 using TeamUpBackEnd.Models.WorkspaceRelated;
 using TeamUpBackEnd.Services;
+
 using static TeamUpBackEnd.DTO.TaskItemsDTO;
 using taskDTO = TeamUpBackEnd.DTO.TaskItemsDTO;
 using user_data = TeamUpBackEnd.DTO.UserDataDTO;
@@ -602,6 +603,7 @@ namespace TeamUpBackEnd.Extensions
 				var workspace = await db.Workspaces
 					.Include(w => w.Members)
 					.ThenInclude(m => m.User)
+					.ThenInclude(m => m.WorkspaceInvitations)
 					.FirstOrDefaultAsync(w => w.PublicId.ToString() == publicId);
 
 				if (workspace == null)
@@ -625,33 +627,79 @@ namespace TeamUpBackEnd.Extensions
 					.Where(m => m.UserId != owner.UserId)
 					.ToList();
 
-				var full_workpace = new workspaceDto.FullWorkspace
-				{
-					Id = workspace.Id,
-					PublicId = workspace.PublicId.ToString(),
-					Title = workspace.Title,
-					Description = workspace.Description,
-					CreatedAt = (DateOnly)workspace.CreatedAt!,
-					JoinCode = workspace.JoinCode,
-					Owner = new workspaceDto.FullWorkspaceMember
-					{
-						Id = owner.UserId!,
-						UserName = owner.User!.UserName!,
-						Email = owner.User!.Email,
-						Role = WorkSpaceRole.Owner,
-						ProfilePictureUrl = owner.User!.ProfilePictureUrl!
-					},
-					Members = membersWithoutOwner.Select(m => new workspaceDto.FullWorkspaceMember
-					{
-						Id = m.UserId!,
-						UserName = m.User!.UserName!,
-						Email = m.User.Email,
-						Role = m.Role,
-						ProfilePictureUrl = m.User!.ProfilePictureUrl!
-					}).ToList()
-				};
+				var invitations = workspace.Invitations.Where(m => m.isAccepted == false).ToList();
 
-				return Results.Ok(full_workpace);
+				if (owner.UserId == userId)
+				{
+					var full_workpace = new workspaceDto.FullWorkspace
+					{
+						Id = workspace.Id,
+						PublicId = workspace.PublicId.ToString(),
+						Title = workspace.Title,
+						Description = workspace.Description,
+						CreatedAt = (DateOnly)workspace.CreatedAt!,
+						JoinCode = workspace.JoinCode,
+						Owner = new workspaceDto.FullWorkspaceMember
+						{
+							Id = owner.UserId!,
+							UserName = owner.User!.UserName!,
+							Email = owner.User!.Email,
+							Role = WorkSpaceRole.Owner,
+							ProfilePictureUrl = owner.User!.ProfilePictureUrl!
+						},
+						Members = membersWithoutOwner.Select(m => new workspaceDto.FullWorkspaceMember
+						{
+							Id = m.UserId!,
+							UserName = m.User!.UserName!,
+							Email = m.User.Email,
+							Role = m.Role,
+							ProfilePictureUrl = m.User!.ProfilePictureUrl!
+						}).ToList(),
+						Invitations = invitations.Select(m => new workspaceDto.FullWorkspaceInvitations
+						{ 
+							Id = m.Id,
+							UserName = m.User?.UserName!,
+							Emial = m.User?.Email,
+							Role = WorkSpaceRole.Member,
+							ProfilePictureUrl = m.User?.ProfilePictureUrl,
+							CreatedAt = m.CreatedAt,
+							isAccepted = m.isAccepted
+						}).ToList()
+					};
+
+					return Results.Ok(full_workpace);
+				}
+				else
+				{
+					var full_workpace = new workspaceDto.FullWorkspace
+					{
+						Id = workspace.Id,
+						PublicId = workspace.PublicId.ToString(),
+						Title = workspace.Title,
+						Description = workspace.Description,
+						CreatedAt = (DateOnly)workspace.CreatedAt!,
+						JoinCode = workspace.JoinCode,
+						Owner = new workspaceDto.FullWorkspaceMember
+						{
+							Id = owner.UserId!,
+							UserName = owner.User!.UserName!,
+							Email = owner.User!.Email,
+							Role = WorkSpaceRole.Owner,
+							ProfilePictureUrl = owner.User!.ProfilePictureUrl!
+						},
+						Members = membersWithoutOwner.Select(m => new workspaceDto.FullWorkspaceMember
+						{
+							Id = m.UserId!,
+							UserName = m.User!.UserName!,
+							Email = m.User.Email,
+							Role = m.Role,
+							ProfilePictureUrl = m.User!.ProfilePictureUrl!
+						}).ToList()
+					};
+
+					return Results.Ok(full_workpace);
+				}
+
 
 			}).RequireAuthorization().WithSummary("Returns full info on workspace based on publicId").WithTags("Workspace Management");
 
@@ -686,7 +734,8 @@ namespace TeamUpBackEnd.Extensions
 			.RequireAuthorization()
 			.WithSummary("Returns a list of possible users you might be searching for")
 			.WithTags("Workspace Management");
-				
+			
+			//--------------------------------------------------JoinCode-----------------------------------------------------//
 			//user joins into workspace using a special code
 			app.MapPost("/join/workspace", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, UserManager<ApplicationUser> userManager, JoinCodeDTO model) =>
 			{
@@ -705,30 +754,35 @@ namespace TeamUpBackEnd.Extensions
 
 				var workspace = await db.Workspaces
 					.Include(w => w.Members)
-					.FirstOrDefaultAsync(j => j.JoinCode!.Equals(model.join_code));
+					.FirstOrDefaultAsync(j => j.JoinCode == model.join_code);
 
 				if (workspace is null) return Results.BadRequest("Woorkspace with this code does not exist");
 
-				if (workspace.Members.Any(u => u.UserId == userId))
-				{
-					return Results.BadRequest("User is already in the workspace");
-				}
+				var isMember = await db.WorkspaceMembers
+					   .AnyAsync(m => m.UserId == userId && m.WorkSpaceId == workspace.Id);
 
-				workspace.Members.Add(new WorkSpaceMember
+				if (isMember)
+					return Results.BadRequest("Already a member");
+
+
+				var alreadyRequested = await db.WorkspaceInvitations
+					.AnyAsync(i => i.UserId == userId && i.WorkspaceId == workspace.Id);
+
+				if (alreadyRequested)
+					return Results.BadRequest("Already requested");
+
+				var invitation = new WorkspaceInvitation
 				{
 					UserId = userId,
-					Role = WorkSpaceRole.Member
-				});
+					WorkspaceId = workspace.Id
+				};
 
+				await db.AddAsync(invitation);
 				await db.SaveChangesAsync();
 
-				return Results.Ok(new
-				{
-					publicId = workspace.PublicId,
-					title = workspace.Title
-				});
+				return Results.Ok("Request sent. Waiting for approval.");
 
-			}).RequireAuthorization().WithSummary("User joins the workspace by enterning a code").WithTags("Workspace Management");
+			}).RequireAuthorization().WithSummary("User asks to join the workspace by enterning a code").WithTags("Workspace Management");
 
 			//regenerating the workspace join code
 			app.MapPost("/regenerating/join_code", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, UserManager<ApplicationUser> userManager, string publicId) =>
@@ -756,6 +810,33 @@ namespace TeamUpBackEnd.Extensions
 				return Results.Ok("JoinCode changed to " + workspace.JoinCode);
 
 			}).RequireAuthorization().WithSummary("Regenerates the join code in the workspace").WithTags("Workspace Management");
+
+			//returns the invitations in a workspace based on the publicid
+			app.MapGet("/workspaces/{publicId}/invitations", [Authorize] async (AppDbContext db, string publicId, ClaimsPrincipal userClaims, UserManager<ApplicationUser> userManager) =>
+			{
+				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
+
+				if (userId is null) return Results.BadRequest("User id not found");
+
+				var user = userManager.FindByIdAsync(userId);
+
+				if (user is null) return Results.BadRequest("User not found");
+
+				var workspace = await db.Workspaces
+					.Include(m => m.Members)
+					.ThenInclude(m => m.User)
+					.ThenInclude(m => m.WorkspaceInvitations)
+					.FirstOrDefaultAsync(m => m.PublicId.ToString() == publicId);
+				
+				if (workspace is null) return Results.BadRequest("Workspace is not found");
+
+				if (workspace.OwnerId != userId) return Results.Forbid();
+
+				var invitations = workspace.Invitations.Select(m => m.isAccepted == false);
+
+				return Results.Ok(invitations);
+
+			}).RequireAuthorization().WithSummary("Returns all pending invitations for the owner").WithTags("Workspace Management");
 		}
 
 		public static void TaskEndpoints(WebApplication app)
