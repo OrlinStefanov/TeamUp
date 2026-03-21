@@ -21,6 +21,8 @@ import { Observable } from 'rxjs';
 })
 export class Dashboard implements OnInit, AfterViewInit {
   @ViewChild('pageDiv') pageDiv?: ElementRef;
+  @ViewChild('joinWorkspaceModal') joinWorkspaceModal?: ElementRef;
+  @ViewChild('createWorkspaceModal') createWorkspaceModal?: ElementRef;
 
   isDarkMode = false;
   showDropdown = false;
@@ -75,12 +77,22 @@ export class Dashboard implements OnInit, AfterViewInit {
 
   applyTheme() {
     if (!this.pageDiv) return;
+    if (!this.joinWorkspaceModal) return;
+    if (!this.createWorkspaceModal) return;
     if (this.isDarkMode) {
       this.renderer.removeClass(this.pageDiv.nativeElement, 'light-mode');
+      this.renderer.removeClass(this.joinWorkspaceModal.nativeElement, 'light-mode');
+      this.renderer.removeClass(this.createWorkspaceModal.nativeElement, 'light-mode');
       this.renderer.addClass(this.pageDiv.nativeElement, 'dark-mode');
+      this.renderer.addClass(this.joinWorkspaceModal.nativeElement, 'dark-mode');
+      this.renderer.addClass(this.createWorkspaceModal.nativeElement, 'dark-mode');
     } else {
       this.renderer.removeClass(this.pageDiv.nativeElement, 'dark-mode');
+      this.renderer.removeClass(this.joinWorkspaceModal.nativeElement, 'dark-mode');
+      this.renderer.removeClass(this.createWorkspaceModal.nativeElement, 'dark-mode');
       this.renderer.addClass(this.pageDiv.nativeElement, 'light-mode');
+      this.renderer.addClass(this.joinWorkspaceModal.nativeElement, 'light-mode');
+      this.renderer.addClass(this.createWorkspaceModal.nativeElement, 'light-mode');
     }
   }
 
