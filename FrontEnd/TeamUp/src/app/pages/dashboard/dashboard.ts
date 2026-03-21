@@ -108,13 +108,24 @@ export class Dashboard implements OnInit, AfterViewInit {
   }
 
   createWorkspace() {
-    if (!this.workspace.title.trim()) return;
+    if (!this.workspace.title.trim()) {
+      console.log("Workspace name is required");
+      return;
+    }
 
     this.workspace.members = [...this.invitedMembers];
+
+    console.log('Creating workspace:', this.workspace);
+
     this.auth.createWorkspace(this.workspace).subscribe({
       next: () => {
         this.auth.getWorkspaces(true).subscribe();
-        this.closeCreateWorkspace();
+
+        this.workspace = { title: '', description: '', ownerId: '', members: [] };
+        this.invitedMembers = [];
+        this.inviteInput = '';
+        this.suggestions = [];
+        this.showCreateWorkspace = false;
       }
     });
   }
