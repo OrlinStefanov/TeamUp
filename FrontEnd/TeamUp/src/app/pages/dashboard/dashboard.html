@@ -9,23 +9,22 @@
         <div class="col-12">
 
           <div class="workspace-header">
-            <h2>Welcome to your dashboard, {{ (user$ | async)?.userName }}!</h2>
+            <h2>Welcome to your dashboard,<a style="color: #a64bfb; text-shadow: #9333ea 0 0 3px;"> {{ (user$ | async)?.userName }}</a></h2>
+            <h6 style="color: #bbb; padding-bottom: 20px;">Pick a workspace to continue where you left off.</h6>
           </div>
 
-          <div *ngFor="let workspace of workspaces" class="workspace-card">
-            <h3>{{ workspace.title }}</h3>
-            <p>{{ workspace.description }}</p>
-
-            <a 
-              [routerLink]="['/workspace', workspace.publicId, 'tasks']" 
-              class="btn-primary">
-              Go to workspace
-            </a>
-          </div>
-
-          <div class="actions">
-            <button class="btn-primary" (click)="openCreateWorkspace()">
-              + Create Workspace
+          <div class="workspaces-grid">
+            <div *ngFor="let workspace of workspaces" class="workspace-card" [routerLink]="['/workspace', workspace.publicId, 'tasks']">
+              <span class="workspace-icon">
+                {{ workspace.title.charAt(0) }}
+              </span>
+              <h3>{{ workspace.title }}</h3>
+              <p style="color: #bbb;">{{ workspace.description }}</p>
+            </div>
+            <button class="workspaces-grid-add" style="display: flex;" (click)="openCreateWorkspace()">
+                <a>+</a>
+              Add New Workspace
+              <p style="color: #bbb; font-size: x-small; padding: 20px;">Create or Join a new workspace to get started.</p>
             </button>
           </div>
 
