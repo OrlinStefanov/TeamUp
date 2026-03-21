@@ -87,7 +87,6 @@
     </ng-template>
 
   </div>
-</div>
 
 <!-- ================= CREATE WORKSPACE MODAL ================= -->
 <div #createWorkspaceModal *ngIf="showCreateWorkspace" class="createWorkspace-overlay" [ngClass]="{'light-mode': !isDarkMode, 'dark-mode': isDarkMode}">
@@ -217,6 +216,42 @@
           type="submit"
           [disabled]="joinForm.invalid">
           Join Workspace →
+        </button>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label label-caps">Invite Code</label>
+        <input 
+          type="text" 
+          class="form-control" 
+          name="inviteCode"
+          placeholder="e.g. ACME-2024-XXYZ" 
+          required
+          [(ngModel)]="joinInput.inviteCode">
+      </div>
+
+      <div class="separator-row">
+        <div class="separator-line"></div>
+        <div class="separator-text">OR PASTE LINK</div>
+        <div class="separator-line"></div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label label-caps">Or Paste Link</label>
+        <input 
+          type="text" 
+          class="form-control faded-input" 
+          name="workspaceLink"
+          placeholder="https://teamup.io/join/..."
+          [(ngModel)]="joinInput.workspaceLink">
+      </div>
+
+      <div class="joinWorkspace-actions">
+        <button 
+          class="btn-primary" 
+          type="submit"
+          [disabled]="joinForm.invalid">
+          Join Workspace <span class="button-arrow">→</span>
         </button>
       </div>
 
