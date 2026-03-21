@@ -22,9 +22,8 @@ namespace TeamUpBackEnd.DbContext
 		public DbSet<WorkSpace> Workspaces { get; set; }
 
 		public DbSet<WorkSpaceMember> WorkspaceMembers { get; set; }
-
+		public DbSet<WorkspaceInvitation> WorkspaceInvitations { get; set; }
 		public DbSet<TaskItem> Tasks { get; set; }
-
 		public DbSet<TaskAssignment> TaskAssignments { get; set; }
 
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -43,6 +42,21 @@ namespace TeamUpBackEnd.DbContext
 				.HasOne(wm => wm.User)
 				.WithMany(u => u.Workspaces)
 				.HasForeignKey(wm => wm.UserId);
+
+			modelBuilder.Entity<WorkspaceInvitation>()
+				.HasKey(wi => new { wi.WorkspaceId, wi.UserId });
+
+			modelBuilder.Entity<WorkspaceInvitation>()
+				.HasOne(wi => wi.WorkSpace)
+				.WithMany(w => w.Invitations)
+				.HasForeignKey(wi => wi.WorkspaceId)
+				.OnDelete(DeleteBehavior.Cascade);
+
+			modelBuilder.Entity<WorkspaceInvitation>()
+				.HasOne(wi => wi.User)
+				.WithMany(u => u.WorkspaceInvitations)
+				.HasForeignKey(wi => wi.UserId)
+				.OnDelete(DeleteBehavior.Cascade);
 
 			// TaskAssignment composite key
 			modelBuilder.Entity<TaskAssignment>()
