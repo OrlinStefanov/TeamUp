@@ -116,19 +116,55 @@ export class Dashboard implements OnInit, AfterViewInit {
     this.joinInput = { inviteCode: '', workspaceLink: '' };
   }
 
+  //pipam
   joinWorkspace() {
-    const identifier = this.joinInput.inviteCode || this.joinInput.workspaceLink;
-    
-    if (!identifier) return;
+    const code = this.joinInput.inviteCode?.trim();
+    const link = this.joinInput.workspaceLink?.trim();
 
-    console.log('Attempting to join with:', identifier);
-    /*this.auth.joinWorkspace(identifier).subscribe({
-    next: () => {
-         this.auth.getWorkspaces(true).subscribe();
-         this.closeJoinWorkspace();
-       }
-    });*/
-    
+    if (!code && !link) return;
+
+    if (code) {
+      this.auth.joinWorkspaceByCode(code).subscribe({
+        next: () => this.afterJoinSuccess(),
+        error: err => console.error(err)
+      });
+      return;
+    }
+
+    if (link) {
+      const publicId = this.extractPublicIdFromLink(link);
+
+      if (!publicId) {
+        console.error("Invalid link");
+        return;
+      }
+
+      this.auth.joinWorkspaceByLink(publicId).subscribe({
+        next: () => this.afterJoinSuccess(),
+        error: err => console.error(err)
+      });
+    }
+  }
+
+  extractPublicIdFromLink(link: string): string | null {
+    try {
+      const url = new URL(link);
+      const parts = url.pathname.split('/');
+
+      return parts[parts.length - 1];
+    } catch {
+      return null;
+    }
+  }
+
+  afterJoinSuccess() {
+    this.auth.getWorkspaces(true).subscribe();
+
+    this.joinInput = {
+      inviteCode: '',
+      workspaceLink: ''
+    };
+
     this.closeJoinWorkspace();
   }
 

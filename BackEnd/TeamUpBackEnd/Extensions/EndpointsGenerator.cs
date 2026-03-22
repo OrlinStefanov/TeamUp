@@ -720,6 +720,56 @@ namespace TeamUpBackEnd.Extensions
 
 			}).RequireAuthorization().WithSummary("User asks to join the workspace by enterning a code").WithTags("Workspace Management");
 
+			//when joining with link it sends invitation
+			app.MapPost("/workspace/join/link/{publicId}", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, string publicId) =>
+			{
+				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
+
+				if (userId is null)
+					return Results.BadRequest("User not found");
+
+				var user = await db.Users.FindAsync(userId);
+				if (user is null)
+					return Results.BadRequest("User not found");
+
+				var workspace = await db.Workspaces
+					.Include(w => w.Members)
+					.FirstOrDefaultAsync(w => w.PublicId.ToString() == publicId);
+
+				if (workspace is null)
+					return Results.NotFound("Workspace not found");
+
+				var isMember = workspace.Members.Any(m => m.UserId == userId);
+				if (isMember)
+					return Results.BadRequest("Already a member");
+
+				var alreadyRequested = await db.WorkspaceInvitations
+					.AnyAsync(i => i.UserId == userId && i.WorkspaceId == workspace.Id);
+
+				if (alreadyRequested)
+					return Results.BadRequest("Already requested");
+
+				var invitation = new WorkspaceInvitation
+				{
+					UserId = userId,
+					WorkspaceId = workspace.Id,
+					isAccepted = false,
+					CreatedAt = DateOnly.FromDateTime(DateTime.UtcNow)
+				};
+
+				await db.WorkspaceInvitations.AddAsync(invitation);
+				await db.SaveChangesAsync();
+
+				return Results.Ok(new
+				{
+					message = "Join request sent",
+					workspace = workspace.Title
+				});
+
+			}).RequireAuthorization()
+			.WithSummary("Join workspace via invite link")
+			.WithTags("Workspace Management");
+
 			//regenerating the workspace join code
 			app.MapPost("/regenerating/join_code", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, UserManager<ApplicationUser> userManager, string publicId) =>
 			{

@@ -253,7 +253,13 @@
           name="inviteCode"
           placeholder="e.g. ACME-2024-XXYZ" 
           required
+<<<<<<< Updated upstream
           [(ngModel)]="joinInput.inviteCode">
+=======
+          placeholder="e.g. ACME-2024-XXYZ"
+          [(ngModel)]="joinInput.inviteCode"
+          [disabled]="joinInput.workspaceLink">
+>>>>>>> Stashed changes
       </div>
 
       <div class="separator-row">
@@ -269,7 +275,8 @@
           class="form-control faded-input" 
           name="workspaceLink"
           placeholder="https://teamup.io/join/..."
-          [(ngModel)]="joinInput.workspaceLink">
+          [(ngModel)]="joinInput.workspaceLink"
+          [disabled]="joinInput.inviteCode">
       </div>
 
       <div class="joinWorkspace-actions">
