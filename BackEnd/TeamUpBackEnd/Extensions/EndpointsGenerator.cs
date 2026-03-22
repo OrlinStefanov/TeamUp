@@ -7,11 +7,12 @@ using System.Security.Claims;
 using TeamUpBackEnd.DbContext;
 using TeamUpBackEnd.Helpers;
 using TeamUpBackEnd.Models;
+using TeamUpBackEnd.Models.Chat;
 using TeamUpBackEnd.Models.Tasks;
 using TeamUpBackEnd.Models.WorkspaceRelated;
 using TeamUpBackEnd.Services;
-
 using static TeamUpBackEnd.DTO.TaskItemsDTO;
+using chatDto = TeamUpBackEnd.DTO.ChatsDTO;
 using taskDTO = TeamUpBackEnd.DTO.TaskItemsDTO;
 using user_data = TeamUpBackEnd.DTO.UserDataDTO;
 using workspaceDto = TeamUpBackEnd.DTO.WorkspaceDTO;
@@ -1064,7 +1065,7 @@ namespace TeamUpBackEnd.Extensions
 
 				var task = await db.Tasks
 					.Include(t => t.WorkSpace)
-						.ThenInclude(w => w.Members)
+						.ThenInclude(w => w!.Members)
 					.Include(t => t.Assignments!)
 						.ThenInclude(a => a.User)
 					.FirstOrDefaultAsync(t => t.PublicId.ToString() == taskid);
@@ -1129,6 +1130,44 @@ namespace TeamUpBackEnd.Extensions
 				});
 			}).RequireAuthorization()
 				.WithSummary("Edit task by public Id").WithTags("Task Management");
+		}
+	
+		public static void ChatEndpoints(WebApplication app)
+		{
+			//create mew channel in the workspace
+			app.MapPost("/workspace/{workspaceId}/channels", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, int workspaceId, chatDto.CreateChatDTO model) =>
+			{
+				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
+				if (userId is null) return Results.BadRequest();
+
+				var isMember = await db.WorkspaceMembers
+					.AnyAsync(m => m.WorkSpaceId == workspaceId && m.UserId == userId);
+
+				if (!isMember)
+					return Results.Forbid();
+
+				var channel = new Channel
+				{
+					Name = model.Name,
+					Description = model.Description,
+					IsPrivate = model.IsPrivate,
+					WorkspaceId = workspaceId,
+					Members = new List<ChannelMember>()
+				};
+
+				if (channel.IsPrivate)
+				{
+					channel.Members.Add(new ChannelMember
+					{
+						UserId = userId
+					});
+				}
+
+				await db.Channels.AddAsync(channel);
+				await db.SaveChangesAsync();
+
+				return Results.Ok(channel);
+			});
 		}
 	}
 
