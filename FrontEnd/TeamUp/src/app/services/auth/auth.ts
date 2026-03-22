@@ -148,6 +148,22 @@ export class Auth {
   searchUsers(emailOrUsername: string) {
     return this.http.get(`${this.apiUrl}/search/members?query=${encodeURIComponent(emailOrUsername)}`);
   }
+
+  joinWorkspaceByCode(code: string) {
+    return this.http.post(
+      `${this.apiUrl}/join/workspace`,
+      { join_code: code },
+      { withCredentials: true }
+    );
+  }
+
+  joinWorkspaceByLink(publicId: string) {
+    return this.http.post(
+      `${this.apiUrl}/workspace/join/link/${publicId}`,
+      {},
+      { withCredentials: true }
+    );
+  }
   
   //-----------------------Decoding the token--------------------------------------------
   getToken(): string | null {

@@ -190,8 +190,10 @@
           class="form-control"
           name="inviteCode"
           required
-          placeholder="e.g. ACME-2024-XXYZ"
           [(ngModel)]="joinInput.inviteCode">
+          placeholder="e.g. ACME-2024-XXYZ"
+          [(ngModel)]="joinInput.inviteCode"
+          [disabled]="joinInput.workspaceLink">
       </div>
 
       <div class="separator-row">
@@ -207,7 +209,8 @@
           class="form-control"
           name="workspaceLink"
           placeholder="https://teamup.io/join/..."
-          [(ngModel)]="joinInput.workspaceLink">
+          [(ngModel)]="joinInput.workspaceLink"
+          [disabled]="joinInput.inviteCode">
       </div>
 
       <div class="joinWorkspace-actions">
