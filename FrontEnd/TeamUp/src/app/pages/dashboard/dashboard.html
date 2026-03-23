@@ -92,6 +92,7 @@
 <div #createWorkspaceModal *ngIf="showCreateWorkspace" class="createWorkspace-overlay" [ngClass]="{'light-mode': !isDarkMode, 'dark-mode': isDarkMode}">
   <form #createWorkspaceForm="ngForm" (ngSubmit)="createWorkspace()">
 
+<<<<<<< Updated upstream
     <div class="createWorkspace-box">
 
       <div class="header-row">
@@ -258,3 +259,57 @@
     </div>
   </form>
 </div>
+=======
+      <!-- ================= JOIN WORKSPACE MODAL ================= -->
+      @if (showJoinWorkspace) {
+        <div #joinWorkspaceModal class="joinWorkspace-overlay" [ngClass]="{'light-mode': !isDarkMode, 'dark-mode': isDarkMode}">
+          <form #joinForm="ngForm" (ngSubmit)="joinWorkspace()">
+            <div class="joinWorkspace-box">
+              <div class="join-header">
+                <div class="header-content">
+                  <h3>Join <span class="accent">Workspace</span></h3>
+                </div>
+                <button type="button" class="btn-cancel" (click)="closeJoinWorkspace()">✕</button>
+              </div>
+              <p class="join-subtitle">
+                Enter an invite code or workspace link to join.
+              </p>
+              <div class="form-group">
+                <label class="form-label">Invite Code</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  name="inviteCode"
+                  required
+                  placeholder="e.g. ACME-2024-XXYZ"
+                  [(ngModel)]="joinInput.inviteCode"
+                  [disabled]="joinInput.workspaceLink">
+                </div>
+                <div class="separator-row">
+                  <div class="separator-line"></div>
+                  <div class="separator-text">OR PASTE LINK</div>
+                  <div class="separator-line"></div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Workspace Link</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    name="workspaceLink"
+                    placeholder="https://teamup.io/join/..."
+                    [(ngModel)]="joinInput.workspaceLink"
+                    [disabled]="joinInput.inviteCode">
+                  </div>
+                  <div class="joinWorkspace-actions">
+                    <button
+                      class="btn-primary"
+                      type="submit"
+                      [disabled]="joinForm.invalid">
+                      Join Workspace →
+                    </button>
+                  </div>
+                    </div>
+                  </form>
+                </div>
+              }
+>>>>>>> Stashed changes

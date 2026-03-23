@@ -3,7 +3,7 @@
   margin: 0;
   display: flex;
   justify-content: center;
-  min-height: 100vh;
+  max-height: 100vh;
   padding-top: 5%;
 }
 
@@ -236,6 +236,11 @@
     linear-gradient(90deg, rgba(168,85,247,0.5) 0px, #fff 0px);
   background-size:50px 50px;
  }
+
+.joinWorkspace-overlay.dark-mode .joinWorkspace-box {
+  background: #111;
+  box-shadow: #333;
+}
 
 .join-header {
   display: flex;
