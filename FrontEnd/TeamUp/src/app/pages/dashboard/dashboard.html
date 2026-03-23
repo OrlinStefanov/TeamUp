@@ -77,82 +77,176 @@
 
   </div>
 
-  <!-- ================= CREATE WORKSPACE MODAL ================= -->
-  @if (showCreateWorkspace) {
-    <div #createWorkspaceModal class="createWorkspace-overlay" [ngClass]="{'light-mode': !isDarkMode, 'dark-mode': isDarkMode}">
-      <form #createWorkspaceForm="ngForm" (ngSubmit)="createWorkspace()">
-        <div class="createWorkspace-box">
-          <div class="header-row">
-            <div class="header-text">
-              <h4>Create <span class="accent">workspace</span></h4>
-              <p>Set up a new workspace and invite your team.</p>
-            </div>
-            <button type="button" class="btn-cancel" (click)="closeCreateWorkspace()">✕</button>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Workspace name</label>
-            <input
-              type="text"
-              class="form-control"
-              name="title"
-              required
-              placeholder="Enter workspace name"
-              [(ngModel)]="workspace.title">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Workspace description</label>
-              <textarea
-                class="form-control"
-                name="description"
-                placeholder="Enter workspace description"
-                [(ngModel)]="workspace.description">
-              </textarea>
-            </div>
-            <div class="form-group" style="position: relative;">
-              <label class="form-label">Invite people</label>
-              <input
-                type="text"
-                class="form-control"
-                name="invitePeople"
-                placeholder="Enter email or username"
-                [(ngModel)]="inviteInput"
-                (ngModelChange)="onInviteInputChange($event)">
-                @if (suggestions.length > 0) {
-                  <ul class="suggestions-dropdown">
-                    @for (user of suggestions; track user) {
-                      <li (click)="selectUser(user)">
-                        <img [src]="user.profilePictureUrl" class="rounded-circle" width="24" height="24" />
-                        <span>{{ user.userName }} ({{ user.email }})</span>
-                      </li>
-                    }
-                  </ul>
-                }
-              </div>
-              @if (invitedMembers.length > 0) {
-                <div class="selected-members mt-2">
-                  @for (member of invitedMembers; track member) {
-                    <span class="badge bg-primary me-1">
-                      {{ member.emailOrUsername }}
-                      <button type="button" class="btn-close btn-close-white btn-sm"
-                        (click)="removeMember(member)">
-                      </button>
-                    </span>
-                  }
-                </div>
-              }
-              <div class="createWorkspace-actions">
-                <button
-                  class="btn-primary"
-                  type="submit"
-                  [disabled]="createWorkspaceForm.invalid">
-                  Create workspace
-                </button>
-              </div>
-            </div>
-          </form>
-        </div>
-      }
+<!-- ================= CREATE WORKSPACE MODAL ================= -->
+<div #createWorkspaceModal *ngIf="showCreateWorkspace" class="createWorkspace-overlay" [ngClass]="{'light-mode': !isDarkMode, 'dark-mode': isDarkMode}">
+  <form #createWorkspaceForm="ngForm" (ngSubmit)="createWorkspace()">
 
+    <div class="createWorkspace-box">
+
+      <div class="header-row">
+        <div class="header-text">
+          <h4>Create <span class="accent">workspace</span></h4>
+          <p>Set up a new workspace and invite your team.</p>
+        </div>
+
+        <button type="button" class="btn-cancel" (click)="closeCreateWorkspace()">✕</button>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Workspace name</label>
+        <input 
+          type="text" 
+          class="form-control"
+          name="title"
+          required
+          placeholder="Enter workspace name"
+          [(ngModel)]="workspace.title">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Workspace description</label>
+        <textarea 
+          class="form-control"
+          name="description"
+          placeholder="Enter workspace description"
+          [(ngModel)]="workspace.description">
+        </textarea>
+      </div>
+
+      <div class="form-group" style="position: relative;">
+        <label class="form-label">Invite people</label>
+
+        <input 
+          type="text"
+          class="form-control"
+          name="invitePeople"
+          placeholder="Enter email or username"
+          [(ngModel)]="inviteInput"
+          (ngModelChange)="onInviteInputChange($event)">
+
+        <ul *ngIf="suggestions.length > 0" class="suggestions-dropdown">
+          <li *ngFor="let user of suggestions" (click)="selectUser(user)">
+            <img [src]="user.profilePictureUrl" class="rounded-circle" width="24" height="24" />
+            <span>{{ user.userName }} ({{ user.email }})</span>
+          </li>
+        </ul>
+      </div>
+
+      <div *ngIf="invitedMembers.length > 0" class="selected-members mt-2">
+        <span class="badge bg-primary me-1" *ngFor="let member of invitedMembers">
+          {{ member.emailOrUsername }}
+          <button type="button" class="btn-close btn-close-white btn-sm"
+                  (click)="removeMember(member)">
+          </button>
+        </span>
+      </div>
+
+      <div class="createWorkspace-actions">
+        <button 
+          class="btn-primary"
+          type="submit"
+          [disabled]="createWorkspaceForm.invalid">
+          Create workspace
+        </button>
+      </div>
+
+    </div>
+  </form>
+</div>
+
+<!-- ================= JOIN WORKSPACE MODAL ================= -->
+<div #joinWorkspaceModal *ngIf="showJoinWorkspace" class="joinWorkspace-overlay" [ngClass]="{'light-mode': !isDarkMode, 'dark-mode': isDarkMode}">
+  <form #joinForm="ngForm" (ngSubmit)="joinWorkspace()">
+
+    <div class="joinWorkspace-box">
+
+      <div class="join-header">
+        <div class="header-content">
+          <h3>Join <span class="accent">Workspace</span></h3>
+        </div>
+
+        <button type="button" class="btn-cancel" (click)="closeJoinWorkspace()">✕</button>
+      </div>
+
+      <p class="join-subtitle">
+        Enter an invite code or workspace link to join.
+      </p>
+
+      <div class="form-group">
+        <label class="form-label">Invite Code</label>
+        <input 
+          type="text"
+          class="form-control"
+          name="inviteCode"
+          required
+          placeholder="e.g. ACME-2024-XXYZ"
+          [(ngModel)]="joinInput.inviteCode">
+      </div>
+
+      <div class="separator-row">
+        <div class="separator-line"></div>
+        <div class="separator-text">OR PASTE LINK</div>
+        <div class="separator-line"></div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Workspace Link</label>
+        <input 
+          type="text"
+          class="form-control"
+          name="workspaceLink"
+          placeholder="https://teamup.io/join/..."
+          [(ngModel)]="joinInput.workspaceLink">
+      </div>
+
+      <div class="joinWorkspace-actions">
+        <button 
+          class="btn-primary"
+          type="submit"
+          [disabled]="joinForm.invalid">
+          Join Workspace →
+        </button>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label label-caps">Invite Code</label>
+        <input 
+          type="text" 
+          class="form-control" 
+          name="inviteCode"
+          placeholder="e.g. ACME-2024-XXYZ" 
+          required
+          [(ngModel)]="joinInput.inviteCode">
+      </div>
+
+      <div class="separator-row">
+        <div class="separator-line"></div>
+        <div class="separator-text">OR PASTE LINK</div>
+        <div class="separator-line"></div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label label-caps">Or Paste Link</label>
+        <input 
+          type="text" 
+          class="form-control faded-input" 
+          name="workspaceLink"
+          placeholder="https://teamup.io/join/..."
+          [(ngModel)]="joinInput.workspaceLink">
+      </div>
+
+      <div class="joinWorkspace-actions">
+        <button 
+          class="btn-primary" 
+          type="submit"
+          [disabled]="joinForm.invalid">
+          Join Workspace <span class="button-arrow">→</span>
+        </button>
+      </div>
+
+    </div>
+  </form>
+</div>
       <!-- ================= JOIN WORKSPACE MODAL ================= -->
       @if (showJoinWorkspace) {
         <div #joinWorkspaceModal class="joinWorkspace-overlay" [ngClass]="{'light-mode': !isDarkMode, 'dark-mode': isDarkMode}">
@@ -174,7 +268,6 @@
                   class="form-control"
                   name="inviteCode"
                   required
-                  [(ngModel)]="joinInput.inviteCode">
                   placeholder="e.g. ACME-2024-XXYZ"
                   [(ngModel)]="joinInput.inviteCode"
                   [disabled]="joinInput.workspaceLink">
@@ -202,39 +295,8 @@
                       Join Workspace →
                     </button>
                   </div>
-                  <div class="form-group">
-                    <label class="form-label label-caps">Invite Code</label>
-                    <input
-                      type="text"
-                      class="form-control"
-                      name="inviteCode"
-                      placeholder="e.g. ACME-2024-XXYZ"
-                      required
-                      [(ngModel)]="joinInput.inviteCode">
-                    </div>
-                    <div class="separator-row">
-                      <div class="separator-line"></div>
-                      <div class="separator-text">OR PASTE LINK</div>
-                      <div class="separator-line"></div>
-                    </div>
-                    <div class="form-group">
-                      <label class="form-label label-caps">Or Paste Link</label>
-                      <input
-                        type="text"
-                        class="form-control faded-input"
-                        name="workspaceLink"
-                        placeholder="https://teamup.io/join/..."
-                        [(ngModel)]="joinInput.workspaceLink">
-                      </div>
-                      <div class="joinWorkspace-actions">
-                        <button
-                          class="btn-primary"
-                          type="submit"
-                          [disabled]="joinForm.invalid">
-                          Join Workspace <span class="button-arrow">→</span>
-                        </button>
-                      </div>
                     </div>
                   </form>
                 </div>
               }
+
