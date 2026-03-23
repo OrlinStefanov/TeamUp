@@ -33,6 +33,16 @@ namespace TeamUpBackEnd.DbContext
 			modelBuilder.Entity<WorkSpaceMember>()
 				.HasKey(wm => new { wm.WorkSpaceId, wm.UserId });
 
+			modelBuilder.Entity<WorkSpace>()
+				.HasOne(w => w.Owner)
+				.WithMany()
+				.HasForeignKey(w => w.OwnerId)
+				.OnDelete(DeleteBehavior.Restrict);
+
+			modelBuilder.Entity<WorkSpace>()
+				.HasIndex(w => w.JoinCode)
+				.IsUnique();
+
 			modelBuilder.Entity<WorkSpaceMember>()
 				.HasOne(wm => wm.WorkSpace)
 				.WithMany(w => w.Members)
@@ -50,6 +60,12 @@ namespace TeamUpBackEnd.DbContext
 				.HasOne(wi => wi.WorkSpace)
 				.WithMany(w => w.Invitations)
 				.HasForeignKey(wi => wi.WorkspaceId)
+				.OnDelete(DeleteBehavior.Cascade);
+
+			modelBuilder.Entity<WorkspaceInvitation>()
+				.HasOne<WorkSpace>()
+				.WithMany(w => w.Invitations)
+				.HasForeignKey(i => i.WorkspaceId)
 				.OnDelete(DeleteBehavior.Cascade);
 
 			modelBuilder.Entity<WorkspaceInvitation>()
@@ -111,16 +127,12 @@ namespace TeamUpBackEnd.DbContext
 				.HasForeignKey(c => c.WorkspaceId)
 				.OnDelete(DeleteBehavior.Cascade);
 
-
-
 			// Message → Sender
 			modelBuilder.Entity<Message>()
 				.HasOne(m => m.Sender)
 				.WithMany(u => u.SentMessages)
 				.HasForeignKey(m => m.SenderId)
 				.OnDelete(DeleteBehavior.Restrict);
-
-
 
 			// Message → Channel
 			modelBuilder.Entity<Message>()
@@ -129,16 +141,12 @@ namespace TeamUpBackEnd.DbContext
 				.HasForeignKey(m => m.ChannelId)
 				.OnDelete(DeleteBehavior.Cascade);
 
-
-
 			// Message → Conversation
 			modelBuilder.Entity<Message>()
 				.HasOne(m => m.Conversation)
 				.WithMany(c => c.Messages)
 				.HasForeignKey(m => m.ConversationId)
 				.OnDelete(DeleteBehavior.Cascade);
-
-
 
 			// PublicId indexes
 			modelBuilder.Entity<Channel>()
