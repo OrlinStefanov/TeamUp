@@ -152,6 +152,12 @@ namespace TeamUpBackEnd.DbContext
 			modelBuilder.Entity<Message>()
 				.HasIndex(m => m.PublicId)
 				.IsUnique();
+
+			modelBuilder.Entity<Message>()
+				.HasIndex(m => m.ChannelId);
+
+			modelBuilder.Entity<Message>()
+				.HasIndex(m => m.ConversationId);
 		}
 	}
 }
