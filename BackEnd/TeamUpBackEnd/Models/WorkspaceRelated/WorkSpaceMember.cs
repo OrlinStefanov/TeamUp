@@ -2,7 +2,7 @@
 {
 	public class WorkSpaceMember
 	{
-		public int WorkSpaceId { get; set; }
+		public int WorkspaceId { get; set; }
 		public WorkSpace? WorkSpace { get; set; }
 
 		public string? UserId { get; set; }

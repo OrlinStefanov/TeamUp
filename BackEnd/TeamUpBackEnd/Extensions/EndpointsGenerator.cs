@@ -747,7 +747,7 @@ namespace TeamUpBackEnd.Extensions
 				if (workspace is null) return Results.BadRequest("Woorkspace with this code does not exist");
 
 				var isMember = await db.WorkspaceMembers
-					   .AnyAsync(m => m.UserId == userId && m.WorkSpaceId == workspace.Id);
+					   .AnyAsync(m => m.UserId == userId && m.WorkspaceId == workspace.Id);
 
 				if (isMember)
 					return Results.BadRequest("Already a member");
@@ -906,14 +906,14 @@ namespace TeamUpBackEnd.Extensions
 				if (action == "accept")
 				{
 					var isMember = await db.WorkspaceMembers
-						.AnyAsync(m => m.UserId == invitation.UserId && m.WorkSpaceId == invitation.WorkspaceId);
+						.AnyAsync(m => m.UserId == invitation.UserId && m.WorkspaceId == invitation.WorkspaceId);
 
 					if (!isMember)
 					{
 						await db.WorkspaceMembers.AddAsync(new WorkSpaceMember
 						{
 							UserId = invitation.UserId,
-							WorkSpaceId = invitation.WorkspaceId,
+							WorkspaceId = invitation.WorkspaceId,
 							Role = WorkSpaceRole.Member
 						});
 					}
@@ -1195,7 +1195,7 @@ namespace TeamUpBackEnd.Extensions
 				if (userId is null) return Results.BadRequest();
 
 				var isMember = await db.WorkspaceMembers
-					.AnyAsync(m => m.WorkSpaceId == workspaceId && m.UserId == userId);
+					.AnyAsync(m => m.WorkspaceId == workspaceId && m.UserId == userId);
 
 				if (!isMember)
 					return Results.Forbid();

@@ -12,8 +12,8 @@ using TeamUpBackEnd.DbContext;
 namespace TeamUpBackEnd.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260320100945_WorkspaceInvitation")]
-    partial class WorkspaceInvitation
+    [Migration("20260323202255_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -340,7 +340,7 @@ namespace TeamUpBackEnd.Migrations
                     b.Property<string>("Content")
                         .HasColumnType("text");
 
-                    b.Property<int>("ConversationId")
+                    b.Property<int?>("ConversationId")
                         .HasColumnType("integer");
 
                     b.Property<Guid>("PublicId")
@@ -457,6 +457,9 @@ namespace TeamUpBackEnd.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("JoinCode")
+                        .IsUnique();
+
                     b.HasIndex("OwnerId");
 
                     b.ToTable("Workspaces");
@@ -464,7 +467,7 @@ namespace TeamUpBackEnd.Migrations
 
             modelBuilder.Entity("TeamUpBackEnd.Models.WorkspaceRelated.WorkSpaceMember", b =>
                 {
-                    b.Property<int>("WorkSpaceId")
+                    b.Property<int>("WorkspaceId")
                         .HasColumnType("integer");
 
                     b.Property<string>("UserId")
@@ -473,7 +476,7 @@ namespace TeamUpBackEnd.Migrations
                     b.Property<int>("Role")
                         .HasColumnType("integer");
 
-                    b.HasKey("WorkSpaceId", "UserId");
+                    b.HasKey("WorkspaceId", "UserId");
 
                     b.HasIndex("UserId");
 
@@ -588,7 +591,7 @@ namespace TeamUpBackEnd.Migrations
             modelBuilder.Entity("TeamUpBackEnd.Models.Chat.Conversation", b =>
                 {
                     b.HasOne("TeamUpBackEnd.Models.WorkspaceRelated.WorkSpace", "WorkSpace")
-                        .WithMany()
+                        .WithMany("Conversations")
                         .HasForeignKey("WorkSpaceId");
 
                     b.Navigation("WorkSpace");
@@ -623,8 +626,7 @@ namespace TeamUpBackEnd.Migrations
                     b.HasOne("TeamUpBackEnd.Models.Chat.Conversation", "Conversation")
                         .WithMany("Messages")
                         .HasForeignKey("ConversationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("TeamUpBackEnd.Models.ApplicationUser", "Sender")
                         .WithMany("SentMessages")
@@ -672,7 +674,8 @@ namespace TeamUpBackEnd.Migrations
                 {
                     b.HasOne("TeamUpBackEnd.Models.ApplicationUser", "Owner")
                         .WithMany()
-                        .HasForeignKey("OwnerId");
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Owner");
                 });
@@ -687,7 +690,7 @@ namespace TeamUpBackEnd.Migrations
 
                     b.HasOne("TeamUpBackEnd.Models.WorkspaceRelated.WorkSpace", "WorkSpace")
                         .WithMany("Members")
-                        .HasForeignKey("WorkSpaceId")
+                        .HasForeignKey("WorkspaceId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -752,6 +755,8 @@ namespace TeamUpBackEnd.Migrations
             modelBuilder.Entity("TeamUpBackEnd.Models.WorkspaceRelated.WorkSpace", b =>
                 {
                     b.Navigation("Channels");
+
+                    b.Navigation("Conversations");
 
                     b.Navigation("Invitations");
 

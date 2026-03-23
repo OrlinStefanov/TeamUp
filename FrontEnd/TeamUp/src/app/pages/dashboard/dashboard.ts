@@ -2,7 +2,7 @@ import { Component, ElementRef, Renderer2, ViewChild, AfterViewInit, OnInit } fr
 import { Auth } from '../../services/auth/auth';
 import { FormsModule } from '@angular/forms';
 import { Workspace, WorkspaceMember } from '../../services/auth/auth-types';
-import { CommonModule, NgFor, NgIf } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { Observable } from 'rxjs';
 
@@ -12,10 +12,8 @@ import { Observable } from 'rxjs';
   imports: [
     FormsModule,
     CommonModule,
-    RouterModule,
-    NgIf,
-    NgFor
-  ],
+    RouterModule
+],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })

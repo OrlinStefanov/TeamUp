@@ -1,12 +1,12 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule, NgFor } from '@angular/common';
+
 import { RouterModule, Router, ActivatedRoute } from '@angular/router';
 import { RouterOutlet, RouterLink } from '@angular/router';
 import { Auth } from '../services/auth/auth';
 
 @Component({
   selector: 'app-workspace-detail',
-  imports: [CommonModule, NgFor, RouterModule, RouterOutlet, RouterLink],
+  imports: [RouterModule, RouterOutlet, RouterLink],
   templateUrl: './workspace-detail.html',
   styleUrl: './workspace-detail.css',
   standalone: true

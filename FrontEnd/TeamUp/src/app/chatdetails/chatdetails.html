@@ -1,1 +1,30 @@
-<p>chatdetails works!</p>
+<div class="chat-container">
+
+  <!-- CHANNEL LIST -->
+  <div class="channels">
+    <div *ngFor="let channel of channels"
+         (click)="selectChannel(channel.publicId)">
+      # {{ channel.name }}
+    </div>
+  </div>
+
+  <!-- CHAT -->
+  <div class="chat-box">
+
+    <div class="messages">
+      <div *ngFor="let msg of messages">
+        <b>{{ msg.senderId }}</b>: {{ msg.content }}
+      </div>
+    </div>
+
+    <div class="input-box">
+      <input [(ngModel)]="messageInput"
+             (keyup.enter)="sendMessage()"
+             placeholder="Type message..." />
+
+      <button (click)="sendMessage()">Send</button>
+    </div>
+
+  </div>
+
+</div>
