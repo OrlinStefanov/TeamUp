@@ -7,11 +7,12 @@ using System.Security.Claims;
 using TeamUpBackEnd.DbContext;
 using TeamUpBackEnd.Helpers;
 using TeamUpBackEnd.Models;
+using TeamUpBackEnd.Models.Chat;
 using TeamUpBackEnd.Models.Tasks;
 using TeamUpBackEnd.Models.WorkspaceRelated;
 using TeamUpBackEnd.Services;
-
 using static TeamUpBackEnd.DTO.TaskItemsDTO;
+using chatDto = TeamUpBackEnd.DTO.ChatsDTO;
 using taskDTO = TeamUpBackEnd.DTO.TaskItemsDTO;
 using user_data = TeamUpBackEnd.DTO.UserDataDTO;
 using workspaceDto = TeamUpBackEnd.DTO.WorkspaceDTO;
@@ -25,6 +26,7 @@ namespace TeamUpBackEnd.Extensions
 			UserEndpoints(app);
 			WorkspaceEndpoints(app);
 			TaskEndpoints(app);
+			ChatEndpoints(app);
 		}
 
 		public static void UserEndpoints(WebApplication app)
@@ -668,6 +670,58 @@ namespace TeamUpBackEnd.Extensions
 			.RequireAuthorization()
 			.WithSummary("Returns a list of possible users you might be searching for")
 			.WithTags("Workspace Management");
+
+			//remove member from the workspace
+			app.MapDelete("/workspace/{publicId}/members/{userId}", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, string publicId, string userId) =>
+			{
+				var currentUserId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
+
+				if (currentUserId is null) return Results.BadRequest("User id not found");
+
+				var workspace = await db.Workspaces
+					.Include(w => w.Members)
+					.Include(w => w.Channels)
+						.ThenInclude(w => w.Members)
+					.Include(w => w.Conversations)
+					.FirstOrDefaultAsync(w => w.PublicId.ToString() == publicId);
+
+				if (workspace is null) return Results.BadRequest("Workspace is not found");
+
+				if (workspace.OwnerId != currentUserId) return Results.Forbid();
+
+				if (workspace.OwnerId == userId) return Results.BadRequest("Can't remove owner");
+
+				var member = workspace.Members.FirstOrDefault(m => m.UserId == userId);
+
+				if (member is null) return Results.BadRequest("User not in the workspace");
+
+				workspace.Members.Remove(member);
+
+				foreach (var channel in workspace.Channels)
+				{
+					var channelMember = channel.Members!.FirstOrDefault(c => c.UserId == userId);
+					if (channelMember != null)
+					{
+						channel.Members!.Remove(channelMember);
+					}
+				}
+
+				foreach (var convo in workspace.Conversations)
+				{
+					var convoMember = convo.Members!.FirstOrDefault(m => m.UserId == userId);
+					if (convoMember != null)
+						convo.Members!.Remove(convoMember);
+				}
+
+				var invitations = db.WorkspaceInvitations.Where(i => i.UserId == userId && i.WorkspaceId == workspace.Id);
+
+				db.WorkspaceInvitations.RemoveRange(invitations);
+
+				await db.SaveChangesAsync();
+
+				return Results.Ok("User removed from workspace");
+
+			}).RequireAuthorization().WithSummary("Removes member from the workspace").WithTags("Workspace Management");
 			
 			//--------------------------------------------------JoinCode-----------------------------------------------------//
 			//user joins into workspace using a special code
@@ -693,7 +747,7 @@ namespace TeamUpBackEnd.Extensions
 				if (workspace is null) return Results.BadRequest("Woorkspace with this code does not exist");
 
 				var isMember = await db.WorkspaceMembers
-					   .AnyAsync(m => m.UserId == userId && m.WorkSpaceId == workspace.Id);
+					   .AnyAsync(m => m.UserId == userId && m.WorkspaceId == workspace.Id);
 
 				if (isMember)
 					return Results.BadRequest("Already a member");
@@ -719,6 +773,56 @@ namespace TeamUpBackEnd.Extensions
 				return Results.Ok("Request sent. Waiting for approval.");
 
 			}).RequireAuthorization().WithSummary("User asks to join the workspace by enterning a code").WithTags("Workspace Management");
+
+			//when joining with link it sends invitation
+			app.MapPost("/workspace/join/link/{publicId}", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, string publicId) =>
+			{
+				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
+
+				if (userId is null)
+					return Results.BadRequest("User not found");
+
+				var user = await db.Users.FindAsync(userId);
+				if (user is null)
+					return Results.BadRequest("User not found");
+
+				var workspace = await db.Workspaces
+					.Include(w => w.Members)
+					.FirstOrDefaultAsync(w => w.PublicId.ToString() == publicId);
+
+				if (workspace is null)
+					return Results.NotFound("Workspace not found");
+
+				var isMember = workspace.Members.Any(m => m.UserId == userId);
+				if (isMember)
+					return Results.BadRequest("Already a member");
+
+				var alreadyRequested = await db.WorkspaceInvitations
+					.AnyAsync(i => i.UserId == userId && i.WorkspaceId == workspace.Id);
+
+				if (alreadyRequested)
+					return Results.BadRequest("Already requested");
+
+				var invitation = new WorkspaceInvitation
+				{
+					UserId = userId,
+					WorkspaceId = workspace.Id,
+					isAccepted = false,
+					CreatedAt = DateOnly.FromDateTime(DateTime.UtcNow)
+				};
+
+				await db.WorkspaceInvitations.AddAsync(invitation);
+				await db.SaveChangesAsync();
+
+				return Results.Ok(new
+				{
+					message = "Join request sent",
+					workspace = workspace.Title
+				});
+
+			}).RequireAuthorization()
+			.WithSummary("Join workspace via invite link")
+			.WithTags("Workspace Management");
 
 			//regenerating the workspace join code
 			app.MapPost("/regenerating/join_code", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, UserManager<ApplicationUser> userManager, string publicId) =>
@@ -802,14 +906,14 @@ namespace TeamUpBackEnd.Extensions
 				if (action == "accept")
 				{
 					var isMember = await db.WorkspaceMembers
-						.AnyAsync(m => m.UserId == invitation.UserId && m.WorkSpaceId == invitation.WorkspaceId);
+						.AnyAsync(m => m.UserId == invitation.UserId && m.WorkspaceId == invitation.WorkspaceId);
 
 					if (!isMember)
 					{
 						await db.WorkspaceMembers.AddAsync(new WorkSpaceMember
 						{
 							UserId = invitation.UserId,
-							WorkSpaceId = invitation.WorkspaceId,
+							WorkspaceId = invitation.WorkspaceId,
 							Role = WorkSpaceRole.Member
 						});
 					}
@@ -1014,7 +1118,7 @@ namespace TeamUpBackEnd.Extensions
 
 				var task = await db.Tasks
 					.Include(t => t.WorkSpace)
-						.ThenInclude(w => w.Members)
+						.ThenInclude(w => w!.Members)
 					.Include(t => t.Assignments!)
 						.ThenInclude(a => a.User)
 					.FirstOrDefaultAsync(t => t.PublicId.ToString() == taskid);
@@ -1079,6 +1183,160 @@ namespace TeamUpBackEnd.Extensions
 				});
 			}).RequireAuthorization()
 				.WithSummary("Edit task by public Id").WithTags("Task Management");
+		}
+	
+		public static void ChatEndpoints(WebApplication app)
+		{
+			//---------------Channels-----------------------//
+			//create mew channel in the workspace
+			app.MapPost("/workspace/{workspaceId}/create/channels", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, int workspaceId, chatDto.CreateChatDTO model) =>
+			{
+				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
+				if (userId is null) return Results.BadRequest();
+
+				var isMember = await db.WorkspaceMembers
+					.AnyAsync(m => m.WorkspaceId == workspaceId && m.UserId == userId);
+
+				if (!isMember)
+					return Results.Forbid();
+
+				var channel = new Channel
+				{
+					Name = model.Name,
+					Description = model.Description,
+					IsPrivate = model.IsPrivate,
+					WorkspaceId = workspaceId,
+					Members = new List<ChannelMember>()
+				};
+
+				if (channel.IsPrivate)
+				{
+					channel.Members.Add(new ChannelMember
+					{
+						UserId = userId
+					});
+				}
+
+				await db.Channels.AddAsync(channel);
+				await db.SaveChangesAsync();
+
+				return Results.Ok(channel);
+			}).RequireAuthorization().WithSummary("Creates new channel in the workspace").WithTags("Chat Management");
+
+			//returns channels for workspace
+			app.MapGet("/workspace/{workspaceId}/get/channels", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, int workspaceId) =>
+			{
+				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
+
+				if (userId is null) return Results.BadRequest("User id not found");
+
+				var channels = await db.Channels
+					.Where(c => c.WorkspaceId == workspaceId)
+					.Select(c => new {
+						c.PublicId,
+						c.Name,
+						c.Description,
+						c.IsPrivate
+					})
+					.ToListAsync();
+
+				if (channels is null || channels.Count < 0)
+				{
+					return Results.BadRequest("Channels is null");
+				}
+
+				return Results.Ok(channels);
+			}).RequireAuthorization().WithSummary("Returns all channels in the workspace").WithTags("Chat Management");
+
+			//add members to private channel
+			app.MapPost("/workspace/{publicId}/add_members/channel", [Authorize] async (AppDbContext db, int publicId, chatDto.AddChatMemberDTO model) =>
+			{
+				var channel = await db.Channels
+					.Include(c => c.Members)
+					.FirstOrDefaultAsync(c => c.Id == publicId);
+
+				if (channel is null) return Results.BadRequest("Channel id is not found");
+
+				var exists = channel.Members!
+					.Any(m => m.UserId == model.UserId);
+
+				if (exists) return Results.BadRequest("Already exists");
+
+				channel.Members!.Add(new ChannelMember
+				{
+					ChannelId = channel.Id,
+					UserId = model.UserId
+				});
+
+				await db.SaveChangesAsync();
+
+				return Results.Ok("Member was correctly added");
+			}).RequireAuthorization().WithSummary("Adds new member to a private chat").WithTags("Chat Management");
+
+			//remove member from the channel
+			app.MapDelete("/channels/{channelPublicId}/members/{userId}", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, string channelPublicId, string userId) =>
+			{
+				var currentUserId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
+				if (currentUserId == null) return Results.BadRequest("User not found");
+
+				var channel = await db.Channels
+					.Include(c => c.Members!)
+					.ThenInclude(m => m.User)
+					.Include(c => c.Workspace)
+					.ThenInclude(w => w!.Members)
+					.FirstOrDefaultAsync(c => c.PublicId.ToString() == channelPublicId);
+
+				if (channel == null)
+					return Results.NotFound("Channel not found");
+
+				var isOwner = channel.Workspace!.Members
+					.Any(m => m.UserId == currentUserId && m.Role == WorkSpaceRole.Owner);
+
+				if (!isOwner && currentUserId != userId)
+					return Results.Forbid();
+
+				var member = channel.Members!
+					.FirstOrDefault(m => m.UserId == userId);
+
+				if (member == null)
+					return Results.NotFound("User not in channel");
+
+				channel.Members!.Remove(member);
+
+				await db.SaveChangesAsync();
+
+				return Results.Ok("Removed from channel");
+			}).RequireAuthorization().WithSummary("Removes member from channel").WithTags("Chat Management");
+
+			//--------------------------Messages--------------------------------//
+			//returns all old messages
+			app.MapGet("/channels/{publicId}/messages", [Authorize] async (AppDbContext db, string publicId) =>
+			{
+				var channel = await db.Channels.FirstOrDefaultAsync(c => c.PublicId.ToString() == publicId);
+
+				if (channel is null) return Results.BadRequest("Channel not found");
+
+				var messages = await db.Messages
+					.Where(m => m.ChannelId == channel.Id)
+					.Include(m => m.Sender)
+					.OrderBy(m => m.SentAt)
+					.Select(m => new 
+					{ 
+						m.PublicId,
+						m.Content,
+						m.SentAt,
+						Sender = new
+						{
+							m.Sender!.UserName,
+							m.Sender!.ProfilePictureUrl
+						}
+					}).ToListAsync();
+
+				if (messages is null || messages.Count <= 0) return Results.BadRequest("No messages found");
+
+				return Results.Ok(messages);
+
+			}).RequireAuthorization().WithSummary("Returns all messages that are stored in the database").WithTags("Chat Management");
 		}
 	}
 

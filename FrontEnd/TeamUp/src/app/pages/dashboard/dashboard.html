@@ -2,89 +2,78 @@
   <div class="container-fluid workspace-content">
 
     <!-- MAIN STATE -->
-    <ng-container *ngIf="workspaces$ | async as workspaces">
-
+    @if (workspaces$ | async; as workspaces) {
       <!-- HAS WORKSPACES -->
-      <div *ngIf="workspaces.length > 0; else emptyState" class="row">
-        <div class="col-12">
-
-          <div class="workspace-header">
-            <h2>Welcome to your dashboard,<a style="color: #a64bfb; text-shadow: #9333ea 0 0 3px;"> {{ (user$ | async)?.userName }}</a></h2>
-            <h6 style="color: #bbb; padding-bottom: 20px;">Pick a workspace to continue where you left off.</h6>
-          </div>
-
-          <div class="workspaces-grid">
-            <div *ngFor="let workspace of workspaces" class="workspace-card" [routerLink]="['/workspace', workspace.publicId, 'tasks']">
-              <span class="workspace-icon">
-                {{ workspace.title.charAt(0) }}
-              </span>
-              <h3>{{ workspace.title }}</h3>
-              <p style="color: #bbb;">{{ workspace.description }}</p>
+      @if (workspaces.length > 0) {
+        <div class="row">
+          <div class="col-12">
+            <div class="workspace-header">
+              <h2>Welcome to your dashboard,<a style="color: #a64bfb; text-shadow: #9333ea 0 0 3px;"> {{ (user$ | async)?.userName }}</a></h2>
+              <h6 style="color: #bbb; padding-bottom: 20px;">Pick a workspace to continue where you left off.</h6>
             </div>
-            <button class="workspaces-grid-add" style="display: flex;" (click)="openCreateWorkspace()">
+            <div class="workspaces-grid">
+              @for (workspace of workspaces; track workspace) {
+                <div class="workspace-card" [routerLink]="['/workspace', workspace.publicId, 'tasks']">
+                  <span class="workspace-icon">
+                    {{ workspace.title.charAt(0) }}
+                  </span>
+                  <h3>{{ workspace.title }}</h3>
+                  <p style="color: #bbb;">{{ workspace.description }}</p>
+                </div>
+              }
+              <button class="workspaces-grid-add" style="display: flex;" (click)="openCreateWorkspace()">
                 <a>+</a>
-              Add New Workspace
-              <p style="color: #bbb; font-size: x-small; padding: 20px;">Create or Join a new workspace to get started.</p>
+                Add New Workspace
+                <p style="color: #bbb; font-size: x-small; padding: 20px;">Create or Join a new workspace to get started.</p>
+              </button>
+            </div>
+          </div>
+        </div>
+      } @else {
+        <div class="empty-dashboard">
+          <h1>
+            Welcome to <span class="accent">Team Up</span>
+          </h1>
+          <p class="subtitle">
+            Your gamified workspace for developer teams. Ship code, earn points,
+            and compete with your crew.
+          </p>
+          <div class="steps-grid">
+            <div class="step-card">
+              <h6>STEP 1</h6>
+              <h5>Create or join a workspace</h5>
+              <p>Start fresh with your own workspace or join an existing team.</p>
+            </div>
+            <div class="step-card">
+              <h6>STEP 2</h6>
+              <h5>Invite your team</h5>
+              <p>Add teammates via email or invite link.</p>
+            </div>
+            <div class="step-card">
+              <h6>STEP 3</h6>
+              <h5>Complete tasks & earn points</h5>
+              <p>Track progress on boards and earn points.</p>
+            </div>
+            <div class="step-card">
+              <h6>STEP 4</h6>
+              <h5>Climb the leaderboard</h5>
+              <p>Compete with your team and build streaks.</p>
+            </div>
+          </div>
+          <!-- ✅ BUTTONS FIXED -->
+          <div class="empty-actions">
+            <button class="btn-primary" (click)="openCreateWorkspace()">
+              + Create Workspace
+            </button>
+            <button class="btn-secondary" (click)="openJoinWorkspace()">
+              Join Workspace
             </button>
           </div>
-
         </div>
-      </div>
-
-    </ng-container>
+      }
+    }
 
     <!-- EMPTY STATE -->
-    <ng-template #emptyState>
-      <div class="empty-dashboard">
-
-        <h1>
-          Welcome to <span class="accent">Team Up</span>
-        </h1>
-
-        <p class="subtitle">
-          Your gamified workspace for developer teams. Ship code, earn points,
-          and compete with your crew.
-        </p>
-
-        <div class="steps-grid">
-          <div class="step-card">
-            <h6>STEP 1</h6>
-            <h5>Create or join a workspace</h5>
-            <p>Start fresh with your own workspace or join an existing team.</p>
-          </div>
-
-          <div class="step-card">
-            <h6>STEP 2</h6>
-            <h5>Invite your team</h5>
-            <p>Add teammates via email or invite link.</p>
-          </div>
-
-          <div class="step-card">
-            <h6>STEP 3</h6>
-            <h5>Complete tasks & earn points</h5>
-            <p>Track progress on boards and earn points.</p>
-          </div>
-
-          <div class="step-card">
-            <h6>STEP 4</h6>
-            <h5>Climb the leaderboard</h5>
-            <p>Compete with your team and build streaks.</p>
-          </div>
-        </div>
-
-        <!-- ✅ BUTTONS FIXED -->
-        <div class="empty-actions">
-          <button class="btn-primary" (click)="openCreateWorkspace()">
-            + Create Workspace
-          </button>
-
-          <button class="btn-secondary" (click)="openJoinWorkspace()">
-            Join Workspace
-          </button>
-        </div>
-
-      </div>
-    </ng-template>
 
   </div>
 
@@ -92,7 +81,6 @@
 <div #createWorkspaceModal *ngIf="showCreateWorkspace" class="createWorkspace-overlay" [ngClass]="{'light-mode': !isDarkMode, 'dark-mode': isDarkMode}">
   <form #createWorkspaceForm="ngForm" (ngSubmit)="createWorkspace()">
 
-<<<<<<< Updated upstream
     <div class="createWorkspace-box">
 
       <div class="header-row">
@@ -259,7 +247,6 @@
     </div>
   </form>
 </div>
-=======
       <!-- ================= JOIN WORKSPACE MODAL ================= -->
       @if (showJoinWorkspace) {
         <div #joinWorkspaceModal class="joinWorkspace-overlay" [ngClass]="{'light-mode': !isDarkMode, 'dark-mode': isDarkMode}">
@@ -312,4 +299,4 @@
                   </form>
                 </div>
               }
->>>>>>> Stashed changes
+

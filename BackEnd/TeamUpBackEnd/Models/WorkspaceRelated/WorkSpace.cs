@@ -21,5 +21,6 @@ namespace TeamUpBackEnd.Models.WorkspaceRelated
 		public ICollection<WorkSpaceMember> Members { get; set; } = new List<WorkSpaceMember>();
 		public ICollection<TaskItem> Tasks { get; set; } = new List<TaskItem>();
 		public ICollection<WorkspaceInvitation> Invitations { get; set; } = new List<WorkspaceInvitation>();
+		public ICollection<Conversation> Conversations { get; set; } = new List<Conversation>();
 	}
 }

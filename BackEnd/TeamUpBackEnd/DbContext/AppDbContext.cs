@@ -31,18 +31,36 @@ namespace TeamUpBackEnd.DbContext
 			base.OnModelCreating(modelBuilder);
 
 			modelBuilder.Entity<WorkSpaceMember>()
-				.HasKey(wm => new { wm.WorkSpaceId, wm.UserId });
+				.HasKey(wm => new { wm.WorkspaceId, wm.UserId });
 
 			modelBuilder.Entity<WorkSpaceMember>()
 				.HasOne(wm => wm.WorkSpace)
 				.WithMany(w => w.Members)
-				.HasForeignKey(wm => wm.WorkSpaceId);
+				.HasForeignKey(wm => wm.WorkspaceId)
+				.OnDelete(DeleteBehavior.Cascade);
 
 			modelBuilder.Entity<WorkSpaceMember>()
 				.HasOne(wm => wm.User)
 				.WithMany(u => u.Workspaces)
-				.HasForeignKey(wm => wm.UserId);
+				.HasForeignKey(wm => wm.UserId)
+				.OnDelete(DeleteBehavior.Cascade);
 
+			// ------------------------
+			// Workspace
+			// ------------------------
+			modelBuilder.Entity<WorkSpace>()
+				.HasOne(w => w.Owner)
+				.WithMany()
+				.HasForeignKey(w => w.OwnerId)
+				.OnDelete(DeleteBehavior.Restrict);
+
+			modelBuilder.Entity<WorkSpace>()
+				.HasIndex(w => w.JoinCode)
+				.IsUnique();
+
+			// ------------------------
+			// WorkspaceInvitation
+			// ------------------------
 			modelBuilder.Entity<WorkspaceInvitation>()
 				.HasKey(wi => new { wi.WorkspaceId, wi.UserId });
 
@@ -58,21 +76,9 @@ namespace TeamUpBackEnd.DbContext
 				.HasForeignKey(wi => wi.UserId)
 				.OnDelete(DeleteBehavior.Cascade);
 
-			// TaskAssignment composite key
-			modelBuilder.Entity<TaskAssignment>()
-				.HasKey(ta => new { ta.TaskItemId, ta.UserId });
-
-			modelBuilder.Entity<TaskAssignment>()
-				.HasOne(ta => ta.TaskItem)
-				.WithMany(t => t.Assignments)
-				.HasForeignKey(ta => ta.TaskItemId);
-
-			modelBuilder.Entity<TaskAssignment>()
-				.HasOne(ta => ta.User)
-				.WithMany(u => u.Tasks)
-				.HasForeignKey(ta => ta.UserId);
-
-			// ChannelMember composite key
+			// ------------------------
+			// ChannelMember
+			// ------------------------
 			modelBuilder.Entity<ChannelMember>()
 				.HasKey(cm => new { cm.ChannelId, cm.UserId });
 
@@ -88,7 +94,9 @@ namespace TeamUpBackEnd.DbContext
 				.HasForeignKey(cm => cm.UserId)
 				.OnDelete(DeleteBehavior.Cascade);
 
-			// ConversationMember composite key
+			// ------------------------
+			// ConversationMember
+			// ------------------------
 			modelBuilder.Entity<ConversationMember>()
 				.HasKey(cm => new { cm.ConversationId, cm.UserId });
 
@@ -104,54 +112,60 @@ namespace TeamUpBackEnd.DbContext
 				.HasForeignKey(cm => cm.UserId)
 				.OnDelete(DeleteBehavior.Cascade);
 
+			// ------------------------
 			// Channel → Workspace
+			// ------------------------
 			modelBuilder.Entity<Channel>()
 				.HasOne(c => c.Workspace)
 				.WithMany(w => w.Channels)
 				.HasForeignKey(c => c.WorkspaceId)
 				.OnDelete(DeleteBehavior.Cascade);
 
-
-
-			// Message → Sender
+			// ------------------------
+			// Message relationships
+			// ------------------------
 			modelBuilder.Entity<Message>()
 				.HasOne(m => m.Sender)
 				.WithMany(u => u.SentMessages)
 				.HasForeignKey(m => m.SenderId)
 				.OnDelete(DeleteBehavior.Restrict);
 
-
-
-			// Message → Channel
 			modelBuilder.Entity<Message>()
 				.HasOne(m => m.Channel)
 				.WithMany(c => c.Messages)
 				.HasForeignKey(m => m.ChannelId)
 				.OnDelete(DeleteBehavior.Cascade);
 
-
-
-			// Message → Conversation
 			modelBuilder.Entity<Message>()
 				.HasOne(m => m.Conversation)
 				.WithMany(c => c.Messages)
 				.HasForeignKey(m => m.ConversationId)
 				.OnDelete(DeleteBehavior.Cascade);
 
+			// ------------------------
+			// TaskAssignment
+			// ------------------------
+			modelBuilder.Entity<TaskAssignment>()
+				.HasKey(ta => new { ta.TaskItemId, ta.UserId });
 
+			modelBuilder.Entity<TaskAssignment>()
+				.HasOne(ta => ta.TaskItem)
+				.WithMany(t => t.Assignments)
+				.HasForeignKey(ta => ta.TaskItemId);
 
-			// PublicId indexes
-			modelBuilder.Entity<Channel>()
-				.HasIndex(c => c.PublicId)
-				.IsUnique();
+			modelBuilder.Entity<TaskAssignment>()
+				.HasOne(ta => ta.User)
+				.WithMany(u => u.Tasks)
+				.HasForeignKey(ta => ta.UserId);
 
-			modelBuilder.Entity<Conversation>()
-				.HasIndex(c => c.PublicId)
-				.IsUnique();
-
-			modelBuilder.Entity<Message>()
-				.HasIndex(m => m.PublicId)
-				.IsUnique();
+			// ------------------------
+			// Indexes
+			// ------------------------
+			modelBuilder.Entity<Channel>().HasIndex(c => c.PublicId).IsUnique();
+			modelBuilder.Entity<Conversation>().HasIndex(c => c.PublicId).IsUnique();
+			modelBuilder.Entity<Message>().HasIndex(m => m.PublicId).IsUnique();
+			modelBuilder.Entity<Message>().HasIndex(m => m.ChannelId);
+			modelBuilder.Entity<Message>().HasIndex(m => m.ConversationId);
 		}
 	}
 }
