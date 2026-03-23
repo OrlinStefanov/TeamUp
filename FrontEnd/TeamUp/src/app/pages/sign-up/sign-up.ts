@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RegisterUser } from '../../services/auth/auth-types';
 import { Auth } from '../../services/auth/auth';
 import { FormsModule } from '@angular/forms';
-import { NgIf } from '@angular/common';
+
 import { Router } from '@angular/router';
 
 @Component({

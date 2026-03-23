@@ -22,17 +22,19 @@
               <span class="badge bg-secondary ms-auto mt-2">{{ tasksToDo.length }}</span>
             </div>
             <div>
-              <div class="mb-4" *ngFor="let task of tasksToDo">
-                <div class="card h-100">
-                  <div class="card-body">
-                    <h5 class="card-title">{{ task.title }}</h5>
-                    <p class="card-text">{{ task.description }}</p>
-                  </div>
-                  <div class="card-footer text-muted">
-                    Due: {{ task.dueDate | date:'mediumDate' }}
+              @for (task of tasksToDo; track task) {
+                <div class="mb-4">
+                  <div class="card h-100">
+                    <div class="card-body">
+                      <h5 class="card-title">{{ task.title }}</h5>
+                      <p class="card-text">{{ task.description }}</p>
+                    </div>
+                    <div class="card-footer text-muted">
+                      Due: {{ task.dueDate | date:'mediumDate' }}
+                    </div>
                   </div>
                 </div>
-              </div>
+              }
             </div>
           </div>
           <!-- In Progress Column -->
@@ -46,17 +48,19 @@
               <span class="badge bg-secondary ms-auto mt-2">{{ tasksInProgress.length }}</span>
             </div>
             <div>
-              <div class="mb-4" *ngFor="let task of tasksInProgress">
-                <div class="card h-100">
-                  <div class="card-body">
-                    <h5 class="card-title">{{ task.title }}</h5>
-                    <p class="card-text">{{ task.description }}</p>
-                  </div>
-                  <div class="card-footer text-muted">
-                    Due: {{ task.dueDate | date:'mediumDate' }}
+              @for (task of tasksInProgress; track task) {
+                <div class="mb-4">
+                  <div class="card h-100">
+                    <div class="card-body">
+                      <h5 class="card-title">{{ task.title }}</h5>
+                      <p class="card-text">{{ task.description }}</p>
+                    </div>
+                    <div class="card-footer text-muted">
+                      Due: {{ task.dueDate | date:'mediumDate' }}
+                    </div>
                   </div>
                 </div>
-              </div>
+              }
             </div>
           </div>
           <!-- Done Column -->
@@ -70,17 +74,19 @@
               <span class="badge bg-secondary ms-auto mt-2">{{ tasksCompleted.length }}</span>
             </div>
             <div>
-              <div class="mb-4" *ngFor="let task of tasksCompleted">
-                <div class="card h-100">
-                  <div class="card-body">
-                    <h5 class="card-title">{{ task.title }}</h5>
-                    <p class="card-text">{{ task.description }}</p>
-                  </div>
-                  <div class="card-footer text-muted">
-                    Due: {{ task.dueDate | date:'mediumDate' }}
+              @for (task of tasksCompleted; track task) {
+                <div class="mb-4">
+                  <div class="card h-100">
+                    <div class="card-body">
+                      <h5 class="card-title">{{ task.title }}</h5>
+                      <p class="card-text">{{ task.description }}</p>
+                    </div>
+                    <div class="card-footer text-muted">
+                      Due: {{ task.dueDate | date:'mediumDate' }}
+                    </div>
                   </div>
                 </div>
-              </div>
+              }
             </div>
           </div>
           <!-- Overdue Column -->
@@ -94,17 +100,19 @@
               <span class="badge bg-secondary ms-auto mt-2">{{ tasksOverdue.length }}</span>
             </div>
             <div>
-              <div class="mb-4" *ngFor="let task of tasksOverdue">
-                <div class="card h-100 border-danger">
-                  <div class="card-body">
-                    <h5 class="card-title">{{ task.title }}</h5>
-                    <p class="card-text">{{ task.description }}</p>
-                  </div>
-                  <div class="card-footer text-danger">
-                    Due: {{ task.dueDate | date:'mediumDate' }}
+              @for (task of tasksOverdue; track task) {
+                <div class="mb-4">
+                  <div class="card h-100 border-danger">
+                    <div class="card-body">
+                      <h5 class="card-title">{{ task.title }}</h5>
+                      <p class="card-text">{{ task.description }}</p>
+                    </div>
+                    <div class="card-footer text-danger">
+                      Due: {{ task.dueDate | date:'mediumDate' }}
+                    </div>
                   </div>
                 </div>
-              </div>
+              }
             </div>
           </div>
         </div>

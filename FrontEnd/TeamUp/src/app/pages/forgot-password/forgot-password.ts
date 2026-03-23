@@ -1,14 +1,14 @@
 import { Component } from '@angular/core';
 import { ElementRef, Renderer2, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgIf, NgClass } from '@angular/common';
+import { NgClass } from '@angular/common';
 import { Auth } from '../../services/auth/auth';
 import { ActivatedRoute } from '@angular/router';
 import { ResetUser } from '../../services/auth/auth-types';
 
 @Component({
   selector: 'app-forgot-password',
-  imports: [FormsModule, NgIf, NgClass],
+  imports: [FormsModule, NgClass],
   templateUrl: './forgot-password.html',
   styleUrl: './forgot-password.css',
 })

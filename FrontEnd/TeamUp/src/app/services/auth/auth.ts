@@ -164,6 +164,12 @@ export class Auth {
       { withCredentials: true }
     );
   }
+
+  getChannels(workspacePublicId: string) {
+    return this.http.get<any[]>(`${this.apiUrl}/workspaces/${workspacePublicId}/channels`, {
+      withCredentials: true
+    });
+  }
   
   //-----------------------Decoding the token--------------------------------------------
   getToken(): string | null {

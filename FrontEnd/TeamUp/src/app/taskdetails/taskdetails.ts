@@ -1,12 +1,12 @@
 import { Component } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { NgFor } from '@angular/common';
+
 import { Auth } from '../services/auth/auth';
 import { RouterLink } from "@angular/router";
 
 @Component({
   selector: 'app-taskdetails',
-  imports: [DatePipe, NgFor, RouterLink],
+  imports: [DatePipe, RouterLink],
   templateUrl: './taskdetails.html',
   styleUrl: './taskdetails.css',
 })

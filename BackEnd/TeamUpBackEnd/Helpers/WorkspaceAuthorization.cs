@@ -10,7 +10,7 @@ namespace TeamUpBackEnd.Helpers
 		public static async Task<WorkSpaceRole?> GetUserRole(AppDbContext db, int workspaceId, string userId)
 		{
 			var member = await db.WorkspaceMembers
-				.FirstOrDefaultAsync(m => m.WorkSpaceId == workspaceId && m.UserId == userId);
+				.FirstOrDefaultAsync(m => m.WorkspaceId == workspaceId && m.UserId == userId);
 
 			return member?.Role;
 		}

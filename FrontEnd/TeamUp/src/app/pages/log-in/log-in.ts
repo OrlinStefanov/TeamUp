@@ -3,13 +3,13 @@ import { CommonModule } from '@angular/common';
 import { LoginUser, RegisterUser } from '../../services/auth/auth-types';
 import { Auth } from '../../services/auth/auth';
 import { FormsModule } from '@angular/forms';
-import { NgIf } from '@angular/common';
+
 import { Router } from '@angular/router';
 
 
 @Component({
   selector: 'app-log-in',
-  imports: [CommonModule, FormsModule, NgIf],
+  imports: [CommonModule, FormsModule],
   templateUrl: './log-in.html',
   styleUrl: './log-in.css',
 })
