@@ -1135,7 +1135,7 @@ namespace TeamUpBackEnd.Extensions
 		public static void ChatEndpoints(WebApplication app)
 		{
 			//create mew channel in the workspace
-			app.MapPost("/workspace/{workspaceId}/channels", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, int workspaceId, chatDto.CreateChatDTO model) =>
+			app.MapPost("/workspace/{workspaceId}/create/channels", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, int workspaceId, chatDto.CreateChatDTO model) =>
 			{
 				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
 				if (userId is null) return Results.BadRequest();
@@ -1167,7 +1167,57 @@ namespace TeamUpBackEnd.Extensions
 				await db.SaveChangesAsync();
 
 				return Results.Ok(channel);
-			});
+			}).WithSummary("Creates new channel in the workspace").WithTags("Chat Management");
+
+			//returns channels for workspace
+			app.MapGet("/workspace/{workspaceId}/get/channels", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, int workspaceId) =>
+			{
+				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
+
+				if (userId is null) return Results.BadRequest("User id not found");
+
+				var channels = await db.Channels
+					.Where(c => c.WorkspaceId == workspaceId)
+					.Select(c => new {
+						c.PublicId,
+						c.Name,
+						c.Description,
+						c.IsPrivate
+					})
+					.ToListAsync();
+
+				if (channels is null || channels.Count < 0)
+				{
+					return Results.BadRequest("Channels is null");
+				}
+
+				return Results.Ok(channels);
+			}).WithSummary("Returns all channels in the workspace").WithTags("Chat Management");
+
+			//add members to private channel
+			app.MapPost("/workspace/{publicId}/add_members/channel", [Authorize] async (AppDbContext db, int publicId, chatDto.AddChatMemberDTO model) =>
+			{
+				var channel = await db.Channels
+					.Include(c => c.Members)
+					.FirstOrDefaultAsync(c => c.Id == publicId);
+
+				if (channel is null) return Results.BadRequest("Channel id is not found");
+
+				var exists = channel.Members!
+					.Any(m => m.UserId == model.UserId);
+
+				if (exists) return Results.BadRequest("Already exists");
+
+				channel.Members!.Add(new ChannelMember
+				{
+					ChannelId = channel.Id,
+					UserId = model.UserId
+				});
+
+				await db.SaveChangesAsync();
+
+				return Results.Ok("Member was correctly added");
+			}).WithSummary("Adds new member to a private chat").WithTags("Chat Management");
 		}
 	}
 

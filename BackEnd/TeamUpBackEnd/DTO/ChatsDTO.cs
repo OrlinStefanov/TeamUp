@@ -8,5 +8,10 @@
 			public string? Description { get; set; }
 			public bool IsPrivate { get; set; }
 		}
+
+		public record AddChatMemberDTO
+		{
+			public string? UserId { get; set; }
+		}
 	}
 }

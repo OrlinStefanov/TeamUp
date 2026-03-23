@@ -84,6 +84,8 @@ builder.Services.AddSwaggerGen(options =>
 	});
 });
 
+builder.Services.AddSignalR();
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -96,10 +98,15 @@ if (app.Environment.IsDevelopment())
 	});
 }
 
+app.UseDefaultFiles();
+app.UseStaticFiles();
+	
 app.UseCors("AllowAll");
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapHub<ChatHub>("/chathub");
 
 EndpointsGenerator.MapEndpoints(app);
 
