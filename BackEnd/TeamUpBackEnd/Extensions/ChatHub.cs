@@ -25,14 +25,12 @@ namespace TeamUpBackEnd.Extensions
 
 			if (channel == null) return;
 
-			// public channel → allow
 			if (!channel.IsPrivate)
 			{
 				await Groups.AddToGroupAsync(Context.ConnectionId, channelId);
 				return;
 			}
 
-			// private channel → check membership
 			var isMember = channel.Members!.Any(m => m.UserId == userId);
 
 			if (!isMember) return;
