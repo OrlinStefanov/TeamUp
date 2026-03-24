@@ -17,16 +17,21 @@
     <div *ngFor="let msg of messages" class="message d-flex mb-3">
 
       <!-- avatar -->
-      <img 
-        [src]="msg.profilePictureUrl || 'https://via.placeholder.com/40'"
-        class="rounded-circle me-3"
-        style="width:40px;height:40px;object-fit:cover;"
-      >
-
+       @if (msg.profilePictureUrl) {
+        <img 
+          [src]="msg.sender.profilePictureUrl"
+          class="rounded-circle me-3"
+          style="width:40px;height:40px;object-fit:cover;"
+        >
+       } @else {
+        <div class="rounded-circle me-3 text-center" style="width:40px;height:40px;background-color:#ccc;">
+          <span class="text-white" style="font-size:20px;line-height:40px;">{{ msg.sender.userName.charAt(0) || "Userche" }}</span>
+        </div>
+       }
       <!-- message -->
       <div>
         <div class="d-flex align-items-center">
-          <strong class="me-2">{{ msg.senderName }}</strong>
+          <strong class="me-2">{{ msg.sender.username }}</strong>
           <small class="text-muted">
             {{ msg.sentAt | date:'shortTime' }}
           </small>

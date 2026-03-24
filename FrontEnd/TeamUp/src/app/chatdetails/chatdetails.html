@@ -44,7 +44,7 @@
       <ul class="nav flex-column">
         <li 
           class="nav-item"
-          *ngFor="let channel of channels">
+          *ngFor="let channel of (channels$ | async)">
 
           <a 
             class="nav-link text-dark d-flex align-items-center"

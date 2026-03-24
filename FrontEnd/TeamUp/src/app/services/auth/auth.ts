@@ -177,8 +177,7 @@ export class Auth {
       withCredentials: true,
       headers: { 'Content-Type': 'application/json' }
     });
-  }
-  
+  }  
   //-----------------------Decoding the token--------------------------------------------
   getToken(): string | null {
     return localStorage.getItem(this.tokenKey);
