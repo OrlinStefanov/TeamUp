@@ -3,6 +3,7 @@ import { ChatService } from '../services/chat-services/chat-service';
 import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DatePipe, NgFor, NgIf } from '@angular/common';
+import { Auth } from '../services/auth/auth';
 
 @Component({
   selector: 'app-chat-component',
@@ -12,40 +13,49 @@ import { DatePipe, NgFor, NgIf } from '@angular/common';
   styleUrl: './chat-component.css',
 })
 export class ChatComponent {
+
   messages: any[] = [];
   currentChannelId: string = '';
   messageInput: string = '';
 
   constructor(
     private chat: ChatService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private auth: Auth
   ) {}
 
-  ngOnInit() {
-    this.chat.startConnection().then(() => {
-      this.chat.onMessage((msg) => {
-        this.messages.push(msg);
+ ngOnInit() {
+  this.chat.startConnection()
+    .then(() => {
+      console.log('SignalR connected');
+
+      this.chat.onMessage((msg: any) => {
+        console.log('Received message:', msg);
+        this.messages.push(msg); 
         this.scrollToBottom();
       });
 
-    });
+      this.route.params.subscribe(params => {
+        const channelId = params['channelId'];
 
-    this.route.params.subscribe(params => {
-      const channelId = params['channelId'];
-
-      if (channelId) {
-        this.loadChannel(channelId);
-      }
-    });
+        if (channelId) {
+          this.loadChannel(channelId);
+        }
+      });
+    })
+    .catch(err => console.error('SignalR connection error:', err));
   }
-
   loadChannel(channelId: string) {
+
+    this.messages = [];
+
     this.currentChannelId = channelId;
 
     this.chat.joinChannel(channelId);
 
-    this.chat.getMessages(channelId).subscribe((msgs: any) => {
+    this.chat.getMessage(channelId).subscribe((msgs: any) => {
       this.messages = msgs;
+      console.log(this.messages);
       setTimeout(() => this.scrollToBottom(), 0);
     });
   }
@@ -54,6 +64,7 @@ export class ChatComponent {
     if (!this.messageInput.trim()) return;
 
     this.chat.sendMessage(this.currentChannelId, this.messageInput);
+
     this.messageInput = '';
   }
 

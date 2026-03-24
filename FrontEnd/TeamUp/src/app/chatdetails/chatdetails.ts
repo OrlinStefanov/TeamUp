@@ -3,7 +3,8 @@ import { ChatService } from '../services/chat-services/chat-service';
 import { FormsModule } from '@angular/forms';
 import { Auth } from '../services/auth/auth';
 import { CommonModule } from '@angular/common';
-import { RouterLink, RouterOutlet } from '@angular/router';
+import { RouterLink, RouterOutlet, ActivatedRoute } from '@angular/router';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-chatdetails',
@@ -12,48 +13,42 @@ import { RouterLink, RouterOutlet } from '@angular/router';
     FormsModule,
     RouterLink,
     RouterOutlet
-],
+  ],
   templateUrl: './chatdetails.html',
   styleUrl: './chatdetails.css',
 })
+export class Chatdetails {
+  channels$!: Observable<any[]>;
 
-export class Chatdetails {  
-  channels: any[] = [];
+  workspaceId: string = '';
   selectedWorkspaceId: number = 0;
-  workspaceId : string = '';
 
-  constructor(private chat: ChatService, private auth: Auth) {}
+  constructor(
+    private chat: ChatService,
+    private auth: Auth,
+    private route: ActivatedRoute
+  ) {}
 
   ngOnInit() {
-    this.workspaceId = window.location.pathname.split('/')[2]; // Assuming the workspace ID is in the URL path
-    this.auth.getWorkspaceInfo(this.workspaceId).subscribe({
+    this.route.parent?.params.subscribe(params => {
+      this.workspaceId = params['id'];
+
+      this.auth.getWorkspaceInfo(this.workspaceId).subscribe({
         next: (workspace) => {
           this.selectedWorkspaceId = workspace.id;
-          this.loadChannels(this.selectedWorkspaceId)
-        }
-      }
-    );
-  }
 
-  loadChannels(publicId: number) {
-    this.selectedWorkspaceId = publicId;
-    this.auth.getChannels(publicId).subscribe({
-      next: (res) => {
-        this.channels = res;
-        console.log(this.channels);
-      },
-      error: (err) => {
-        console.error('Failed to load channels:', err);
-      }
+          this.chat.loadChannels(this.selectedWorkspaceId.toString());
+
+          this.channels$ = this.chat.channels$;
+        }
+      });
     });
   }
 
-
   createChannel() {
     this.auth.createChannel(this.selectedWorkspaceId).subscribe({
-      next: (res : any) =>
-      {
-        this.channels.push(res);
+      next: (newChannel: any) => {
+        this.chat.addChannel(newChannel);
       }
     });
   }
