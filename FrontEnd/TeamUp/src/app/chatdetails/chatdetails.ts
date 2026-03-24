@@ -3,42 +3,44 @@ import { ChatService } from '../services/chat-services/chat-service';
 import { FormsModule } from '@angular/forms';
 import { Auth } from '../services/auth/auth';
 import { CommonModule } from '@angular/common';
+import { RouterLink, RouterOutlet } from '@angular/router';
 
 @Component({
   selector: 'app-chatdetails',
   imports: [
     CommonModule,
-    FormsModule
-  ],
+    FormsModule,
+    RouterLink,
+    RouterOutlet
+],
   templateUrl: './chatdetails.html',
   styleUrl: './chatdetails.css',
 })
 
-export class Chatdetails {
-  messages: any[] = [];
-  currentChannelId: string = '';
-  messageInput: string = '';
-  
+export class Chatdetails {  
   channels: any[] = [];
-  selectedWorkspaceId: string = '';
+  selectedWorkspaceId: number = 0;
+  workspaceId : string = '';
 
   constructor(private chat: ChatService, private auth: Auth) {}
 
   ngOnInit() {
-    this.chat.startConnection().then(() => {
-
-      this.chat.onMessage((msg) => {
-        this.messages.push(msg);
-      });
-
-    });
+    this.workspaceId = window.location.pathname.split('/')[2]; // Assuming the workspace ID is in the URL path
+    this.auth.getWorkspaceInfo(this.workspaceId).subscribe({
+        next: (workspace) => {
+          this.selectedWorkspaceId = workspace.id;
+          this.loadChannels(this.selectedWorkspaceId)
+        }
+      }
+    );
   }
 
-  loadChannels(publicId: string) {
+  loadChannels(publicId: number) {
     this.selectedWorkspaceId = publicId;
     this.auth.getChannels(publicId).subscribe({
       next: (res) => {
         this.channels = res;
+        console.log(this.channels);
       },
       error: (err) => {
         console.error('Failed to load channels:', err);
@@ -46,20 +48,13 @@ export class Chatdetails {
     });
   }
 
-  selectChannel(channelId: string) {
-    this.currentChannelId = channelId;
 
-    this.chat.joinChannel(channelId);
-
-    this.chat.getMessages(channelId).subscribe((msgs: any) => {
-      this.messages = msgs;
+  createChannel() {
+    this.auth.createChannel(this.selectedWorkspaceId).subscribe({
+      next: (res : any) =>
+      {
+        this.channels.push(res);
+      }
     });
-  }
-
-  sendMessage() {
-    if (!this.messageInput.trim()) return;
-
-    this.chat.sendMessage(this.currentChannelId, this.messageInput);
-    this.messageInput = '';
   }
 }

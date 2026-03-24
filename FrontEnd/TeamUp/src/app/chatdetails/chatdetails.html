@@ -1,14 +1,12 @@
-<div class="chat-container">
+<!--<div class="chat-container">
 
-  <!-- CHANNEL LIST -->
+
   <div class="channels">
     <div *ngFor="let channel of channels"
          (click)="selectChannel(channel.publicId)">
       # {{ channel.name }}
     </div>
   </div>
-
-  <!-- CHAT -->
   <div class="chat-box">
 
     <div class="messages">
@@ -27,4 +25,50 @@
 
   </div>
 
+</div> -->
+<div class="container-fluid" >
+  <div class="d-flex" style="height: 83vh;">
+
+    <!-- SIDEBAR -->
+    <div class="bg-white text-white p-3" style="width: 260px;">
+      <!-- Channels header -->
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <small class="text-uppercase text-muted">Channels</small>
+        <button class="btn btn-sm btn-outline-dark" (click)="createChannel()">
+          +
+        </button>
+      </div>
+      <hr style="color: black;">
+
+      <!-- Channels list -->
+      <ul class="nav flex-column">
+        <li 
+          class="nav-item"
+          *ngFor="let channel of channels">
+
+          <a 
+            class="nav-link text-dark d-flex align-items-center"
+            [routerLink]="['/workspace', workspaceId, 'chat', channel.publicId]"
+            routerLinkActive="active-channel">
+
+            <div class="justify-content-center align-items-center">
+              <p># {{ channel.name }}</p>
+              <span *ngIf="channel.isPrivate == true">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-lock-fill" viewBox="0 0 16 16">
+                  <path fill-rule="evenodd" d="M8 0a4 4 0 0 1 4 4v2.05a2.5 2.5 0 0 1 2 2.45v5a2.5 2.5 0 0 1-2.5 2.5h-7A2.5 2.5 0 0 1 2 13.5v-5a2.5 2.5 0 0 1 2-2.45V4a4 4 0 0 1 4-4m0 1a3 3 0 0 0-3 3v2h6V4a3 3 0 0 0-3-3"/>
+                </svg>
+              </span>
+            </div>
+          </a>
+        </li>
+      </ul>
+
+    </div>
+
+    <!-- MAIN CHAT CONTENT -->
+    <div class="flex-grow-1 bg-light">
+      <router-outlet></router-outlet>
+    </div>
+
+  </div>
 </div>

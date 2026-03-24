@@ -165,9 +165,17 @@ export class Auth {
     );
   }
 
-  getChannels(workspacePublicId: string) {
-    return this.http.get<any[]>(`${this.apiUrl}/workspaces/${workspacePublicId}/channels`, {
+  getChannels(workspacePublicId: number) {
+    return this.http.get<any[]>(`${this.apiUrl}/workspace/${workspacePublicId}/get/channels`, {
       withCredentials: true
+    });
+  }
+
+  createChannel(workspaceId : number)
+  {
+    return this.http.post(`${this.apiUrl}/workspace/${workspaceId}/create/channels`, {
+      withCredentials: true,
+      headers: { 'Content-Type': 'application/json' }
     });
   }
   
