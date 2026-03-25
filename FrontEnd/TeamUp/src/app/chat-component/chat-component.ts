@@ -2,12 +2,12 @@ import { Component } from '@angular/core';
 import { ChatService } from '../services/chat-services/chat-service';
 import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { DatePipe, NgFor, NgIf } from '@angular/common';
+import { CommonModule, DatePipe, NgFor, NgIf } from '@angular/common';
 import { Auth } from '../services/auth/auth';
 
 @Component({
   selector: 'app-chat-component',
-  imports: [FormsModule, DatePipe, NgIf, NgFor],
+  imports: [FormsModule, DatePipe, NgIf, NgFor, CommonModule],
   standalone: true,
   templateUrl: './chat-component.html',
   styleUrl: './chat-component.css',
@@ -17,6 +17,10 @@ export class ChatComponent {
   messages: any[] = [];
   currentChannelId: string = '';
   messageInput: string = '';
+  currentUserId : string = '';
+
+  channels : any;
+  channel : any;
 
   constructor(
     private chat: ChatService,
@@ -25,6 +29,8 @@ export class ChatComponent {
   ) {}
 
  ngOnInit() {
+  this.currentUserId = this.auth.getUserId();
+
   this.chat.startConnection()
     .then(() => {
       console.log('SignalR connected');
@@ -35,11 +41,21 @@ export class ChatComponent {
         this.scrollToBottom();
       });
 
+      this.channels = this.chat.channels$;
+
       this.route.params.subscribe(params => {
         const channelId = params['channelId'];
 
         if (channelId) {
           this.loadChannel(channelId);
+
+          this.chat.channels$.subscribe((channels: any[]) => {
+            this.channels = channels;
+
+            this.channel = this.channels.find(
+              (c: any) => c.publicId === this.currentChannelId
+            );
+          });
         }
       });
     })

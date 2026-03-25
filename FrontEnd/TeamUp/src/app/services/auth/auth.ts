@@ -9,8 +9,6 @@ import { BehaviorSubject, finalize, Observable, of, shareReplay, tap } from 'rxj
 })
 
 export class Auth {
-
-  public getUserId: any;
   public me_credentials: any;
 
   constructor(private http: HttpClient) {
@@ -31,6 +29,11 @@ export class Auth {
   // prevent duplicate calls (important)
   private workspaceRequests = new Map<string, Observable<any>>();
   private taskRequests = new Map<string, Observable<any>>();
+
+  getUserId(): string {
+    const user = this.userSubject.value;
+    return user?.id || '';
+  }
 
   login(user: LoginUser) {
     return this.http.post<{ token: string }>(`${this.apiUrl}/login`, user).pipe(
@@ -184,28 +187,27 @@ export class Auth {
   }
 
   decodeToken(token: string): User {
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
 
-      return {
-        id: payload.jti ?? '',
-        username: payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] ?? 
-                  payload.unique_name ?? 
-                  payload.name ?? '',
-        
-        email: payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'] ?? 
-              payload.email ?? '',
+    return {
+      id: payload.sub ?? 
+          payload.nameid ?? 
+          payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'] ?? '',
 
-      /*  roles: payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role']
-          ? [payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role']]
-          : [],*/
+      username: payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] ?? 
+                payload.unique_name ?? 
+                payload.name ?? '',
 
-        exp: payload.exp ?? 0
-      };
-    } catch {
-      return { id: '', email: '', username:'', exp: 0 };
-    }
+      email: payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'] ?? 
+             payload.email ?? '',
+
+      exp: payload.exp ?? 0
+    };
+  } catch {
+    return { id: '', email: '', username:'', exp: 0 };
   }
+}
 
   loadUserFromStorage(): void {
     const token = this.getToken();
