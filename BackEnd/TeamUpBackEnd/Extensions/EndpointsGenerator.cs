@@ -1325,6 +1325,7 @@ namespace TeamUpBackEnd.Extensions
 						m.PublicId,
 						m.Content,
 						m.SentAt,
+						SenderId = m.SenderId,
 						Sender = new
 						{
 							m.Sender!.UserName,
