@@ -174,9 +174,9 @@ export class Auth {
     });
   }
 
-  createChannel(workspaceId : number)
+  createChannel(workspaceId : number, channel : any)
   {
-    return this.http.post(`${this.apiUrl}/workspace/${workspaceId}/create/channels`, {
+    return this.http.post(`${this.apiUrl}/workspace/${workspaceId}/create/channels`, channel, {
       withCredentials: true,
       headers: { 'Content-Type': 'application/json' }
     });

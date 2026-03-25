@@ -1,8 +1,8 @@
 <div class="chat-container d-flex flex-column h-100">
 
   <!-- HEADER -->
-  <div class="chat-header border-bottom p-3 bg-white">
-    <h5 class="mb-0"># {{channel.name || "Channel"}}</h5>
+  <div *ngIf="channel != null" class="chat-header border-bottom p-3 bg-white">
+    <h5 class="mb-0"># {{channel.name}}</h5>
   </div>
 
   <!-- ✅ SCROLLABLE MESSAGES CONTAINER -->
