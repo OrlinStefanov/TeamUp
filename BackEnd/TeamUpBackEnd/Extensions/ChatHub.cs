@@ -86,6 +86,7 @@ namespace TeamUpBackEnd.Extensions
 					publicId = message.PublicId,
 					content = message.Content,
 					sentAt = message.SentAt,
+					senderId = userId,
 					sender = new
 					{
 						userName = sender!.UserName,

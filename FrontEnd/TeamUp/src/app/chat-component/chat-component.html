@@ -2,36 +2,40 @@
 
   <!-- HEADER -->
   <div class="chat-header border-bottom p-3 bg-white">
-    <h5 class="mb-0"># Channel</h5>
+    <h5 class="mb-0"># {{channel.name || "Channel"}}</h5>
   </div>
 
-  <!-- MESSAGES -->
-  <div class="chat-messages flex-grow-1 p-3 overflow-auto">
+  <!-- ✅ SCROLLABLE MESSAGES CONTAINER -->
+  <div class="chat-messages flex-grow-1 overflow-auto p-3">
 
-    <!-- empty state -->
-    <div *ngIf="messages.length === 0" class="text-center text-muted mt-5">
-      No messages yet 👋
-    </div>
+    <div *ngFor="let msg of messages" 
+         class="message d-flex mb-3"
+         [ngClass]="{
+           'justify-content-end text-end': msg.senderId === currentUserId,
+           'justify-content-start': msg.senderId !== currentUserId
+         }">
 
-    <!-- messages -->
-    <div *ngFor="let msg of messages" class="message d-flex mb-3">
-
-      <!-- avatar -->
-       @if (msg.profilePictureUrl) {
-        <img 
+      <!-- LEFT avatar -->
+      <ng-container *ngIf="msg.senderId !== currentUserId">
+        <img *ngIf="msg.sender?.profilePictureUrl"
           [src]="msg.sender.profilePictureUrl"
           class="rounded-circle me-3"
-          style="width:40px;height:40px;object-fit:cover;"
-        >
-       } @else {
-        <div class="rounded-circle me-3 text-center" style="width:40px;height:40px;background-color:#ccc;">
-          <span class="text-white" style="font-size:20px;line-height:40px;">{{ msg.sender.userName.charAt(0) || "Userche" }}</span>
+          style="width:40px;height:40px;object-fit:cover;">
+        
+        <div *ngIf="!msg.sender?.profilePictureUrl"
+          class="rounded-circle me-3 text-center"
+          style="width:40px;height:40px;background-color:#ccc;">
+          <span class="text-white" style="line-height:40px;">
+            {{ msg.sender?.userName?.charAt(0) }}
+          </span>
         </div>
-       }
+      </ng-container>
+
       <!-- message -->
-      <div>
+      <div class="bg-light p-2 rounded">
+
         <div class="d-flex align-items-center">
-          <strong class="me-2">{{ msg.sender.username }}</strong>
+          <strong class="me-2">{{ msg.sender?.userName }}</strong>
           <small class="text-muted">
             {{ msg.sentAt | date:'shortTime' }}
           </small>
@@ -42,11 +46,27 @@
         </div>
       </div>
 
+      <!-- RIGHT avatar -->
+      <ng-container *ngIf="msg.senderId === currentUserId">
+        <img *ngIf="msg.sender?.profilePictureUrl"
+          [src]="msg.sender.profilePictureUrl"
+          class="rounded-circle ms-3"
+          style="width:40px;height:40px;object-fit:cover;">
+        
+        <div *ngIf="!msg.sender?.profilePictureUrl"
+          class="rounded-circle ms-3 text-center"
+          style="width:40px;height:40px;background-color:#ccc;">
+          <span class="text-white" style="line-height:40px;">
+            {{ msg.sender?.userName?.charAt(0) }}
+          </span>
+        </div>
+      </ng-container>
+
     </div>
 
   </div>
 
-  <!-- INPUT -->
+  <!-- INPUT (always bottom) -->
   <div class="chat-input border-top p-3 bg-white">
     <div class="input-group">
       <input
