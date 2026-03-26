@@ -181,6 +181,14 @@ export class Auth {
       headers: { 'Content-Type': 'application/json' }
     });
   }  
+
+  createTask(data : any)
+  {
+    return this.http.post(`${this.apiUrl}/create/tasks`, data, {
+      withCredentials: true,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
   //-----------------------Decoding the token--------------------------------------------
   getToken(): string | null {
     return localStorage.getItem(this.tokenKey);
