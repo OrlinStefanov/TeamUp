@@ -52,6 +52,15 @@ export class Dashboard implements OnInit, AfterViewInit {
 
   inviteInput: string = '';
 
+  showEditWorkspace = false;
+  showDeleteWorkspace = false;
+
+  selectedWorkspace: any = null;
+
+  editSuggestions: any[] = [];
+  editInviteInput = '';
+  editMembers: any[] = [];
+
   constructor(private renderer: Renderer2, private auth: Auth) {}
 
   ngOnInit() {
@@ -61,6 +70,62 @@ export class Dashboard implements OnInit, AfterViewInit {
     this.auth.getWorkspaces().subscribe();
     const savedMode = localStorage.getItem('darkMode');
     this.isDarkMode = savedMode === 'true';
+  }
+
+  updateWorkspace() {
+
+    this.selectedWorkspace.members = this.editMembers.filter(m => m.id !== this.selectedWorkspace.ownerId);
+    console.log('update', this.selectedWorkspace);
+    this.auth.editWorkspace(this.selectedWorkspace).subscribe();
+    
+    this.showEditWorkspace = false;
+  }
+
+  deleteWorkspace() {
+    // call API
+    console.log('delete', this.selectedWorkspace);
+
+    this.showDeleteWorkspace = false;
+  }
+
+  onEditInputChange(value: string) {
+    // call your API (same as create modal)
+    console.log('search user', value);
+  }
+
+  addMember(user: any) {
+    const exists = this.editMembers.some(m => m.id === user.id);
+    if (!exists) {
+      this.editMembers.push(user);
+    }
+
+    this.editInviteInput = '';
+    this.editSuggestions = [];
+  }
+
+  removeEditMember(member: any) {
+    this.editMembers = this.editMembers.filter(m => m.id !== member.id);
+  }
+
+  openEditWorkspace(workspace: any) {
+    this.selectedWorkspace = { ...workspace }; // clone
+    this.editMembers = [...workspace.members];
+
+    console.log('edit', this.selectedWorkspace);
+    this.showEditWorkspace = true;
+  }
+
+  closeEditWorkspace() {
+    this.showEditWorkspace = false;
+  }
+
+  openDeleteWorkspace(workspace: any) {
+    this.selectedWorkspace = workspace;
+    this.showDeleteWorkspace = true;
+  }
+
+  closeDeleteWorkspace() {
+    this.showDeleteWorkspace = false;
   }
 
   ngAfterViewInit() {
