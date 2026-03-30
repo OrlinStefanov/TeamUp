@@ -14,6 +14,7 @@ namespace TeamUpBackEnd.Models.Tasks
 		public TasksStatus Status { get; set; } = TasksStatus.ToDo;
 		public TaskDifficulty Difficulty { get; set; }
 		public int Points { get; set; }
+		public bool IsDeleted { get; set; }
 
 		public int WorkSpaceId { get; set; }
 		public WorkSpace? WorkSpace { get; set; }

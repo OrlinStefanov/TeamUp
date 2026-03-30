@@ -1167,6 +1167,15 @@ namespace TeamUpBackEnd.Extensions
 
 					task.StartDate = dto.StartDate;
 					task.Points = dto.Points;
+
+				if (task.Points == 0)
+				{
+					if (task.Difficulty == TaskDifficulty.Easy) task.Points = 50;
+					if (task.Difficulty == TaskDifficulty.Medium) task.Points = 75;
+					if (task.Difficulty == TaskDifficulty.Hard) task.Points = 100;
+					if (task.Difficulty == TaskDifficulty.VeryHard) task.Points = 150;
+				}
+
 				task.Status = (TasksStatus)dto.Status!;
 
 				if (dto.Difficulty.HasValue)
@@ -1209,6 +1218,68 @@ namespace TeamUpBackEnd.Extensions
 				});
 			}).RequireAuthorization()
 				.WithSummary("Edit task by public Id").WithTags("Task Management");
+
+			//delete task
+			app.MapDelete("/delete/task/{taskId}", async (AppDbContext db, ClaimsPrincipal userClaims, string taskId) =>
+			{
+				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
+
+				if (userId is null) return Results.BadRequest("User id not found");
+
+				var task = await db.Tasks
+					.Include(t => t.Assignments!)
+						.ThenInclude(t => t.User)
+					.Include(w => w.WorkSpace)
+					.FirstOrDefaultAsync(t => t.PublicId.ToString() == taskId && t.IsDeleted == false);
+
+				if (task is null) return Results.BadRequest("Task not found");
+
+				if (task.WorkSpace!.OwnerId != userId) return Results.Forbid();
+
+				task.IsDeleted = true;
+
+				foreach (var item in task.Assignments!)
+				{
+					item.IsDeleted = true;
+				}
+
+				await db.SaveChangesAsync();
+
+				return Results.Ok();
+			}).RequireAuthorization().WithSummary("Soft delete a task by it's id").WithTags("Task Management");
+
+			//change task status
+			app.MapPut("/task/status/{taskId}", async (AppDbContext db, ClaimsPrincipal userClaims, string taskId, TaskStatusChangeAction data) =>
+			{
+				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
+
+				if (userId is null) return Results.BadRequest("User id not found");
+
+				var task = await db.Tasks
+					.Include(t => t.Assignments!)
+						.ThenInclude(t => t.User)
+					.Include(t => t.WorkSpace)
+						.FirstOrDefaultAsync(t => t.PublicId.ToString() == taskId && t.IsDeleted == false);
+
+				if (task is null) return Results.BadRequest("Task not found");
+
+				if (task.WorkSpace!.OwnerId == userId || task.Assignments!.Any(t => t.UserId == userId))
+				{
+					task.Status = data.status switch
+					{
+						0 => TasksStatus.ToDo,
+						1 => TasksStatus.InProgress,
+						2 => TasksStatus.Done,
+						_ => TasksStatus.ToDo
+					};
+
+					return Results.Ok("Successfully changed");
+				} else
+				{
+					return Results.Forbid();
+				}
+
+			}).RequireAuthorization().WithSummary("Change task status").WithTags("Task Management");
 		}
 	
 		public static void ChatEndpoints(WebApplication app)
@@ -1372,5 +1443,10 @@ namespace TeamUpBackEnd.Extensions
 	public record InvitationActionDto
 	{
 		public string Action { get; set; } = ""; // "accept" or "reject"
+	}
+
+	public record TaskStatusChangeAction
+	{
+		public int status; // 0 - To Do 1 - In Progress 2 - Done 
 	}
 }
