@@ -1,12 +1,12 @@
 import { Component, OnInit } from '@angular/core';
-
 import { RouterModule, Router, ActivatedRoute } from '@angular/router';
 import { RouterOutlet, RouterLink } from '@angular/router';
 import { Auth } from '../services/auth/auth';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-workspace-detail',
-  imports: [RouterModule, RouterOutlet, RouterLink],
+  imports: [RouterModule, RouterOutlet, RouterLink, CommonModule],
   templateUrl: './workspace-detail.html',
   styleUrl: './workspace-detail.css',
   standalone: true
@@ -15,6 +15,8 @@ export class WorkspaceDetail implements OnInit {
   workspace_info: any = null;
   user_data: any = null;
   workspaceId: string = '';
+  isDarkMode = false;
+  activeLink: string = '';
 
   constructor(
     private auth: Auth,
@@ -40,6 +42,19 @@ export class WorkspaceDetail implements OnInit {
       }
     });
 
+    const savedMode = localStorage.getItem('darkMode');
+    if (savedMode !== null) {
+      this.isDarkMode = savedMode === 'true';
+    }
+
     this.user_data = this.auth.getCurrentUser();
+  }
+
+  setActive(link: string) {
+    this.activeLink = link;
+  }
+
+  isActive(route: string): boolean {
+    return this.router.url.endsWith(route);
   }
 }

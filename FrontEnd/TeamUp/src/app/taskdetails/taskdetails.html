@@ -2,6 +2,9 @@
   <div class="row" style="border-top: 2px solid whitesmoke;">
     <div class="col-12 mt-4">
       <h4>Task Board</h4>
+      <div class="col-12 text-end" style="margin-top: -20px;">
+        <button class="btn btn-m btn-primary" (click)="openTaskModal()">Add Task</button>
+      </div>
     </div>
     <div class="col-12" style="margin-top: -10px;">
       <p class="text-muted">{{tasks.length}} {{ tasks.length === 1 ? 'task' : 'tasks' }}</p>
@@ -116,6 +119,113 @@
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="createTaskModal">
+  <div class="modal-dialog modal-dialog-centered modal-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Create Task</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form (ngSubmit)="createTask()">
+          <div class="mb-3">
+            <label for="taskTitle" class="form-label">Title</label>
+            <input type="text" class="form-control" id="taskTitle" [(ngModel)]="newTask.title" required>
+          </div>
+          <div class="mb-3">  
+          <label for="taskDescription" class="form-label">Description</label>
+            <textarea class="form-control" id="taskDescription" rows="3" [(ngModel)]="newTask.description"></textarea>
+          </div>
+          <div class="mb-3">
+            <label for="taskDueDate" class="form-label">Due Date</label>
+            <input type="date" class="form-control" id="taskDueDate" [(ngModel)]="newTask.dueDate" required>
+          </div>
+          <div class="mb-3">
+            <label for="taskStartDate" class="form-label">Start Date</label>
+            <input type="date" class="form-control" id="taskStartDate" [(ngModel)]="newTask.startDate" required>
+          </div>
+          <div class="mb-3">
+            <label for="taskStatus" class="form-label">Status</label>
+            <select class="form-select" id="taskStatus" [(ngModel)]="newTask.status" required>
+              <option [ngValue]="0">To Do</option>
+              <option [ngValue]="1">In Progress</option>
+              <option [ngValue]="2">Done</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="taskDifficulty" class="form-label">Difficulty</label>
+            <select class="form-select" id="taskDifficulty" [(ngModel)]="newTask.difficulty" required>
+              <option [ngValue]="0">Low</option>
+              <option [ngValue]="1">Medium</option>
+              <option [ngValue]="2">High</option>
+              <option [ngValue]="3">Very High</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="taskPoints" class="form-label">Points</label>
+            <p class="text-muted smaller">If you don't enter the system will evaluate later</p>
+            <input type="number" class="form-control" id="taskPoints" [(ngModel)]="newTask.points" required>
+          </div>
+          <div class="mb-3">
+            <label for="assignedUsers" class="form-label">Assigned Users</label>
+          <div class="dropdown">
+            <button class="btn btn-outline-secondary dropdown-toggle w-100" type="button" data-bs-toggle="dropdown">
+              Select user
+            </button>
+
+            <ul class="dropdown-menu w-100">
+              <!-- Owner -->
+              <li *ngIf="worksapce_info.owner">
+                <a class="dropdown-item d-flex align-items-center"
+                  (click)="newTask.assignedUsers = worksapce_info.owner.id">
+
+                  <img *ngIf="worksapce_info.owner.profilePictureUrl"
+                      [src]="worksapce_info.owner.profilePictureUrl"
+                      class="rounded-circle me-2"
+                      width="30" height="30">
+
+                  <div *ngIf="!worksapce_info.owner.profilePictureUrl"
+                      class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-2"
+                      style="width:30px;height:30px;">
+                    {{ worksapce_info.owner.userName.charAt(0) }}
+                  </div>
+
+                  {{ worksapce_info.owner.userName }}
+                </a>
+              </li>
+
+              <!-- Members -->
+              <li *ngFor="let user of worksapce_info.members">
+                <a class="dropdown-item d-flex align-items-center"
+                  (click)="newTask.assignedUsers = user.id">
+
+                  <img *ngIf="user.profilePictureUrl"
+                      [src]="user.profilePictureUrl"
+                      class="rounded-circle me-2"
+                      width="30" height="30">
+
+                  <div *ngIf="!user.profilePictureUrl"
+                      class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-2"
+                      style="width:30px;height:30px;">
+                    {{ user.userName.charAt(0) }}
+                  </div>
+
+                  {{ user.userName }}
+                </a>
+              </li>
+            </ul>
+          </div>
+          </div>
+          <div class="d-flex justify-content-between">
+            <button type="submit" class="btn btn-primary">Create Task</button>
+            <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          </div>
+        </form>
       </div>
     </div>
   </div>

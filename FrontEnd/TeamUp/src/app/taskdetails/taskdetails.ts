@@ -1,12 +1,14 @@
 import { Component } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 
 import { Auth } from '../services/auth/auth';
 import { RouterLink } from "@angular/router";
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-taskdetails',
-  imports: [DatePipe, RouterLink],
+  imports: [DatePipe, RouterLink, CommonModule, FormsModule],
+  standalone : true,
   templateUrl: './taskdetails.html',
   styleUrl: './taskdetails.css',
 })
@@ -20,6 +22,18 @@ export class Taskdetails {
   tasksInProgress : any[] = []
   tasksCompleted : any[] = [];
   tasksOverdue : any[] = [];
+
+  newTask : any = {
+    title: '',
+    description: '',
+    dueDate: '',
+    startDate: '',
+    status: 0, //0-ToDo 1-InProgress 2-Done
+    difficulty: 0, //0-Easy 1-Medium 2-Hard 3-veryHard
+    points: 0,
+    assignedUserIds : [],
+    workspaceId: 0 // number
+  };
 
   constructor(private auth : Auth) {}
 
@@ -35,12 +49,48 @@ export class Taskdetails {
       this.tasks = response;
       console.log('Tasks:', this.tasks);
       // Categorize tasks by status
+      this.filterTasksStatus();
+    });
+
+    this.user_data = this.auth.getCurrentUser();
+  }
+
+  openTaskModal() {
+    const modal = new (window as any).bootstrap.Modal(
+      document.getElementById('createTaskModal')
+    );
+    modal.show();
+  }
+
+  filterTasksStatus()
+  {
       this.tasksToDo = this.tasks.filter(t => t.status == 'ToDo');
       this.tasksInProgress = this.tasks.filter(t => t.status == 'In Progress');
       this.tasksCompleted = this.tasks.filter(t => t.status == 'Done');
       this.tasksOverdue = this.tasks.filter(t => t.status == 'Overdue');
-    });
+  }
 
-    this.user_data = this.auth.getCurrentUser();
+  createTask()
+  {
+    this.auth.createTask(this.newTask).subscribe((res : any) =>
+    {
+      console.log(res);
+
+      this.tasks.push(res);
+    
+      this.filterTasksStatus();
+      
+      this.newTask = {
+        title: '',
+        description: '',
+        dueDate: '',
+        startDate: '',
+        status: 0, //0-ToDo 1-InProgress 2-Done
+        difficulty: 0, //0-Easy 1-Medium 2-Hard 3-veryHard
+        points: 0,
+        assignedUserIds : [],
+        workspaceId: 0 // number
+      }
+    });
   }
 }
