@@ -3,8 +3,10 @@ import { ChatService } from '../services/chat-services/chat-service';
 import { FormsModule } from '@angular/forms';
 import { Auth } from '../services/auth/auth';
 import { CommonModule } from '@angular/common';
-import { RouterLink, RouterOutlet, ActivatedRoute } from '@angular/router';
+import { RouterLink, RouterOutlet, ActivatedRoute, RouterModule } from '@angular/router';
 import { Observable } from 'rxjs';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'app-chatdetails',
@@ -12,6 +14,7 @@ import { Observable } from 'rxjs';
     CommonModule,
     FormsModule,
     RouterLink,
+    RouterModule,
     RouterOutlet
   ],
   templateUrl: './chatdetails.html',
@@ -31,6 +34,9 @@ export class Chatdetails {
     isPrivate: false
   };
 
+  unreadMap: any = {};
+  private destroy$ = new Subject<void>();
+
   constructor(
     private chat: ChatService,
     private auth: Auth,
@@ -39,24 +45,34 @@ export class Chatdetails {
 
   ngOnInit() {
     this.route.parent?.params.subscribe(params => {
-      const publicId = params['id'];
-      if (!publicId) return;
+        const publicId = params['id'];
+        if (!publicId) return;
 
-      this.workspacePublicId = publicId;
+        this.workspacePublicId = publicId;
 
-      const cached = this.auth.getCachedWorkspaceById(publicId);
+        const cached = this.auth.getCachedWorkspaceById(publicId);
 
-      if (cached) {
-        this.workspaceId = cached.id;
-        this.initChannels();
-      } else {
-
-        this.auth.getWorkspaceInfo(publicId).subscribe(ws => {
-          this.workspaceId = ws.id;
+        if (cached) {
+          this.workspaceId = cached.id;
           this.initChannels();
-        });
-      }
-    });
+        } else {
+          this.auth.getWorkspaceInfo(publicId).subscribe(ws => {
+            this.workspaceId = ws.id;
+            this.initChannels();
+          });
+        }
+
+        this.chat.unread$
+          .pipe(takeUntil(this.destroy$))
+          .subscribe(map => {
+            this.unreadMap = map;
+          });
+      });
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   initChannels() {
