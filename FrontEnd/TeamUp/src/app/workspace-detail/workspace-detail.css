@@ -6,6 +6,14 @@
   background-color: #f5f5f5 !important;
 }
 
+.navbar.dark-mode .navbar-brand {
+    color: #fff !important;
+}
+
+.navbar.light-mode .navbar-brand {
+    color: #0f0f14 !important;
+}
+
 .nav-3items {
     display: flex;
 }
@@ -18,8 +26,17 @@
     color: #999;
 }
 
-.nav-link:hover {
+.nav-3items.light-mode .nav-link:hover {
     color: #0f0f14;
+}
+
+.nav-3items.dark-mode .nav-link:hover {
+    color: #fff;
+}
+
+.nav-3items .nav-link.active:hover {
+    cursor: pointer;
+    color: #9938fa;
 }
 
 .nav-link.active {
