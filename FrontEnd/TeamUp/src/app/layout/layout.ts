@@ -3,6 +3,7 @@ import { Auth } from '../services/auth/auth';
 import { RouterOutlet, RouterLinkWithHref, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Observable } from 'rxjs';
+import { HostListener } from '@angular/core';
 
 @Component({
   selector: 'app-layout',
@@ -14,6 +15,7 @@ export class Layout {
   isSidebarOpen = false;
   isDesktopSidebarCollapsed = false;
   isDarkMode = false;
+  isSettingsOpen = false;
   activeLink: string = '';
 
   workspaces : any[] = [];
@@ -22,6 +24,7 @@ export class Layout {
   
   user$!: Observable<any>;
   workspaces$!: Observable<any[]>;
+
 
   ngOnInit() {
     this.user$ = this.auth.user$;
@@ -54,4 +57,27 @@ export class Layout {
   isActive(url: string) {
     return this.router.url === url;
   }
+
+  @HostListener('document:click', ['$event'])
+  onClickOutside(event: MouseEvent) {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.settings-wrapper')) {
+      this.isSettingsOpen = false;
+    }
+  }
+
+  toggleSettings() {
+    this.isSettingsOpen = !this.isSettingsOpen;
+  }
+
+  toggleTheme() {
+    this.isDarkMode = !this.isDarkMode;
+    localStorage.setItem('darkMode', this.isDarkMode.toString());
+  }
+
+  logout() {
+    this.auth.logout(); 
+    this.router.navigate(['/login']);
+  }
+
 }
