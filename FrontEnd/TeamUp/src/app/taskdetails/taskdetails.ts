@@ -16,6 +16,7 @@ export class Taskdetails {
   worksapce_info : any = null;
   tasks : any[] = [];
   user_data : any = null;
+   isDarkMode = false;
 
   //different status for task
   tasksToDo : any[] = [];
@@ -51,6 +52,11 @@ export class Taskdetails {
       // Categorize tasks by status
       this.filterTasksStatus();
     });
+
+    const savedMode = localStorage.getItem('darkMode');
+    if (savedMode !== null) {
+      this.isDarkMode = savedMode === 'true';
+    }
 
     this.user_data = this.auth.getCurrentUser();
   }
@@ -92,5 +98,13 @@ export class Taskdetails {
         workspaceId: 0 // number
       }
     });
+  }
+
+  setStatus(status: number) {
+    this.newTask.status = status;
+  }
+
+  setDifficulty(level: number) {
+    this.newTask.difficulty = level;
   }
 }
