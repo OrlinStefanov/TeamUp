@@ -340,7 +340,8 @@
 
 .workspaces-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(400px, 450px));
+  justify-content: start;
   gap: 20px;
   align-items: stretch;
   grid-auto-rows: 180px;
@@ -349,7 +350,7 @@
 .workspace-card {
   border: 1px solid #bbb;
   border-radius: 8px;
-  padding: 20px;
+  padding: 10px;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -411,6 +412,24 @@
   background-color: #a64bfb26;
   margin-bottom: 10px;
   transition: all 0.3s ease;
+}
+
+.footer {
+  display: flex;           /* always part of layout */
+  justify-content: flex-end;
+  gap: 6px;
+
+  opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+
+  transition: all 0.25s ease;
+}
+
+.workspace-card:hover .footer {
+  opacity: 1;
+
+  max-height: 100px;
 }
 
 /* Responsive */
