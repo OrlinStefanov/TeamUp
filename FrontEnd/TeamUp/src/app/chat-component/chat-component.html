@@ -1,0 +1,85 @@
+<div class="chat-container d-flex flex-column h-100">
+
+  <!-- HEADER -->
+  <div *ngIf="channel != null" class="chat-header border-bottom p-3 bg-white">
+    <h5 class="mb-0"># {{channel.name}}</h5>
+  </div>
+
+  <!-- ✅ SCROLLABLE MESSAGES CONTAINER -->
+  <div class="chat-messages flex-grow-1 overflow-auto p-3">
+
+    <div *ngFor="let msg of messages" 
+         class="message d-flex mb-3"
+         [ngClass]="{
+           'justify-content-end text-end': msg.senderId === currentUserId,
+           'justify-content-start': msg.senderId !== currentUserId
+         }">
+
+      <!-- LEFT avatar -->
+      <ng-container *ngIf="msg.senderId !== currentUserId">
+        <img *ngIf="msg.sender?.profilePictureUrl"
+          [src]="msg.sender.profilePictureUrl"
+          class="rounded-circle me-3"
+          style="width:40px;height:40px;object-fit:cover;">
+        
+        <div *ngIf="!msg.sender?.profilePictureUrl"
+          class="rounded-circle me-3 text-center"
+          style="width:40px;height:40px;background-color:#ccc;">
+          <span class="text-white" style="line-height:40px;">
+            {{ msg.sender?.userName?.charAt(0) }}
+          </span>
+        </div>
+      </ng-container>
+
+      <!-- message -->
+      <div class="bg-light p-2 rounded">
+
+        <div class="d-flex align-items-center">
+          <strong class="me-2">{{ msg.sender?.userName }}</strong>
+          <small class="text-muted">
+            {{ msg.sentAt | date:'shortTime' }}
+          </small>
+        </div>
+
+        <div class="message-content">
+          {{ msg.content }}
+        </div>
+      </div>
+
+      <!-- RIGHT avatar -->
+      <ng-container *ngIf="msg.senderId === currentUserId">
+        <img *ngIf="msg.sender?.profilePictureUrl"
+          [src]="msg.sender.profilePictureUrl"
+          class="rounded-circle ms-3"
+          style="width:40px;height:40px;object-fit:cover;">
+        
+        <div *ngIf="!msg.sender?.profilePictureUrl"
+          class="rounded-circle ms-3 text-center"
+          style="width:40px;height:40px;background-color:#ccc;">
+          <span class="text-white" style="line-height:40px;">
+            {{ msg.sender?.userName?.charAt(0) }}
+          </span>
+        </div>
+      </ng-container>
+
+    </div>
+
+  </div>
+
+  <!-- INPUT (always bottom) -->
+  <div class="chat-input border-top p-3 bg-white">
+    <div class="input-group">
+      <input
+        type="text"
+        class="form-control"
+        placeholder="Message..."
+        [(ngModel)]="messageInput"
+        (keyup.enter)="sendMessage()"
+      />
+      <button class="btn btn-primary" (click)="sendMessage()">
+        Send
+      </button>
+    </div>
+  </div>
+
+</div>

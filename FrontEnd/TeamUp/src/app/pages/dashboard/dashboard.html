@@ -8,8 +8,7 @@
         <div class="row">
           <div class="col-12">
             <div class="workspace-header">
-              <h2>Welcome to your dashboard,<a style="color: #a64bfb; text-shadow: #9333ea 0 0 3px;"> {{ (user$ | async)?.userName }}</a></h2>
-              <h6 style="color: #bbb; padding-bottom: 20px;">Pick a workspace to continue where you left off.</h6>
+              <h2>Welcome to your dashboard,<a style="color: #a64bfb; text-shadow: #9333ea 0 0 3px;"> {{ (user$ | async)?.userName }}</a></h2>              <h6 class="text-muted" style=" padding-bottom: 20px;">Pick a workspace to continue where you left off.</h6>
             </div>
             <div class="workspaces-grid">
               @for (workspace of workspaces; track workspace) {
@@ -19,6 +18,19 @@
                   </span>
                   <h3>{{ workspace.title }}</h3>
                   <p style="color: #bbb;">{{ workspace.description }}</p>
+                  <div class="footer justify-content-end">
+                    <button class="btn btn-sm" title="edit" (click)="openEditWorkspace(workspace); $event.stopPropagation()">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" style="color: #9333ea;" height="16" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
+                        <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
+                        <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z"/>
+                      </svg>
+                    </button>
+                    <button class="btn btn-sm" title="delete" (click)="openDeleteWorkspace(workspace); $event.stopPropagation()">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" style="color: #9333ea;" height="16" fill="currentColor" class="bi bi-trash-fill" viewBox="0 0 16 16">
+                        <path d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1zm3 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5M8 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 5m3 .5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 1 0"/>
+                      </svg>
+                    </button>
+                  </div>
                 </div>
               }
               <button class="workspaces-grid-add" style="display: flex;" (click)="openCreateWorkspace()">
@@ -77,177 +89,187 @@
 
   </div>
 
-<!-- ================= CREATE WORKSPACE MODAL ================= -->
-<div #createWorkspaceModal *ngIf="showCreateWorkspace" class="createWorkspace-overlay" [ngClass]="{'light-mode': !isDarkMode, 'dark-mode': isDarkMode}">
-  <form #createWorkspaceForm="ngForm" (ngSubmit)="createWorkspace()">
+  <!-- ================= CREATE WORKSPACE MODAL ================= -->
+  @if (showCreateWorkspace) {
+    <div #createWorkspaceModal class="createWorkspace-overlay" [ngClass]="{'light-mode': !isDarkMode, 'dark-mode': isDarkMode}">
+      <form #createWorkspaceForm="ngForm" (ngSubmit)="createWorkspace()">
+        <div class="createWorkspace-box">
+          <div class="header-row">
+            <div class="header-text">
+              <h4>Create <span class="accent">workspace</span></h4>
+              <p>Set up a new workspace and invite your team.</p>
+            </div>
+            <button type="button" class="btn-cancel" (click)="closeCreateWorkspace()">✕</button>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Workspace name</label>
+            <input
+              type="text"
+              class="form-control"
+              name="title"
+              required
+              placeholder="Enter workspace name"
+              [(ngModel)]="workspace.title">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Workspace description</label>
+              <textarea
+                class="form-control"
+                name="description"
+                placeholder="Enter workspace description"
+                [(ngModel)]="workspace.description">
+              </textarea>
+            </div>
+            <div class="form-group" style="position: relative;">
+              <label class="form-label">Invite people</label>
+              <input
+                type="text"
+                class="form-control"
+                name="invitePeople"
+                placeholder="Enter email or username"
+                [(ngModel)]="inviteInput"
+                (ngModelChange)="onInviteInputChange($event)">
+                @if (suggestions.length > 0) {
+                  <ul class="suggestions-dropdown">
+                    @for (user of suggestions; track user) {
+                      <li (click)="selectUser(user)">
+                        <img [src]="user.profilePictureUrl" class="rounded-circle" width="24" height="24" />
+                        <span>{{ user.userName }} ({{ user.email }})</span>
+                      </li>
+                    }
+                  </ul>
+                }
+              </div>
+              @if (invitedMembers.length > 0) {
+                <div class="selected-members mt-2">
+                  @for (member of invitedMembers; track member) {
+                    <span class="badge bg-primary me-1">
+                      {{ member.emailOrUsername }}
+                      <button type="button" class="btn-close btn-close-white btn-sm"
+                        (click)="removeMember(member)">
+                      </button>
+                    </span>
+                  }
+                </div>
+              }
+              <div class="createWorkspace-actions">
+                <button
+                  class="btn-primary"
+                  type="submit"
+                  [disabled]="createWorkspaceForm.invalid">
+                  Create workspace
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      }
 
-    <div class="createWorkspace-box">
+  @if (showEditWorkspace) {
+  <div class="createWorkspace-overlay" [ngClass]="{'light-mode': !isDarkMode, 'dark-mode': isDarkMode}">
+    <form (ngSubmit)="updateWorkspace()">
+      <div class="createWorkspace-box">
 
-      <div class="header-row">
-        <div class="header-text">
-          <h4>Create <span class="accent">workspace</span></h4>
-          <p>Set up a new workspace and invite your team.</p>
+        <div class="header-row">
+          <h4>Edit <span class="accent">workspace</span></h4>
+          <button type="button" class="btn-cancel" (click)="closeEditWorkspace()">✕</button>
         </div>
 
-        <button type="button" class="btn-cancel" (click)="closeCreateWorkspace()">✕</button>
-      </div>
+        <div class="form-group">
+          <label>Workspace name</label>
+          <input
+            class="form-control"
+            [(ngModel)]="selectedWorkspace.title"
+            name="editTitle"
+            required>
+        </div>
 
-      <div class="form-group">
-        <label class="form-label">Workspace name</label>
-        <input 
-          type="text" 
-          class="form-control"
-          name="title"
-          required
-          placeholder="Enter workspace name"
-          [(ngModel)]="workspace.title">
-      </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea
+            class="form-control"
+            [(ngModel)]="selectedWorkspace.description"
+            name="editDescription">
+          </textarea>
+        </div>
 
-      <div class="form-group">
-        <label class="form-label">Workspace description</label>
-        <textarea 
-          class="form-control"
-          name="description"
-          placeholder="Enter workspace description"
-          [(ngModel)]="workspace.description">
-        </textarea>
-      </div>
+        <div class="form-group" style="position: relative;">
+          <label>Add / remove members</label>
 
-      <div class="form-group" style="position: relative;">
-        <label class="form-label">Invite people</label>
+          <input
+            type="text"
+            class="form-control"
+            placeholder="Search user..."
+            [(ngModel)]="editInviteInput"
+            (ngModelChange)="onEditInputChange($event)"
+            name="editInvite">
 
-        <input 
-          type="text"
-          class="form-control"
-          name="invitePeople"
-          placeholder="Enter email or username"
-          [(ngModel)]="inviteInput"
-          (ngModelChange)="onInviteInputChange($event)">
+          @if (editSuggestions.length > 0) {
+            <ul class="suggestions-dropdown">
+              @for (user of editSuggestions; track user) {
+                <li (click)="addMember(user)">
+                  <img [src]="user.profilePictureUrl" width="24" height="24" />
+                  {{ user.userName }} ({{ user.email }})
+                </li>
+              }
+            </ul>
+          }
+        </div>
 
-        <ul *ngIf="suggestions.length > 0" class="suggestions-dropdown">
-          <li *ngFor="let user of suggestions" (click)="selectUser(user)">
-            <img [src]="user.profilePictureUrl" class="rounded-circle" width="24" height="24" />
-            <span>{{ user.userName }} ({{ user.email }})</span>
-          </li>
-        </ul>
-      </div>
+        <div class="selected-members mt-2">
+          @for (member of editMembers; track member) {
+            <span class="badge bg-primary me-1">
+              {{ member.userName || member.email }}
 
-      <div *ngIf="invitedMembers.length > 0" class="selected-members mt-2">
-        <span class="badge bg-primary me-1" *ngFor="let member of invitedMembers">
-          {{ member.emailOrUsername }}
-          <button type="button" class="btn-close btn-close-white btn-sm"
-                  (click)="removeMember(member)">
+              <button
+                type="button"
+                class="btn-close btn-close-white btn-sm"
+                (click)="removeEditMember(member)">
+              </button>
+            </span>
+          }
+        </div>
+
+        <div class="createWorkspace-actions">
+          <button class="btn-primary" type="submit">
+            Save changes
           </button>
-        </span>
-      </div>
-
-      <div class="createWorkspace-actions">
-        <button 
-          class="btn-primary"
-          type="submit"
-          [disabled]="createWorkspaceForm.invalid">
-          Create workspace
-        </button>
-      </div>
-
-    </div>
-  </form>
-</div>
-
-<!-- ================= JOIN WORKSPACE MODAL ================= -->
-<div #joinWorkspaceModal *ngIf="showJoinWorkspace" class="joinWorkspace-overlay" [ngClass]="{'light-mode': !isDarkMode, 'dark-mode': isDarkMode}">
-  <form #joinForm="ngForm" (ngSubmit)="joinWorkspace()">
-
-    <div class="joinWorkspace-box">
-
-      <div class="join-header">
-        <div class="header-content">
-          <h3>Join <span class="accent">Workspace</span></h3>
         </div>
 
-        <button type="button" class="btn-cancel" (click)="closeJoinWorkspace()">✕</button>
       </div>
+    </form>
+  </div>
+  }
 
-      <p class="join-subtitle">
-        Enter an invite code or workspace link to join.
-      </p>
+  @if (showDeleteWorkspace) {
+    <div class="createWorkspace-overlay" [ngClass]="{'light-mode': !isDarkMode, 'dark-mode': isDarkMode}">
+      <div class="createWorkspace-box">
 
-      <div class="form-group">
-        <label class="form-label">Invite Code</label>
-        <input 
-          type="text"
-          class="form-control"
-          name="inviteCode"
-          required
-          placeholder="e.g. ACME-2024-XXYZ"
-          [(ngModel)]="joinInput.inviteCode">
+        <div class="header-row">
+          <h4>Delete <span class="accent">workspace</span></h4>
+          <button class="btn-cancel" (click)="closeDeleteWorkspace()">✕</button>
+        </div>
+
+        <p>
+          Are you sure you want to delete
+          <strong>{{ selectedWorkspace?.title }}</strong>?
+        </p>
+
+        <div class="createWorkspace-actions">
+          <button class="btn-secondary" (click)="closeDeleteWorkspace()">
+            Cancel
+          </button>
+
+          <button class="btn-danger" (click)="deleteWorkspace()">
+            Delete
+          </button>
+        </div>
+
       </div>
-
-      <div class="separator-row">
-        <div class="separator-line"></div>
-        <div class="separator-text">OR PASTE LINK</div>
-        <div class="separator-line"></div>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Workspace Link</label>
-        <input 
-          type="text"
-          class="form-control"
-          name="workspaceLink"
-          placeholder="https://teamup.io/join/..."
-          [(ngModel)]="joinInput.workspaceLink">
-      </div>
-
-      <div class="joinWorkspace-actions">
-        <button 
-          class="btn-primary"
-          type="submit"
-          [disabled]="joinForm.invalid">
-          Join Workspace →
-        </button>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label label-caps">Invite Code</label>
-        <input 
-          type="text" 
-          class="form-control" 
-          name="inviteCode"
-          placeholder="e.g. ACME-2024-XXYZ" 
-          required
-          [(ngModel)]="joinInput.inviteCode">
-      </div>
-
-      <div class="separator-row">
-        <div class="separator-line"></div>
-        <div class="separator-text">OR PASTE LINK</div>
-        <div class="separator-line"></div>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label label-caps">Or Paste Link</label>
-        <input 
-          type="text" 
-          class="form-control faded-input" 
-          name="workspaceLink"
-          placeholder="https://teamup.io/join/..."
-          [(ngModel)]="joinInput.workspaceLink">
-      </div>
-
-      <div class="joinWorkspace-actions">
-        <button 
-          class="btn-primary" 
-          type="submit"
-          [disabled]="joinForm.invalid">
-          Join Workspace <span class="button-arrow">→</span>
-        </button>
-      </div>
-
     </div>
-  </form>
-</div>
-      <!-- ================= JOIN WORKSPACE MODAL ================= -->
+`  }
+
+  <!-- ================= JOIN WORKSPACE MODAL ================= -->
       @if (showJoinWorkspace) {
         <div #joinWorkspaceModal class="joinWorkspace-overlay" [ngClass]="{'light-mode': !isDarkMode, 'dark-mode': isDarkMode}">
           <form #joinForm="ngForm" (ngSubmit)="joinWorkspace()">
@@ -268,6 +290,7 @@
                   class="form-control"
                   name="inviteCode"
                   required
+                  [(ngModel)]="joinInput.inviteCode">
                   placeholder="e.g. ACME-2024-XXYZ"
                   [(ngModel)]="joinInput.inviteCode"
                   [disabled]="joinInput.workspaceLink">
@@ -295,8 +318,39 @@
                       Join Workspace →
                     </button>
                   </div>
+                  <div class="form-group">
+                    <label class="form-label label-caps">Invite Code</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      name="inviteCode"
+                      placeholder="e.g. ACME-2024-XXYZ"
+                      required
+                      [(ngModel)]="joinInput.inviteCode">
+                    </div>
+                    <div class="separator-row">
+                      <div class="separator-line"></div>
+                      <div class="separator-text">OR PASTE LINK</div>
+                      <div class="separator-line"></div>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label label-caps">Or Paste Link</label>
+                      <input
+                        type="text"
+                        class="form-control faded-input"
+                        name="workspaceLink"
+                        placeholder="https://teamup.io/join/..."
+                        [(ngModel)]="joinInput.workspaceLink">
+                      </div>
+                      <div class="joinWorkspace-actions">
+                        <button
+                          class="btn-primary"
+                          type="submit"
+                          [disabled]="joinForm.invalid">
+                          Join Workspace <span class="button-arrow">→</span>
+                        </button>
+                      </div>
                     </div>
                   </form>
                 </div>
               }
-

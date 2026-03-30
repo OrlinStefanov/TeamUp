@@ -398,7 +398,7 @@ namespace TeamUpBackEnd.Extensions
 
 				var workspace = await db.Workspaces
 					.Include(w => w.Members)
-					.FirstOrDefaultAsync(w => w.PublicId.ToString() == data.PublicId);
+					.FirstOrDefaultAsync(w => w.PublicId.ToString() == data.PublicId && w.IsDeleted == false);
 
 				if (workspace is null)	return Results.NotFound("Workspace not found");
 
@@ -493,7 +493,7 @@ namespace TeamUpBackEnd.Extensions
 				}
 
 				var workspaces = await db.Workspaces
-					.Where(w => w.Members.Any(m => m.UserId == userId))
+					.Where(w => w.Members.Any(m => m.UserId == userId) && w.IsDeleted == false)
 					.Select(w => new
 					{
 						w.Id,
@@ -540,7 +540,7 @@ namespace TeamUpBackEnd.Extensions
 						.ThenInclude(m => m.User)
 					.Include(w => w.Invitations) 
 						.ThenInclude(i => i.User) 
-					.FirstOrDefaultAsync(w => w.PublicId.ToString() == publicId);
+					.FirstOrDefaultAsync(w => w.PublicId.ToString() == publicId && w.IsDeleted == false);
 
 				if (workspace == null)
 				{
@@ -671,6 +671,32 @@ namespace TeamUpBackEnd.Extensions
 			.WithSummary("Returns a list of possible users you might be searching for")
 			.WithTags("Workspace Management");
 
+			//remove the whole workspace
+			app.MapDelete("/delete/workspace/{publicId}", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, string publicId) =>
+			{
+				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
+
+				if (userId is null) return Results.BadRequest("User id not found");
+
+				var workspace = await db.Workspaces
+					.Include(w => w.Members)
+						.ThenInclude(w => w.User)
+						.FirstOrDefaultAsync(w => w.PublicId.ToString() == publicId);
+
+				if (workspace is null) return Results.BadRequest("Workspace not found");
+
+				if (workspace.OwnerId != userId) return Results.Forbid();
+
+				if (workspace.IsDeleted) return Results.BadRequest("Already deleted");
+
+				workspace.IsDeleted = true;
+
+				await db.SaveChangesAsync();
+
+				return Results.Ok("Ok");
+
+			}).RequireAuthorization().WithSummary("Soft delete on the workspace").WithTags("Workspace Management");
+
 			//remove member from the workspace
 			app.MapDelete("/workspace/{publicId}/members/{userId}", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, string publicId, string userId) =>
 			{
@@ -742,7 +768,7 @@ namespace TeamUpBackEnd.Extensions
 
 				var workspace = await db.Workspaces
 					.Include(w => w.Members)
-					.FirstOrDefaultAsync(j => j.JoinCode == model.join_code);
+					.FirstOrDefaultAsync(j => j.JoinCode == model.join_code && j.IsDeleted == false);
 
 				if (workspace is null) return Results.BadRequest("Woorkspace with this code does not exist");
 
@@ -1141,6 +1167,15 @@ namespace TeamUpBackEnd.Extensions
 
 					task.StartDate = dto.StartDate;
 					task.Points = dto.Points;
+
+				if (task.Points == 0)
+				{
+					if (task.Difficulty == TaskDifficulty.Easy) task.Points = 50;
+					if (task.Difficulty == TaskDifficulty.Medium) task.Points = 75;
+					if (task.Difficulty == TaskDifficulty.Hard) task.Points = 100;
+					if (task.Difficulty == TaskDifficulty.VeryHard) task.Points = 150;
+				}
+
 				task.Status = (TasksStatus)dto.Status!;
 
 				if (dto.Difficulty.HasValue)
@@ -1183,6 +1218,68 @@ namespace TeamUpBackEnd.Extensions
 				});
 			}).RequireAuthorization()
 				.WithSummary("Edit task by public Id").WithTags("Task Management");
+
+			//delete task
+			app.MapDelete("/delete/task/{taskId}", async (AppDbContext db, ClaimsPrincipal userClaims, string taskId) =>
+			{
+				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
+
+				if (userId is null) return Results.BadRequest("User id not found");
+
+				var task = await db.Tasks
+					.Include(t => t.Assignments!)
+						.ThenInclude(t => t.User)
+					.Include(w => w.WorkSpace)
+					.FirstOrDefaultAsync(t => t.PublicId.ToString() == taskId && t.IsDeleted == false);
+
+				if (task is null) return Results.BadRequest("Task not found");
+
+				if (task.WorkSpace!.OwnerId != userId) return Results.Forbid();
+
+				task.IsDeleted = true;
+
+				foreach (var item in task.Assignments!)
+				{
+					item.IsDeleted = true;
+				}
+
+				await db.SaveChangesAsync();
+
+				return Results.Ok();
+			}).RequireAuthorization().WithSummary("Soft delete a task by it's id").WithTags("Task Management");
+
+			//change task status
+			app.MapPut("/task/status/{taskId}", async (AppDbContext db, ClaimsPrincipal userClaims, string taskId, TaskStatusChangeAction data) =>
+			{
+				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
+
+				if (userId is null) return Results.BadRequest("User id not found");
+
+				var task = await db.Tasks
+					.Include(t => t.Assignments!)
+						.ThenInclude(t => t.User)
+					.Include(t => t.WorkSpace)
+						.FirstOrDefaultAsync(t => t.PublicId.ToString() == taskId && t.IsDeleted == false);
+
+				if (task is null) return Results.BadRequest("Task not found");
+
+				if (task.WorkSpace!.OwnerId == userId || task.Assignments!.Any(t => t.UserId == userId))
+				{
+					task.Status = data.status switch
+					{
+						0 => TasksStatus.ToDo,
+						1 => TasksStatus.InProgress,
+						2 => TasksStatus.Done,
+						_ => TasksStatus.ToDo
+					};
+
+					return Results.Ok("Successfully changed");
+				} else
+				{
+					return Results.Forbid();
+				}
+
+			}).RequireAuthorization().WithSummary("Change task status").WithTags("Task Management");
 		}
 	
 		public static void ChatEndpoints(WebApplication app)
@@ -1325,6 +1422,7 @@ namespace TeamUpBackEnd.Extensions
 						m.PublicId,
 						m.Content,
 						m.SentAt,
+						SenderId = m.SenderId,
 						Sender = new
 						{
 							m.Sender!.UserName,
@@ -1345,5 +1443,10 @@ namespace TeamUpBackEnd.Extensions
 	public record InvitationActionDto
 	{
 		public string Action { get; set; } = ""; // "accept" or "reject"
+	}
+
+	public record TaskStatusChangeAction
+	{
+		public int status; // 0 - To Do 1 - In Progress 2 - Done 
 	}
 }

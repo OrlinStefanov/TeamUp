@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using TeamUpBackEnd.DbContext;
 using TeamUpBackEnd.Models.Chat;
 
@@ -46,7 +47,12 @@ namespace TeamUpBackEnd.Extensions
 
 		public async Task SendMessage(string channelPublicId, string content)
 		{
-			var userId = Context.UserIdentifier;
+			var userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+			if (string.IsNullOrEmpty(userId))
+			{
+				return;
+			}
 
 			var channel = await _db.Channels
 				.FirstOrDefaultAsync(c => c.PublicId.ToString() == channelPublicId);
@@ -65,13 +71,27 @@ namespace TeamUpBackEnd.Extensions
 			await _db.Messages.AddAsync(message);
 			await _db.SaveChangesAsync();
 
+			var sender = await _db.Users
+				.Where(u => u.Id == userId)
+				.Select(u => new
+				{
+					u.UserName,
+					u.ProfilePictureUrl
+				})
+				.FirstOrDefaultAsync();
+
 			await Clients.Group(channelPublicId)
 				.SendAsync("ReceiveMessage", new
 				{
-					id = message.PublicId,
+					publicId = message.PublicId,
 					content = message.Content,
+					sentAt = message.SentAt,
 					senderId = userId,
-					sentAt = message.SentAt
+					sender = new
+					{
+						userName = sender!.UserName,
+						profilePictureUrl = sender.ProfilePictureUrl
+					}
 				});
 		}
 	}

@@ -14,6 +14,7 @@ namespace TeamUpBackEnd.Models.WorkspaceRelated
 		public string? OwnerId { get; set; }
 		public string? JoinCode { get; set; } = Helper.GenerateJoinCode();
 		public ApplicationUser? Owner { get; set; }
+		public bool IsDeleted { get; set; }
 
 		public DateOnly? CreatedAt { get; set; }
 		public DateOnly? UpdatedAt { get; set; }

@@ -9,11 +9,13 @@ import { Layout } from './layout/layout';
 import { Taskdetails } from './taskdetails/taskdetails';
 import { WorkspaceDetail } from './workspace-detail/workspace-detail';
 import { Chatdetails } from './chatdetails/chatdetails';
+import { ChatComponent } from './chat-component/chat-component';
 export const routes: Routes = [
   { path: '', component: StartUp },
   { path: 'signup', component: SignUp },
   { path: 'login', component: LogIn },
   { path: 'forgot-password', component: ForgotPassword },
+
   {
     path: '',
     component: Layout,
@@ -28,8 +30,17 @@ export const routes: Routes = [
         children: [
           { path: '', redirectTo: 'tasks', pathMatch: 'full' },
           { path: 'tasks', component: Taskdetails },
-          { path: 'chat', component: Chatdetails },
-        //  { path: 'leaderboard', component: Leaderboard }
+
+          {
+            path: 'chat',
+            component: Chatdetails,
+            children: [
+              { path: '', component: ChatComponent }, 
+              { path: ':channelId', component: ChatComponent }
+            ]
+          }
+
+          // { path: 'leaderboard', component: Leaderboard }
         ]
       }
     ]
