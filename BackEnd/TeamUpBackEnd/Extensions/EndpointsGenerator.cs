@@ -398,7 +398,7 @@ namespace TeamUpBackEnd.Extensions
 
 				var workspace = await db.Workspaces
 					.Include(w => w.Members)
-					.FirstOrDefaultAsync(w => w.PublicId.ToString() == data.PublicId);
+					.FirstOrDefaultAsync(w => w.PublicId.ToString() == data.PublicId && w.IsDeleted == false);
 
 				if (workspace is null)	return Results.NotFound("Workspace not found");
 
@@ -493,7 +493,7 @@ namespace TeamUpBackEnd.Extensions
 				}
 
 				var workspaces = await db.Workspaces
-					.Where(w => w.Members.Any(m => m.UserId == userId))
+					.Where(w => w.Members.Any(m => m.UserId == userId) && w.IsDeleted == false)
 					.Select(w => new
 					{
 						w.Id,
@@ -540,7 +540,7 @@ namespace TeamUpBackEnd.Extensions
 						.ThenInclude(m => m.User)
 					.Include(w => w.Invitations) 
 						.ThenInclude(i => i.User) 
-					.FirstOrDefaultAsync(w => w.PublicId.ToString() == publicId);
+					.FirstOrDefaultAsync(w => w.PublicId.ToString() == publicId && w.IsDeleted == false);
 
 				if (workspace == null)
 				{
@@ -671,6 +671,32 @@ namespace TeamUpBackEnd.Extensions
 			.WithSummary("Returns a list of possible users you might be searching for")
 			.WithTags("Workspace Management");
 
+			//remove the whole workspace
+			app.MapDelete("/delete/workspace/{publicId}", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, string publicId) =>
+			{
+				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
+
+				if (userId is null) return Results.BadRequest("User id not found");
+
+				var workspace = await db.Workspaces
+					.Include(w => w.Members)
+						.ThenInclude(w => w.User)
+						.FirstOrDefaultAsync(w => w.PublicId.ToString() == publicId);
+
+				if (workspace is null) return Results.BadRequest("Workspace not found");
+
+				if (workspace.OwnerId != userId) return Results.Forbid();
+
+				if (workspace.IsDeleted) return Results.BadRequest("Already deleted");
+
+				workspace.IsDeleted = true;
+
+				await db.SaveChangesAsync();
+
+				return Results.Ok("Ok");
+
+			}).RequireAuthorization().WithSummary("Soft delete on the workspace").WithTags("Workspace Management");
+
 			//remove member from the workspace
 			app.MapDelete("/workspace/{publicId}/members/{userId}", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, string publicId, string userId) =>
 			{
@@ -742,7 +768,7 @@ namespace TeamUpBackEnd.Extensions
 
 				var workspace = await db.Workspaces
 					.Include(w => w.Members)
-					.FirstOrDefaultAsync(j => j.JoinCode == model.join_code);
+					.FirstOrDefaultAsync(j => j.JoinCode == model.join_code && j.IsDeleted == false);
 
 				if (workspace is null) return Results.BadRequest("Woorkspace with this code does not exist");
 
