@@ -15,44 +15,52 @@ namespace TeamUpBackEnd.Extensions
 			_db = db;
 		}
 
-		//joins channel
+		// JOIN CHANNEL
 		public async Task JoinChannel(string channelId)
 		{
-			var userId = Context.UserIdentifier;
+			var userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+			if (string.IsNullOrEmpty(userId)) return;
 
 			var channel = await _db.Channels
-				   .Include(c => c.Members)
-				   .FirstOrDefaultAsync(c => c.PublicId.ToString() == channelId);
+				.Include(c => c.Members)
+				.FirstOrDefaultAsync(c => c.PublicId.ToString() == channelId);
 
 			if (channel == null) return;
 
 			if (!channel.IsPrivate)
 			{
 				await Groups.AddToGroupAsync(Context.ConnectionId, channelId);
-				return;
+			}
+			else
+			{
+				var isMember = channel.Members!.Any(m => m.UserId == userId);
+				if (!isMember) return;
+
+				await Groups.AddToGroupAsync(Context.ConnectionId, channelId);
 			}
 
-			var isMember = channel.Members!.Any(m => m.UserId == userId);
+			var member = await _db.ChannelMembers
+				.FirstOrDefaultAsync(m =>
+					m.ChannelId == channel.Id &&
+					m.UserId == userId);
 
-			if (!isMember) return;
-
-			await Groups.AddToGroupAsync(Context.ConnectionId, channelId);
+			if (member != null)
+			{
+				await _db.SaveChangesAsync();
+			}
 		}
 
-		//leaves the channel
+		// LEAVE CHANNEL
 		public async Task LeaveChannel(string channelId)
 		{
 			await Groups.RemoveFromGroupAsync(Context.ConnectionId, channelId);
 		}
 
+		// SEND MESSAGE
 		public async Task SendMessage(string channelPublicId, string content)
 		{
 			var userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-			if (string.IsNullOrEmpty(userId))
-			{
-				return;
-			}
+			if (string.IsNullOrEmpty(userId)) return;
 
 			var channel = await _db.Channels
 				.FirstOrDefaultAsync(c => c.PublicId.ToString() == channelPublicId);
@@ -86,6 +94,7 @@ namespace TeamUpBackEnd.Extensions
 					publicId = message.PublicId,
 					content = message.Content,
 					sentAt = message.SentAt,
+					channelId = channelPublicId,
 					senderId = userId,
 					sender = new
 					{
@@ -93,6 +102,63 @@ namespace TeamUpBackEnd.Extensions
 						profilePictureUrl = sender.ProfilePictureUrl
 					}
 				});
+
+			await Clients.OthersInGroup(channelPublicId)
+				.SendAsync("IncrementUnread", new
+				{
+					channelId = channelPublicId
+				});
+		}
+
+		public async Task Typing(string channelId)
+		{
+			var userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+			if (userId == null) return;
+
+			var userName = Context.User?.Identity?.Name;
+
+			await Clients.OthersInGroup(channelId)
+				.SendAsync("UserTyping", new
+				{
+					channelId,
+					userId,
+					userName
+				});
+		}
+
+		public async Task StopTyping(string channelId)
+		{
+			var userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+			if (userId == null) return;
+
+			await Clients.OthersInGroup(channelId)
+				.SendAsync("UserStopTyping", new
+				{
+					channelId,
+					userId
+				});
+		}
+
+		public async Task MarkAsRead(string channelId)
+		{
+			var userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+			if (userId == null) return;
+
+			var channel = await _db.Channels
+				.FirstOrDefaultAsync(c => c.PublicId.ToString() == channelId);
+
+			if (channel == null) return;
+
+			var member = await _db.ChannelMembers
+				.FirstOrDefaultAsync(m =>
+					m.ChannelId == channel.Id &&
+					m.UserId == userId);
+
+			if (member != null)
+			{
+				member.LastSeen = DateTime.UtcNow;
+				await _db.SaveChangesAsync();
+			}
 		}
 	}
 }

@@ -1,88 +1,137 @@
 import { Component } from '@angular/core';
-import { ChatService } from '../services/chat-services/chat-service';
 import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { CommonModule, DatePipe, NgFor, NgIf } from '@angular/common';
+import { CommonModule, NgIf, NgFor, DatePipe } from '@angular/common';
+import { ChatService } from '../services/chat-services/chat-service';
 import { Auth } from '../services/auth/auth';
 
 @Component({
   selector: 'app-chat-component',
-  imports: [FormsModule, DatePipe, NgIf, NgFor, CommonModule],
   standalone: true,
+  imports: [FormsModule, CommonModule, NgIf, NgFor, DatePipe],
   templateUrl: './chat-component.html',
   styleUrl: './chat-component.css',
 })
 export class ChatComponent {
 
   messages: any[] = [];
-  currentChannelId: string = '';
-  messageInput: string = '';
-  currentUserId : string = '';
+  currentChannelId = '';
+  messageInput = '';
 
-  channels : any;
-  channel : any;
+  channels: any[] = [];
+  channel: any;
 
+  unreadMap: any = {};
+  currentUserId: string = '';
+
+  typingUsers: any[] = [];
+  typingTimeout: any;
+  
   constructor(
     private chat: ChatService,
     private route: ActivatedRoute,
     private auth: Auth
   ) {}
 
- ngOnInit() {
-  this.currentUserId = this.auth.getUserId();
+  ngOnInit() {
+    this.currentUserId = this.auth.getUserId();
+    this.chat.startConnection().then(() => {
 
-  this.chat.startConnection()
-    .then(() => {
-      console.log('SignalR connected');
+      // CHANNELS
+      this.chat.channels$.subscribe(ch => {
+        this.channels = ch;
+      });
 
-      this.chat.onMessage((msg: any) => {
-        console.log('Received message:', msg);
-        this.messages.push(msg); 
+      // UNREAD
+      this.chat.unread$.subscribe(map => {
+        this.unreadMap = map;
+      });
+
+      this.chat.typing$.subscribe(users => {
+        this.typingUsers = users.filter(
+          u => u.channelId === this.currentChannelId
+        );
+      });
+
+      // INCOMING MESSAGES
+      this.chat.incomingMessage$.subscribe((msg: any) => {
+        if (!msg) return;
+
+        if (msg.senderId === this.currentUserId) {
+          this.messages.push(msg);
+          this.scrollToBottom();
+          return;
+        }
+
+        if (msg.channelId !== this.currentChannelId) {
+          this.chat.increaseUnread(msg.channelId);
+          return;
+        }
+
+        this.messages.push(msg);
         this.scrollToBottom();
       });
 
-      this.channels = this.chat.channels$;
-
+      // ROUTE
       this.route.params.subscribe(params => {
         const channelId = params['channelId'];
-
-        if (channelId) {
-          this.loadChannel(channelId);
-
-          this.chat.channels$.subscribe((channels: any[]) => {
-            this.channels = channels;
-
-            this.channel = this.channels.find(
-              (c: any) => c.publicId === this.currentChannelId
-            );
-          });
-        }
+        if (channelId) this.loadChannel(channelId);
       });
-    })
-    .catch(err => console.error('SignalR connection error:', err));
+
+    });
   }
+
+  onTyping() {
+    this.chat.typing(this.currentChannelId);
+
+    clearTimeout(this.typingTimeout);
+
+    this.typingTimeout = setTimeout(() => {
+      this.chat.stopTyping(this.currentChannelId);
+    }, 1000);
+  }
+
+  // =========================
+  // LOAD CHANNEL
+  // =========================
+
   loadChannel(channelId: string) {
 
     this.messages = [];
-
     this.currentChannelId = channelId;
 
     this.chat.joinChannel(channelId);
 
-    this.chat.getMessage(channelId).subscribe((msgs: any) => {
-      this.messages = msgs;
-      console.log(this.messages);
+    // reset unread
+    this.chat.resetUnread(channelId);
+
+    // set channel
+    this.channel = this.channels.find(c => c.publicId === channelId);
+
+    // load messages (cached)
+    this.chat.getMessages(channelId).subscribe((msgs: any) => {
+      const cached = this.chat.getCachedMessages?.(channelId);
+
+      this.messages = cached?.length ? cached : (msgs || []);
+
       setTimeout(() => this.scrollToBottom(), 0);
     });
   }
+
+  // =========================
+  // SEND MESSAGE
+  // =========================
 
   sendMessage() {
     if (!this.messageInput.trim()) return;
 
     this.chat.sendMessage(this.currentChannelId, this.messageInput);
-
     this.messageInput = '';
   }
+
+  // =========================
+  // UI HELPERS
+  // =========================
 
   scrollToBottom() {
     const el = document.querySelector('.chat-messages');
