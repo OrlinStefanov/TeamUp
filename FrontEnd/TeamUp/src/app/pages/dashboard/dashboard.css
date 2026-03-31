@@ -344,7 +344,7 @@
   justify-content: start;
   gap: 20px;
   align-items: stretch;
-  grid-auto-rows: 180px;
+  grid-auto-rows: 220px;
 }
 
 .workspace-card {
@@ -356,6 +356,7 @@
   gap: 10px;
   cursor: pointer;
   transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .workspace-card p {
@@ -430,6 +431,12 @@
   opacity: 1;
 
   max-height: 100px;
+}
+
+/*orcho e pipal nqma dark mode*/
+.suggestion-item 
+{
+  background-color: white;
 }
 
 /* Responsive */

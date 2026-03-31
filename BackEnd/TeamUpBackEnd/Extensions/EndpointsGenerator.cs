@@ -367,7 +367,12 @@ namespace TeamUpBackEnd.Extensions
 						workspace.Members.Add(new WorkSpaceMember
 						{
 							UserId = memberUser.Id,
-							Role = WorkSpaceRole.Member
+							Role = memberData.Role switch
+							{
+								0 => WorkSpaceRole.Member,
+								1 => WorkSpaceRole.Admin,
+								_ => WorkSpaceRole.Member
+							}
 						});
 					}
 				}
@@ -444,12 +449,22 @@ namespace TeamUpBackEnd.Extensions
 							workspace.Members.Add(new WorkSpaceMember
 							{
 								UserId = user.Id,
-								Role = memberDto.Role
+								Role = memberDto.Role switch
+								{
+									0 => WorkSpaceRole.Member,
+									1 => WorkSpaceRole.Admin,
+									_ => WorkSpaceRole.Member
+								}
 							});
 						}
 						else
 						{
-							existingMember.Role = memberDto.Role;
+							existingMember.Role = memberDto.Role switch
+							{
+								0 => WorkSpaceRole.Member,
+								1 => WorkSpaceRole.Admin,
+								_ => WorkSpaceRole.Member
+							};
 						}
 					}
 
