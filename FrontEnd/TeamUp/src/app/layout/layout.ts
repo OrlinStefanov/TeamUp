@@ -73,6 +73,8 @@ export class Layout {
   toggleTheme() {
     this.isDarkMode = !this.isDarkMode;
     localStorage.setItem('darkMode', this.isDarkMode.toString());
+
+    console.log('Dark mode set to:', this.isDarkMode);
   }
 
   logout() {
