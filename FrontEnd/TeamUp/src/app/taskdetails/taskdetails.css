@@ -240,13 +240,6 @@
 
 .tm-box.dark-mode  .pill-todo { background: rgba(107,107,138,0.2); color: #696982; border: #2a2a3a 1px solid; }
 .tm-box.light-mode .pill-todo { background: #f0eff8; color: #9898b8; border: #dddcee 1px solid; }
-<<<<<<< Updated upstream
-.tm-box .pill-todo.active             { background: rgba(107,107,138,0.2); color: #a0a0c0; border: #6b6b8a 1px solid; }
-
-.tm-box.dark-mode  .pill-progress { background: #0d1f2e; color: #00ddddca; border: #0a3040 1px solid; }
-.tm-box.light-mode .pill-progress { background: #e6fafa; color: #00ddddca; border: #b2ebf2 1px solid; }
-.tm-box .pill-progress.active             { background: rgba(0,200,220,0.15); color: #00bcd4; border: #00bcd4 1px solid; }
-=======
 .tm-box.light-mode .pill-todo.active             { background: rgba(107, 107, 138, 0.12); color: #696982; border: #696982 1px solid; }
 .tm-box.dark-mode  .pill-todo.active { background: rgba(107,107,138,0.2); color: #a0a0c0; border: #a0a0c0 1px solid; }
 
@@ -259,7 +252,6 @@
 .tm-box.dark-mode .pill-progress svg { fill: #00bbd49d; }
 .tm-box.light-mode .pill-progress svg { fill: #00cde89d; }
 .tm-box .pill-progress.active svg { fill: #00bcd4; }
->>>>>>> Stashed changes
 
 .tm-box.dark-mode  .pill-done { background: #0d2015; color: #22c55e; border: #0a3018 1px solid; }
 .tm-box.light-mode .pill-done { background: #edfaf3; color: #16a34a; border: #bbf7d0 1px solid; }
