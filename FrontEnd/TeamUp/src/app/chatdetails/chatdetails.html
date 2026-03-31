@@ -1,38 +1,23 @@
-<!--<div class="chat-container">
-
-
-  <div class="channels">
-    <div *ngFor="let channel of channels"
-         (click)="selectChannel(channel.publicId)">
-      # {{ channel.name }}
-    </div>
-  </div>
-  <div class="chat-box">
-
-    <div class="messages">
-      <div *ngFor="let msg of messages">
-        <b>{{ msg.senderId }}</b>: {{ msg.content }}
-      </div>
-    </div>
-
-    <div class="input-box">
-      <input [(ngModel)]="messageInput"
-             (keyup.enter)="sendMessage()"
-             placeholder="Type message..." />
-
-      <button (click)="sendMessage()">Send</button>
-    </div>
-
-  </div>
-
-</div> -->
 <div class="container-fluid" >
   <div class="d-flex" style="height: 83vh;">
 
     <!-- SIDEBAR -->
     <div class="bg-white text-white p-3" style="width: 260px;">
+      <div class="input-group mb-2">
+        <span class="input-group-text bg-white border-end-0">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search text-muted" viewBox="0 0 16 16">
+            <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
+          </svg>
+        </span>
+
+        <input
+          type="search"
+          class="form-control border-start-0"
+          placeholder="Search channels...">
+      </div>
+      <hr style="color: black;">
       <!-- Channels header -->
-      <div class="d-flex justify-content-between align-items-center mb-2">
+      <div class="d-flex justify-content-between align-items-center mb-1">
         <small class="text-uppercase text-muted">Channels</small>
         <button 
           class="btn btn-sm px-2 py-0"
@@ -41,7 +26,6 @@
           +
         </button>
       </div>
-      <hr style="color: black;">
 
       <!-- Channels list -->
       <ul class="nav flex-column">
@@ -49,20 +33,21 @@
           class="nav-item"
           *ngFor="let channel of (channels$ | async)">
 
-          <a 
-            class="nav-link text-dark d-flex align-items-center"
-            [routerLink]="['/workspace', workspacePublicId, 'chat', channel.publicId]"
-            routerLinkActive="active-channel">
+         <a class="nav-link channel-item d-flex justify-content-between align-items-center"
+          [routerLink]="['/workspace', workspacePublicId, 'chat', channel.publicId]"
+          routerLinkActive="active-channel">
 
-            <div class="justify-content-center align-items-center">
-              <p># {{ channel.name }}</p>
-              <span *ngIf="channel.isPrivate == true">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-lock-fill" viewBox="0 0 16 16">
-                  <path fill-rule="evenodd" d="M8 0a4 4 0 0 1 4 4v2.05a2.5 2.5 0 0 1 2 2.45v5a2.5 2.5 0 0 1-2.5 2.5h-7A2.5 2.5 0 0 1 2 13.5v-5a2.5 2.5 0 0 1 2-2.45V4a4 4 0 0 1 4-4m0 1a3 3 0 0 0-3 3v2h6V4a3 3 0 0 0-3-3"/>
-                </svg>
-              </span>
-            </div>
-          </a>
+          <div class="d-flex align-items-center gap-2">
+            <span>#</span>
+            <span>{{ channel.name }}</span>
+          </div>
+
+          <span
+            *ngIf="unreadMap[channel.publicId] > 0"
+            class="badge bg-purple ms-2">
+            {{ unreadMap[channel.publicId] }}
+          </span>
+        </a>
         </li>
       </ul>
 

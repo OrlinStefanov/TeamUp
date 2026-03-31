@@ -8,7 +8,8 @@
         <div class="row">
           <div class="col-12">
             <div class="workspace-header">
-              <h2>Welcome to your dashboard,<a style="color: #a64bfb; text-shadow: #9333ea 0 0 3px;"> {{ (user$ | async)?.userName }}</a></h2>              <h6 class="text-muted" style=" padding-bottom: 20px;">Pick a workspace to continue where you left off.</h6>
+              <h2>Welcome to your dashboard,<a style="color: #a64bfb; text-shadow: #9333ea 0 0 3px;"> {{ (user$ | async)?.userName }}</a></h2>              
+              <h6 style=" color: #999; padding-bottom: 20px;">Pick a workspace to continue where you left off.</h6>
             </div>
             <div class="workspaces-grid">
               @for (workspace of workspaces; track workspace) {
@@ -17,8 +18,38 @@
                     {{ workspace.title.charAt(0) }}
                   </span>
                   <h3>{{ workspace.title }}</h3>
-                  <p style="color: #bbb;">{{ workspace.description }}</p>
-                  <div class="footer justify-content-end">
+ 
+                  <div class="d-flex justify-content-between">
+                    <p style="color: #999;">{{ workspace.description }}</p>
+                    <div class="members d-flex align-items-center">
+                      
+                      @for (member of workspace.members.slice(0, 5); track member) {
+                        
+                        @if (member.profilePicture) {
+                          <img [src]="member.profilePicture" 
+                              style="width: 30px; height: 30px; border-radius: 50%; margin-right: 5px; object-fit: cover;" 
+                              [title]="member.userName">
+                        } @else {
+                          <span class="badge" 
+                                style="display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; color: #fff; background-color: #999; border-radius: 50%; font-size: 14px; margin-right: 5px;" 
+                                [title]="member.userName">
+                            {{ member.userName.charAt(0) }}
+                          </span>
+                        }
+
+                      }
+
+                      @if (workspace.members.length > 5) {
+                        <span class="extra-members" 
+                              style="font-size: 14px; color: #666; font-weight: bold; margin-left: 2px;">
+                          +{{ workspace.members.length - 5 }}
+                        </span>
+                      }
+
+                    </div>
+                  </div>
+
+                  <div class="footer d-flex justify-content-end mt-auto">
                     <button class="btn btn-sm" title="edit" (click)="openEditWorkspace(workspace); $event.stopPropagation()">
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" style="color: #9333ea;" height="16" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
                         <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
@@ -36,7 +67,7 @@
               <button class="workspaces-grid-add" style="display: flex;" (click)="openCreateWorkspace()">
                 <a>+</a>
                 Add New Workspace
-                <p style="color: #bbb; font-size: x-small; padding: 20px;">Create or Join a new workspace to get started.</p>
+                <p style="color: #999; font-size: x-small; padding: 20px;">Create or Join a new workspace to get started.</p>
               </button>
             </div>
           </div>
@@ -132,8 +163,16 @@
                 @if (suggestions.length > 0) {
                   <ul class="suggestions-dropdown">
                     @for (user of suggestions; track user) {
-                      <li (click)="selectUser(user)">
-                        <img [src]="user.profilePictureUrl" class="rounded-circle" width="24" height="24" />
+                      <li class="suggestion-item" (click)="selectUser(user)">
+                        @if (user.profilePictureUrl) {
+                          <img [src]="user.profilePictureUrl" class="rounded-circle" width="24" height="24" />
+                        } @else {
+                          <span class="badge" 
+                                style="display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; color: #fff; background-color: #999; border-radius: 50%; font-size: 14px; margin-right: 5px;" 
+                                [title]="user.userName">
+                            {{ user.userName.charAt(0) }}
+                          </span>
+                        } 
                         <span>{{ user.userName }} ({{ user.email }})</span>
                       </li>
                     }
@@ -141,14 +180,38 @@
                 }
               </div>
               @if (invitedMembers.length > 0) {
-                <div class="selected-members mt-2">
-                  @for (member of invitedMembers; track member) {
-                    <span class="badge bg-primary me-1">
-                      {{ member.emailOrUsername }}
-                      <button type="button" class="btn-close btn-close-white btn-sm"
-                        (click)="removeMember(member)">
-                      </button>
-                    </span>
+                <div class="selected-members d-flex flex-wrap gap-2 mt-3">
+                  @for (member of invitedMembers; track member.emailOrUsername) {
+                    <div class="d-flex align-items-center bg-light border rounded-2 ps-3 pe-2 py-1 shadow-sm w-100" 
+                        style="min-height: 40px;">
+                      
+                      <span class="text-dark fw-medium flex-grow-1 text-truncate" style="font-size: 0.9rem;">
+                        {{ member.emailOrUsername }}
+                      </span>
+
+                      <div class="d-flex align-items-center ms-2">
+                        
+                        <div class="dropdown">
+                          <button class="btn btn-sm dropdown-toggle border-0 py-0 px-2 text-muted" 
+                                  type="button" 
+                                  data-bs-toggle="dropdown" 
+                                  style="font-size: 0.75rem; background: #e9ecef; border-radius: 10px;">
+                            {{ member.role === 1 ? 'Admin' : 'Member' }}
+                          </button>
+                          <ul class="dropdown-menu shadow-sm border-0">
+                            <li><a class="dropdown-item small" (click)="member.role = 0">Member</a></li>
+                            <li><a class="dropdown-item small" (click)="member.role = 1">Admin</a></li>
+                          </ul>
+                        </div>
+
+                        <button type="button" 
+                                class="btn-close ms-2" 
+                                style="width: 0.5rem; height: 0.5rem; font-size: 0.6rem; padding: 0.5rem;" 
+                                (click)="removeMember(member)">
+                        </button>
+                        
+                      </div>
+                    </div>
                   }
                 </div>
               }
@@ -163,7 +226,7 @@
             </div>
           </form>
         </div>
-      }
+  }
 
   @if (showEditWorkspace) {
   <div class="createWorkspace-overlay" [ngClass]="{'light-mode': !isDarkMode, 'dark-mode': isDarkMode}">
@@ -256,101 +319,70 @@
         </p>
 
         <div class="createWorkspace-actions">
-          <button class="btn-secondary" (click)="closeDeleteWorkspace()">
+          <button class="btn btn-secondary" (click)="closeDeleteWorkspace()">
             Cancel
           </button>
 
-          <button class="btn-danger" (click)="deleteWorkspace()">
+          <button class="btn btn-outline-danger" style="margin-left: 5px;" (click)="deleteWorkspace()">
             Delete
           </button>
         </div>
 
       </div>
     </div>
-`  }
+  }
 
   <!-- ================= JOIN WORKSPACE MODAL ================= -->
-      @if (showJoinWorkspace) {
-        <div #joinWorkspaceModal class="joinWorkspace-overlay" [ngClass]="{'light-mode': !isDarkMode, 'dark-mode': isDarkMode}">
-          <form #joinForm="ngForm" (ngSubmit)="joinWorkspace()">
-            <div class="joinWorkspace-box">
-              <div class="join-header">
-                <div class="header-content">
-                  <h3>Join <span class="accent">Workspace</span></h3>
-                </div>
-                <button type="button" class="btn-cancel" (click)="closeJoinWorkspace()">✕</button>
-              </div>
-              <p class="join-subtitle">
-                Enter an invite code or workspace link to join.
-              </p>
-              <div class="form-group">
-                <label class="form-label">Invite Code</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  name="inviteCode"
-                  required
-                  [(ngModel)]="joinInput.inviteCode">
-                  placeholder="e.g. ACME-2024-XXYZ"
-                  [(ngModel)]="joinInput.inviteCode"
-                  [disabled]="joinInput.workspaceLink">
-                </div>
-                <div class="separator-row">
-                  <div class="separator-line"></div>
-                  <div class="separator-text">OR PASTE LINK</div>
-                  <div class="separator-line"></div>
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Workspace Link</label>
-                  <input
-                    type="text"
-                    class="form-control"
-                    name="workspaceLink"
-                    placeholder="https://teamup.io/join/..."
-                    [(ngModel)]="joinInput.workspaceLink"
-                    [disabled]="joinInput.inviteCode">
-                  </div>
-                  <div class="joinWorkspace-actions">
-                    <button
-                      class="btn-primary"
-                      type="submit"
-                      [disabled]="joinForm.invalid">
-                      Join Workspace →
-                    </button>
-                  </div>
-                  <div class="form-group">
-                    <label class="form-label label-caps">Invite Code</label>
-                    <input
-                      type="text"
-                      class="form-control"
-                      name="inviteCode"
-                      placeholder="e.g. ACME-2024-XXYZ"
-                      required
-                      [(ngModel)]="joinInput.inviteCode">
-                    </div>
-                    <div class="separator-row">
-                      <div class="separator-line"></div>
-                      <div class="separator-text">OR PASTE LINK</div>
-                      <div class="separator-line"></div>
-                    </div>
-                    <div class="form-group">
-                      <label class="form-label label-caps">Or Paste Link</label>
-                      <input
-                        type="text"
-                        class="form-control faded-input"
-                        name="workspaceLink"
-                        placeholder="https://teamup.io/join/..."
-                        [(ngModel)]="joinInput.workspaceLink">
-                      </div>
-                      <div class="joinWorkspace-actions">
-                        <button
-                          class="btn-primary"
-                          type="submit"
-                          [disabled]="joinForm.invalid">
-                          Join Workspace <span class="button-arrow">→</span>
-                        </button>
-                      </div>
-                    </div>
-                  </form>
-                </div>
-              }
+  @if (showJoinWorkspace) {
+  <div #joinWorkspaceModal class="joinWorkspace-overlay" [ngClass]="{'light-mode': !isDarkMode, 'dark-mode': isDarkMode}">
+    <form #joinForm="ngForm" (ngSubmit)="joinWorkspace()">
+      <div class="joinWorkspace-box">
+        <div class="join-header">
+          <div class="header-content">
+            <h3>Join <span class="accent">Workspace</span></h3>
+          </div>
+          <button type="button" class="btn-cancel" (click)="closeJoinWorkspace()">✕</button>
+        </div>
+        <p class="join-subtitle">
+          Enter an invite code or workspace link to join.
+        </p>
+
+        <div class="form-group">
+          <label class="form-label">Invite Code</label>
+          <input
+            type="text"
+            class="form-control"
+            name="inviteCode"
+            placeholder="e.g. ACME-2024-XXYZ"
+            [(ngModel)]="joinInput.inviteCode">
+        </div>
+
+        <div class="separator-row">
+          <div class="separator-line"></div>
+          <div class="separator-text">OR PASTE LINK</div>
+          <div class="separator-line"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Workspace Link</label>
+          <input
+            type="text"
+            class="form-control"
+            name="workspaceLink"
+            placeholder="https://teamup.io/join/..."
+            [(ngModel)]="joinInput.workspaceLink">
+        </div>
+
+        <div class="joinWorkspace-actions">
+          <button
+            class="btn-primary"
+            type="submit"
+            [disabled]="!joinInput.inviteCode && !joinInput.workspaceLink">
+            Join Workspace →
+          </button>
+        </div>
+
+      </div>
+    </form>
+  </div>
+}
