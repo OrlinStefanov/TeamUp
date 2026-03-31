@@ -26,7 +26,7 @@ namespace TeamUpBackEnd.DTO
 		public record WorkspaceMemberDTO
 		{
 			public string? EmailOrUsername { get; set; }
-			public WorkSpaceRole Role { get; set; }
+			public int Role { get; set; }
 		}
 
 		public record FullWorkspace

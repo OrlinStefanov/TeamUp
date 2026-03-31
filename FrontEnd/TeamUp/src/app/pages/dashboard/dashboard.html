@@ -17,8 +17,43 @@
                     {{ workspace.title.charAt(0) }}
                   </span>
                   <h3>{{ workspace.title }}</h3>
+<<<<<<< Updated upstream
                   <p style="color: #bbb;">{{ workspace.description }}</p>
                   <div class="footer justify-content-end">
+=======
+ 
+                  <div class="d-flex justify-content-between">
+                    <p style="color: #999;">{{ workspace.description }}</p>
+                    <div class="members d-flex align-items-center">
+                      
+                      @for (member of workspace.members.slice(0, 5); track member) {
+                        
+                        @if (member.profilePicture) {
+                          <img [src]="member.profilePicture" 
+                              style="width: 30px; height: 30px; border-radius: 50%; margin-right: 5px; object-fit: cover;" 
+                              [title]="member.userName">
+                        } @else {
+                          <span class="badge" 
+                                style="display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; color: #fff; background-color: #999; border-radius: 50%; font-size: 14px; margin-right: 5px;" 
+                                [title]="member.userName">
+                            {{ member.userName.charAt(0) }}
+                          </span>
+                        }
+
+                      }
+
+                      @if (workspace.members.length > 5) {
+                        <span class="extra-members" 
+                              style="font-size: 14px; color: #666; font-weight: bold; margin-left: 2px;">
+                          +{{ workspace.members.length - 5 }}
+                        </span>
+                      }
+
+                    </div>
+                  </div>
+
+                  <div class="footer d-flex justify-content-end mt-auto">
+>>>>>>> Stashed changes
                     <button class="btn btn-sm" title="edit" (click)="openEditWorkspace(workspace); $event.stopPropagation()">
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" style="color: #9333ea;" height="16" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
                         <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
@@ -132,8 +167,16 @@
                 @if (suggestions.length > 0) {
                   <ul class="suggestions-dropdown">
                     @for (user of suggestions; track user) {
-                      <li (click)="selectUser(user)">
-                        <img [src]="user.profilePictureUrl" class="rounded-circle" width="24" height="24" />
+                      <li class="suggestion-item" (click)="selectUser(user)">
+                        @if (user.profilePictureUrl) {
+                          <img [src]="user.profilePictureUrl" class="rounded-circle" width="24" height="24" />
+                        } @else {
+                          <span class="badge" 
+                                style="display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; color: #fff; background-color: #999; border-radius: 50%; font-size: 14px; margin-right: 5px;" 
+                                [title]="user.userName">
+                            {{ user.userName.charAt(0) }}
+                          </span>
+                        } 
                         <span>{{ user.userName }} ({{ user.email }})</span>
                       </li>
                     }
@@ -141,14 +184,38 @@
                 }
               </div>
               @if (invitedMembers.length > 0) {
-                <div class="selected-members mt-2">
-                  @for (member of invitedMembers; track member) {
-                    <span class="badge bg-primary me-1">
-                      {{ member.emailOrUsername }}
-                      <button type="button" class="btn-close btn-close-white btn-sm"
-                        (click)="removeMember(member)">
-                      </button>
-                    </span>
+                <div class="selected-members d-flex flex-wrap gap-2 mt-3">
+                  @for (member of invitedMembers; track member.emailOrUsername) {
+                    <div class="d-flex align-items-center bg-light border rounded-2 ps-3 pe-2 py-1 shadow-sm w-100" 
+                        style="min-height: 40px;">
+                      
+                      <span class="text-dark fw-medium flex-grow-1 text-truncate" style="font-size: 0.9rem;">
+                        {{ member.emailOrUsername }}
+                      </span>
+
+                      <div class="d-flex align-items-center ms-2">
+                        
+                        <div class="dropdown">
+                          <button class="btn btn-sm dropdown-toggle border-0 py-0 px-2 text-muted" 
+                                  type="button" 
+                                  data-bs-toggle="dropdown" 
+                                  style="font-size: 0.75rem; background: #e9ecef; border-radius: 10px;">
+                            {{ member.role === 1 ? 'Admin' : 'Member' }}
+                          </button>
+                          <ul class="dropdown-menu shadow-sm border-0">
+                            <li><a class="dropdown-item small" (click)="member.role = 0">Member</a></li>
+                            <li><a class="dropdown-item small" (click)="member.role = 1">Admin</a></li>
+                          </ul>
+                        </div>
+
+                        <button type="button" 
+                                class="btn-close ms-2" 
+                                style="width: 0.5rem; height: 0.5rem; font-size: 0.6rem; padding: 0.5rem;" 
+                                (click)="removeMember(member)">
+                        </button>
+                        
+                      </div>
+                    </div>
                   }
                 </div>
               }
@@ -163,7 +230,7 @@
             </div>
           </form>
         </div>
-      }
+  }
 
   @if (showEditWorkspace) {
   <div class="createWorkspace-overlay" [ngClass]="{'light-mode': !isDarkMode, 'dark-mode': isDarkMode}">
@@ -256,18 +323,18 @@
         </p>
 
         <div class="createWorkspace-actions">
-          <button class="btn-secondary" (click)="closeDeleteWorkspace()">
+          <button class="btn btn-secondary" (click)="closeDeleteWorkspace()">
             Cancel
           </button>
 
-          <button class="btn-danger" (click)="deleteWorkspace()">
+          <button class="btn btn-outline-danger" style="margin-left: 5px;" (click)="deleteWorkspace()">
             Delete
           </button>
         </div>
 
       </div>
     </div>
-`  }
+  }
 
   <!-- ================= JOIN WORKSPACE MODAL ================= -->
       @if (showJoinWorkspace) {
