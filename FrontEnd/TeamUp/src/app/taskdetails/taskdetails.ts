@@ -24,6 +24,8 @@ export class Taskdetails {
   tasksCompleted : any[] = [];
   tasksOverdue : any[] = [];
 
+  selectedUsers: any[] = [];
+
   newTask : any = {
     title: '',
     description: '',
@@ -78,6 +80,8 @@ export class Taskdetails {
 
   createTask()
   {
+    this.newTask.workspaceId = this.worksapce_info.id;
+
     this.auth.createTask(this.newTask).subscribe((res : any) =>
     {
       console.log(res);
@@ -106,5 +110,17 @@ export class Taskdetails {
 
   setDifficulty(level: number) {
     this.newTask.difficulty = level;
+  }
+
+  toggleUser(user: any) {
+    const exists = this.selectedUsers.find(u => u.id === user.id);
+
+    if (exists) {
+      this.selectedUsers = this.selectedUsers.filter(u => u.id !== user.id);
+    } else {
+      this.selectedUsers.push(user);
+    }
+
+    this.newTask.assignedUsers = this.selectedUsers.map(u => u.id);
   }
 }

@@ -4,6 +4,30 @@
   padding: 15px;
 }
 
+.btn-primary {
+  background: #9333ea;
+  border: none;
+  border-radius: 9px;
+  color: #fff;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 10px 22px;
+  cursor: pointer;
+  gap: 7px;
+  transition: opacity 0.15s, transform 0.1s;
+}
+
+.btn-primary:hover {
+  opacity: 0.8;
+  transform: translateY(-1px);
+}
+
+.btn-primary:active {
+  outline: none;
+  background-color: #9333ea;
+}
+
 .modal-dialog {
   max-width: 520px;
   pointer-events: all;
@@ -25,8 +49,8 @@
 }
 
 .tm-box.light-mode {
-  background: linear-gradient(rgba(168,85,247,0.5) 0px, #c8c8c8 0px),
-    linear-gradient(90deg, rgba(168,85,247,0.5) 0px, #c8c8c8 0px);
+  background: linear-gradient(rgba(168,85,247,0.5) 0px, #f5f5f5 0px),
+    linear-gradient(90deg, rgba(168,85,247,0.5) 0px, #f5f5f5 0px);
   background-size: 50px 50px;
   border-color: #e0dff0;
   color: #1a1a2e;
@@ -214,13 +238,28 @@
   display: block; 
 }
 
-.tm-box.dark-mode  .pill-todo { background: #1a1a2e; color: #6b6b8a; border: #2a2a3a 1px solid; }
+.tm-box.dark-mode  .pill-todo { background: rgba(107,107,138,0.2); color: #696982; border: #2a2a3a 1px solid; }
 .tm-box.light-mode .pill-todo { background: #f0eff8; color: #9898b8; border: #dddcee 1px solid; }
+<<<<<<< Updated upstream
 .tm-box .pill-todo.active             { background: rgba(107,107,138,0.2); color: #a0a0c0; border: #6b6b8a 1px solid; }
 
 .tm-box.dark-mode  .pill-progress { background: #0d1f2e; color: #00ddddca; border: #0a3040 1px solid; }
 .tm-box.light-mode .pill-progress { background: #e6fafa; color: #00ddddca; border: #b2ebf2 1px solid; }
 .tm-box .pill-progress.active             { background: rgba(0,200,220,0.15); color: #00bcd4; border: #00bcd4 1px solid; }
+=======
+.tm-box.light-mode .pill-todo.active             { background: rgba(107, 107, 138, 0.12); color: #696982; border: #696982 1px solid; }
+.tm-box.dark-mode  .pill-todo.active { background: rgba(107,107,138,0.2); color: #a0a0c0; border: #a0a0c0 1px solid; }
+
+.tm-box.light-mode .pill-todo.active svg { fill: #696982; }
+.tm-box.dark-mode .pill-todo.active svg { fill: #a0a0c0; }
+
+.tm-box.dark-mode  .pill-progress { background: #0d1f2e; color: #00bbd49d; border: #0a3040 1px solid; }
+.tm-box.light-mode .pill-progress { background: #e6fafa; color: #00cde89d; border: #b2ebf2 1px solid; }
+.tm-box .pill-progress.active             { background: rgba(0, 215, 234, 0.15); color: #00bcd4; border: #00bcd4 1px solid; }
+.tm-box.dark-mode .pill-progress svg { fill: #00bbd49d; }
+.tm-box.light-mode .pill-progress svg { fill: #00cde89d; }
+.tm-box .pill-progress.active svg { fill: #00bcd4; }
+>>>>>>> Stashed changes
 
 .tm-box.dark-mode  .pill-done { background: #0d2015; color: #22c55e; border: #0a3018 1px solid; }
 .tm-box.light-mode .pill-done { background: #edfaf3; color: #16a34a; border: #bbf7d0 1px solid; }
@@ -291,6 +330,15 @@
 .tm-box.dark-mode .dropdown-item  { color: #e8e4ff; font-size: 13px; }
 .tm-box.light-mode .dropdown-item { color: #1a1a2e; font-size: 13px; }
 
+.owner {
+  color: #f59e0b; 
+  font-weight: 500;
+}
+
+.owner-icon {
+  fill: #f59e0b;
+}
+
 .tm-box.dark-mode .dropdown-item:hover  { background: #1e1e2e; color: #c084fc; }
 .tm-box.light-mode .dropdown-item:hover { background: #f5f0ff; color: #7c3aed; }
 
@@ -306,14 +354,16 @@
 .tm-box.dark-mode .tm-footer  { border-top: 1px solid #1e1e2e; }
 .tm-box.light-mode .tm-footer { border-top: 1px solid #ebebf5; }
 
-.tm-footer-hint { font-size: 11px; }
-
-.tm-box.dark-mode .tm-footer-hint  { color: #3a3a55; }
-.tm-box.light-mode .tm-footer-hint { color: #c0bedd; }
-
 .tm-accent { color: #7c3aed; }
 
-.tm-footer-actions { display: flex; gap: 8px; }
+.tm-footer-actions {
+  display: flex;
+  width: 100%;
+}
+
+.btn-create {
+  margin-left: auto;
+}
 
 /* ── Cancel button ── */
 .btn-cancel-tm {
@@ -334,7 +384,7 @@
 
 /* ── Create button ── */
 .btn-create {
-  background: linear-gradient(135deg, #7c3aed, #9333ea);
+  background: #9333ea;
   border: none;
   border-radius: 9px;
   color: #fff;

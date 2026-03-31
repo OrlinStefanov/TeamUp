@@ -1,9 +1,12 @@
 <div class="container-fluid">
-  <div class="row" style="border-top: 2px solid whitesmoke;">
+  <div class="row border-bottom" style="border-top: 2px solid whitesmoke;">
     <div class="col-12 mt-4">
-      <h4>Task Board</h4>
+      <h4 style="font-weight: bold;">Task Board</h4>
       <div class="col-12 text-end" style="margin-top: -20px;">
-        <button class="btn btn-m btn-primary" (click)="openTaskModal()">Add Task</button>
+        <button class="btn btn-m btn-primary" (click)="openTaskModal()">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24">
+              <path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+            </svg> Add Task</button>
       </div>
     </div>
     <div class="col-12" style="margin-top: -10px;">
@@ -207,36 +210,108 @@
         </div>
 
         <div class="tm-field">
-          <label class="tm-label">Assign To</label>
-          <div class="dropdown">
+        <label class="tm-label">Assign To</label>
 
-            <ul class="dropdown-menu w-100">
-              <li *ngIf="worksapce_info.owner">
-                <a class="dropdown-item d-flex align-items-center" (click)="newTask.assignedUsers = worksapce_info.owner.id">
-                  <img *ngIf="worksapce_info.owner.profilePictureUrl" [src]="worksapce_info.owner.profilePictureUrl" class="rounded-circle me-2" width="28" height="28">
-                  <div *ngIf="!worksapce_info.owner.profilePictureUrl" class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-2" style="width:28px;height:28px;font-size:12px;">
+        <div class="dropdown w-100">
+          <!-- BUTTON -->
+          <button
+            class="btn btn-outline-secondary w-100 text-start"
+            type="button"
+            data-bs-toggle="dropdown"
+          >
+            <span *ngIf="selectedUsers.length === 0">
+              Select users
+            </span>
+
+            <span *ngIf="selectedUsers.length > 0">
+              {{ selectedUsers.length }} selected
+            </span>
+          </button>
+
+          <!-- MENU -->
+          <ul class="dropdown-menu w-100">
+            
+            <!-- OWNER -->
+            <li *ngIf="worksapce_info?.owner" >
+              <a
+                class="dropdown-item owner d-flex align-items-center justify-content-between"
+                (click)="toggleUser(worksapce_info.owner)"
+              >
+                <div class="d-flex align-items-center">
+                  <img *ngIf="worksapce_info.owner.profilePictureUrl"
+                      [src]="worksapce_info.owner.profilePictureUrl"
+                      class="rounded-circle me-2"
+                      width="28" height="28">
+
+                  <div *ngIf="!worksapce_info.owner.profilePictureUrl"
+                      class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-2"
+                      style="width:28px;height:28px;font-size:12px;">
                     {{ worksapce_info.owner.userName.charAt(0) }}
                   </div>
+
                   {{ worksapce_info.owner.userName }}
+                </div>
+
+                <!-- CHECK -->
+                  <div class="d-flex align-items-center gap-2">
+                    <span
+                      *ngIf="selectedUsers.some(u => u.id === worksapce_info.owner.id)"
+                      class="check-icon"
+                      (click)="toggleUser(worksapce_info.owner.id)"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-lg" viewBox="0 0 16 16">
+                        <path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425z"/>
+                      </svg>
+                    </span>
+
+                    <svg width="20" height="20"
+                        class="owner-icon"
+                        viewBox="-4 0 32 32"
+                        xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 10.938c-1.375 0-2.5-1.125-2.5-2.5 0-1.406 1.125-2.5 2.5-2.5s2.5 1.094 2.5 2.5c0 1.375-1.125 2.5-2.5 2.5zM2.031 9.906c1.094 0 1.969 0.906 1.969 2 0 1.125-0.875 2-1.969 2-1.125 0-2.031-0.875-2.031-2 0-1.094 0.906-2 2.031-2zM22.031 9.906c1.094 0 1.969 0.906 1.969 2 0 1.125-0.875 2-1.969 2-1.125 0-2.031-0.875-2.031-2 0-1.094 0.906-2 2.031-2zM4.219 23.719l-1.656-9.063c0.5-0.094 0.969-0.375 1.344-0.688 1.031 0.938 2.344 1.844 3.594 1.844 1.5 0 2.719-2.313 3.563-4.25 0.281 0.094 0.625 0.188 0.938 0.188s0.656-0.094 0.938-0.188c0.844 1.938 2.063 4.25 3.563 4.25 1.25 0 2.563-0.906 3.594-1.844 0.375 0.313 0.844 0.594 1.344 0.688l-1.656 9.063h-15.563zM3.875 24.5h16.25v1.531h-16.25v-1.531z"/>
+                    </svg>
+
+                  </div>
                 </a>
-              </li>
-              <li *ngFor="let user of worksapce_info.members">
-                <a class="dropdown-item d-flex align-items-center" (click)="newTask.assignedUsers = user.id">
-                  <img *ngIf="user.profilePictureUrl" [src]="user.profilePictureUrl" class="rounded-circle me-2" width="28" height="28">
-                  <div *ngIf="!user.profilePictureUrl" class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-2" style="width:28px;height:28px;font-size:12px;">
+            </li>
+
+            <!-- MEMBERS -->
+            <li *ngFor="let user of worksapce_info?.members">
+              <a
+                class="dropdown-item d-flex align-items-center justify-content-between"
+                (click)="toggleUser(user)"
+              >
+                <div class="d-flex align-items-center">
+                  <img *ngIf="user.profilePictureUrl"
+                      [src]="user.profilePictureUrl"
+                      class="rounded-circle me-2"
+                      width="28" height="28">
+
+                  <div *ngIf="!user.profilePictureUrl"
+                      class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-2"
+                      style="width:28px;height:28px;font-size:12px;">
                     {{ user.userName.charAt(0) }}
                   </div>
+
                   {{ user.userName }}
-                </a>
-              </li>
-            </ul>
-          </div>
+                </div>
+
+                <!-- CHECK -->
+                <span *ngIf="selectedUsers.some(u => u.id === user.id)">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-lg" viewBox="0 0 16 16">
+                    <path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425z"/>
+                  </svg>
+                </span>
+              </a>
+            </li>
+
+          </ul>
         </div>
+      </div>
 
       </div>
 
       <div class="tm-footer">
-        <span class="tm-footer-hint"><span class="tm-accent">*</span> required fields</span>
         <div class="tm-footer-actions">
           <button class="btn-cancel-tm" data-bs-dismiss="modal">Cancel</button>
           <button class="btn-create" (click)="createTask()">

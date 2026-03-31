@@ -397,7 +397,7 @@
 }
 
 .page.dark-mode .workspaces-grid-add { border-color: #555; background-color: transparent; color: #fff;}
-.page.dark-mode .workspaces-grid-add:hover { border: #a64bfb solid 1px; background-color: #a64bfb26;}
+.page .workspaces-grid-add:hover { border: #a64bfb solid 1px; background-color: #a64bfb26;}
 
 .workspaces-grid-add a {
   align-items: center;

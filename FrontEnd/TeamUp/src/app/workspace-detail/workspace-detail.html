@@ -10,7 +10,7 @@
   </div>
 </nav>
 
-<nav class="nav mb-3 nav-3items" [ngClass]="{'light-mode': !isDarkMode, 'dark-mode': isDarkMode}">
+<nav class="nav mb-3 nav-3items border-bottom" [ngClass]="{'light-mode': !isDarkMode, 'dark-mode': isDarkMode}">
     <a class="nav-link" [routerLink]="['tasks']" [class.active]="isActive('/tasks')"
           (click)="setActive('tasks');">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-list-task" viewBox="0 0 16 16" style="margin-left: 5px;">
