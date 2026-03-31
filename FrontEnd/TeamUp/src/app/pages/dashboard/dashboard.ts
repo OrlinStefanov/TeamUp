@@ -83,6 +83,9 @@ export class Dashboard implements OnInit, AfterViewInit {
 
   deleteWorkspace() {
     // call API
+    this.auth.deleteWorkspace(this.selectedWorkspace.publicId).subscribe(() => {
+      this.auth.getWorkspaces(true).subscribe();
+    });
     console.log('delete', this.selectedWorkspace);
 
     this.showDeleteWorkspace = false;
