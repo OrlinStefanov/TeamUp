@@ -71,12 +71,10 @@
 
 .page.dark-mode .side-navbar {
   border-right: 1px solid #333;
-  box-shadow: 0 0 4px #333;
 }
 
 .page.light-mode .side-navbar {
   border-right: 1px solid #bbb;
-  box-shadow: 0 0 4px #bbb;
 }
 
 .side-navbar.collapsed {
@@ -186,7 +184,7 @@
   position: relative;
   display: inline-block;
   align-items: center;   
-  z-index: 99999;
+  z-index: 667;
 }
 
 .settings-dropdown {
@@ -194,7 +192,7 @@
   right: -40%;
   bottom: calc(100% + 20px); 
   
-  z-index: 9999; 
+  z-index: 666; 
   pointer-events: all;;
 
   border-radius: 10px;
@@ -241,19 +239,16 @@
 .row.g-0 {
   height: 100vh;
   position: relative;
-  z-index: 1;
 }
 
 .content-wrapper {
   height: 100vh;
   overflow-y: auto;
   position: relative;
-  z-index: 1;
 }
 
-.content {
-  padding: 24px;
-}
+.content.dark-mode { background: #0f0f14; color: #f5f5f5; }
+.content.light-mode { background: #f5f5f5; color: #111; }
 
 .desktop-menu-btn,
 .menu-toggle,

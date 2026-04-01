@@ -194,8 +194,8 @@
             <h5>Team Up</h5>
           </div>
         </div>
-        <main class="content">
-          <router-outlet></router-outlet>
+        <main class="content" [ngClass]="{'light-mode': !isDarkMode, 'dark-mode': isDarkMode}">
+            <router-outlet></router-outlet>
         </main>
       </div>
 
