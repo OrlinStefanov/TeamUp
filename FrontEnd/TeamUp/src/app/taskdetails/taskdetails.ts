@@ -20,7 +20,7 @@ export class Taskdetails {
 
   //different status for task
   tasksToDo : any[] = [];
-  tasksInProgress : any[] = []
+  tasksInProgress : any[] = [];
   tasksCompleted : any[] = [];
   tasksOverdue : any[] = [];
 

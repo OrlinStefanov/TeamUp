@@ -22,6 +22,7 @@ import { takeUntil } from 'rxjs/operators';
 })
 export class Chatdetails {
   channels$!: Observable<any[]>;
+  isDarkMode: boolean = false;
 
   workspacePublicId: string = '';
   workspaceId : number = 0;
@@ -68,6 +69,11 @@ export class Chatdetails {
             this.unreadMap = map;
           });
       });
+
+    const savedMode = localStorage.getItem('darkMode');
+    if (savedMode !== null) {
+      this.isDarkMode = savedMode === 'true';
+    }
   }
 
   ngOnDestroy() {
