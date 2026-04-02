@@ -140,7 +140,7 @@
             @for (workspace of (workspaces$ | async); track workspace) {
               <li>
                 <a class="workspace-item"
-                  (click)="openWorkspace(workspace.publicId)">
+                  [routerLink]="['/workspace', workspace.publicId, 'tasks']">
                   <span class="workspace-icon">
                     {{ workspace.title.charAt(0) }}
                   </span>
