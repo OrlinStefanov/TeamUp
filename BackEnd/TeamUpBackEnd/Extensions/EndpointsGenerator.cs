@@ -1126,13 +1126,7 @@ namespace TeamUpBackEnd.Extensions
 						TasksStatus.Done => "Done",
 						_ => "Overdue"
 					},
-					Difficulty = t.Difficulty switch
-					{
-						TaskDifficulty.Easy => "Easy",
-						TaskDifficulty.Medium => "Medium",
-						TaskDifficulty.Hard => "Hard",
-						_ => "Very Hard"
-					},
+					Difficulty = t.Difficulty,
 					AssignedUsers = t.Assignments!.Select(a => new
 					{
 						a.User!.UserName,

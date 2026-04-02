@@ -1,23 +1,42 @@
-<div class="container-fluid">
+<div class="container-fluid" [ngClass]="{'dark-mode': isDarkMode, 'light-mode': !isDarkMode}">
   <div class="row border-bottom px-3" style="margin-bottom: 10px;">
-    <div class="col-12">
-      <h4 style="font-weight: bold;">Task Board</h4>
-      <div class="col-12 text-end" >
-        <button class="btn btn-m btn-primary" (click)="openTaskModal()" style="margin-top: -20px;">
-          <svg width="14" height="14" fill="none" viewBox="0 0 24 24">
-              <path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
-            </svg> Add Task</button>
+  <div class="col-12 d-flex align-items-center justify-content-between flex-wrap gap-2 py-2">
+    
+    <div class="align-items-center gap-3">
+      <h4 style="font-weight: bold; margin: 0;">Task Board</h4>
+      <span style="color: #999; font-size: 14px;">{{tasks.length}} {{ tasks.length === 1 ? 'task' : 'tasks' }}</span>
+    </div>
+
+    <div class="d-flex align-items-center gap-2">
+      <div class="input-group" style="max-width: 300px;">
+        <input class="form-control" type="search" placeholder="Search" aria-label="Search" id="search-input">
+        <span class="input-group-text bg-white" id="search-btn">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search text-muted" viewBox="0 0 16 16">
+            <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
+          </svg>
+        </span>
       </div>
+
+      <button class="btn btn-m btn-primary" style="white-space: nowrap;">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24">
+          <path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+        </svg> Filter
+      </button>
+
+      <button class="btn btn-m btn-primary" (click)="openTaskModal()" style="white-space: nowrap;">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24">
+          <path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+        </svg> Add Task
+      </button>
     </div>
-    <div class="col-12" style="margin-top: -10px;">
-      <p style="color: #999;">{{tasks.length}} {{ tasks.length === 1 ? 'task' : 'tasks' }}</p>
-    </div>
+
   </div>
+</div>
 
   <div class="row">
     <div class="col-12 px-3">
       <div class="row mt-2">
-        <div class="col-12 d-flex flex-row gap-4">
+        <div class="col-12 d-flex flex-row gap-4 task-board" [ngClass]="{'dark-mode': isDarkMode, 'light-mode': !isDarkMode}">
           <!-- To Do Column -->
           <div class="flex-fill" style="min-width:250px;">
             <div class="d-flex align-items-center mb-3" style="border-bottom: 2px solid rgb(209, 209, 209); height: 60px;">
@@ -33,9 +52,24 @@
                   <div class="card h-100">
                     <div class="card-body">
                       <h5 class="card-title">{{ task.title }}</h5>
-                      <p class="card-text">{{ task.description }}</p>
+                      <p class="card-text" style="color: #999;">{{ task.description }}</p>
+                      <div class="d-flex align-items-center justify-content-between">
+                        <span class="difficulty-badge"
+                          [ngClass]="{
+                            'easy':  task.difficulty === 0,
+                            'medium': task.difficulty === 1,
+                            'hard': task.difficulty === 2,
+                            'vhard': task.difficulty === 3
+                          }">
+                          {{ ['Easy', 'Medium', 'Hard', 'Very Hard'][task.difficulty] }}
+                        </span>
+                        <div class="d-flex align-items-center gap-1 ms-auto">
+                          <span class="points" style="color: rgb(3, 255, 255);">+{{ task.points }} pts</span>
+                          <img src="{{ user_data.profilePictureUrl }}" alt="Profile" class="rounded-circle me-3">
+                        </div>
+                      </div>
                     </div>
-                    <div class="card-footer text-muted">
+                    <div class="card-footer">
                       Due: {{ task.dueDate | date:'mediumDate' }}
                     </div>
                   </div>
@@ -59,9 +93,24 @@
                   <div class="card h-100">
                     <div class="card-body">
                       <h5 class="card-title">{{ task.title }}</h5>
-                      <p class="card-text">{{ task.description }}</p>
+                      <p class="card-text" style="color: #999;">{{ task.description }}</p>
+                      <div class="d-flex align-items-center justify-content-between">
+                        <span class="difficulty-badge"
+                          [ngClass]="{
+                            'easy':  task.difficulty === 0,
+                            'medium': task.difficulty === 1,
+                            'hard': task.difficulty === 2,
+                            'vhard': task.difficulty === 3
+                          }">
+                          {{ ['Easy', 'Medium', 'Hard', 'Very Hard'][task.difficulty] }}
+                        </span>
+                        <div class="d-flex align-items-center gap-1 ms-auto">
+                          <span class="points" style="color: rgb(3, 255, 255);">+{{ task.points }} pts</span>
+                          <img src="{{ user_data.profilePictureUrl }}" alt="Profile" class="rounded-circle me-3">
+                        </div>
+                      </div>
                     </div>
-                    <div class="card-footer text-muted">
+                    <div class="card-footer">
                       Due: {{ task.dueDate | date:'mediumDate' }}
                     </div>
                   </div>
@@ -85,9 +134,24 @@
                   <div class="card h-100">
                     <div class="card-body">
                       <h5 class="card-title">{{ task.title }}</h5>
-                      <p class="card-text">{{ task.description }}</p>
+                      <p class="card-text" style="color: #999;">{{ task.description }}</p>
+                      <div class="d-flex align-items-center justify-content-between">
+                        <span class="difficulty-badge"
+                          [ngClass]="{
+                            'easy':  task.difficulty === 0,
+                            'medium': task.difficulty === 1,
+                            'hard': task.difficulty === 2,
+                            'vhard': task.difficulty === 3
+                          }">
+                          {{ ['Easy', 'Medium', 'Hard', 'Very Hard'][task.difficulty] }}
+                        </span>
+                        <div class="d-flex align-items-center gap-1 ms-auto">
+                          <span class="points" style="color: rgb(3, 255, 255);">+{{ task.points }} pts</span>
+                          <img src="{{ user_data.profilePictureUrl }}" alt="Profile" class="rounded-circle me-3">
+                        </div>
+                      </div>
                     </div>
-                    <div class="card-footer text-muted">
+                    <div class="card-footer">
                       Due: {{ task.dueDate | date:'mediumDate' }}
                     </div>
                   </div>
@@ -111,7 +175,22 @@
                   <div class="card h-100 border-danger">
                     <div class="card-body">
                       <h5 class="card-title">{{ task.title }}</h5>
-                      <p class="card-text">{{ task.description }}</p>
+                      <p class="card-text" style="color: #999;">{{ task.description }}</p>
+                      <div class="d-flex align-items-center justify-content-between">
+                        <span class="difficulty-badge"
+                          [ngClass]="{
+                            'easy':  task.difficulty === 0,
+                            'medium': task.difficulty === 1,
+                            'hard': task.difficulty === 2,
+                            'vhard': task.difficulty === 3
+                          }">
+                          {{ ['Easy', 'Medium', 'Hard', 'Very Hard'][task.difficulty] }}
+                        </span>
+                        <div class="d-flex align-items-center gap-1 ms-auto">
+                          <span class="points" style="color: rgb(3, 255, 255);">+{{ task.points }} pts</span>
+                          <img src="{{ user_data.profilePictureUrl }}" alt="Profile" class="rounded-circle me-3">
+                        </div>
+                      </div>
                     </div>
                     <div class="card-footer text-danger">
                       Due: {{ task.dueDate | date:'mediumDate' }}

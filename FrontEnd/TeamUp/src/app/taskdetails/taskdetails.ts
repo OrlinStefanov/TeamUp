@@ -73,7 +73,7 @@ export class Taskdetails {
   filterTasksStatus()
   {
       this.tasksToDo = this.tasks.filter(t => t.status == 'ToDo');
-      this.tasksInProgress = this.tasks.filter(t => t.status == 'In Progress');
+      this.tasksInProgress = this.tasks.filter(t => t.status == 'InProgress');
       this.tasksCompleted = this.tasks.filter(t => t.status == 'Done');
       this.tasksOverdue = this.tasks.filter(t => t.status == 'Overdue');
   }
