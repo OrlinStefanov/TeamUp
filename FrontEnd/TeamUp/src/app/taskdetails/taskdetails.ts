@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 
 import { Auth } from '../services/auth/auth';
-import { RouterLink } from "@angular/router";
+import { ActivatedRoute, RouterLink } from "@angular/router";
 import { FormsModule } from '@angular/forms';
 
 @Component({
@@ -38,29 +38,36 @@ export class Taskdetails {
     workspaceId: 0 // number
   };
 
-  constructor(private auth : Auth) {}
+  constructor(private auth : Auth, private route : ActivatedRoute) {}
 
   ngOnInit() {
-    const workspaceId = window.location.pathname.split('/')[2]; // assuming URL is /workspace/{id}/tasks
-    
-    this.auth.getWorkspaceInfo(workspaceId).subscribe((response: any) => {
-      this.worksapce_info = response;
-      console.log('Workspace Info:', this.worksapce_info);
-    });
+    this.route.parent?.paramMap.subscribe(params => {
+        const workspaceId = params.get('id');
+        console.log('Workspace ID:', workspaceId);
 
-    this.auth.getWorkspaceTasks(workspaceId).subscribe((response: any) => {
-      this.tasks = response;
-      console.log('Tasks:', this.tasks);
-      // Categorize tasks by status
-      this.filterTasksStatus();
-    });
+        if (!workspaceId) return;
 
-    const savedMode = localStorage.getItem('darkMode');
-    if (savedMode !== null) {
-      this.isDarkMode = savedMode === 'true';
-    }
+        // Load workspace info
+        this.auth.getWorkspaceInfo(workspaceId).subscribe((response: any) => {
+          this.worksapce_info = response;
+          console.log('Workspace Info:', this.worksapce_info);
+        });
 
-    this.user_data = this.auth.getCurrentUser();
+        // Load tasks
+        this.auth.getWorkspaceTasks(workspaceId).subscribe((response: any) => {
+          this.tasks = response;
+          console.log('Tasks:', this.tasks);
+          this.filterTasksStatus();
+        });
+      });
+
+      // Keep the rest as-is (runs once, which is fine)
+      const savedMode = localStorage.getItem('darkMode');
+      if (savedMode !== null) {
+        this.isDarkMode = savedMode === 'true';
+      }
+
+      this.user_data = this.auth.getCurrentUser();
   }
 
   openTaskModal() {
