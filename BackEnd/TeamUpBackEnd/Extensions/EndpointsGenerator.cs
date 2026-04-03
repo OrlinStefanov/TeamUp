@@ -1029,10 +1029,14 @@ namespace TeamUpBackEnd.Extensions
 
 				if (task.Points == 0)
 				{
-					if (task.Difficulty == TaskDifficulty.Easy) task.Points = 50;
-					if (task.Difficulty == TaskDifficulty.Medium) task.Points = 75;
-					if (task.Difficulty == TaskDifficulty.Hard) task.Points = 100;
-					if (task.Difficulty == TaskDifficulty.VeryHard) task.Points = 150;
+					task.Points = task.Difficulty switch
+					{
+						TaskDifficulty.Easy => 50,
+						TaskDifficulty.Medium => 75,
+						TaskDifficulty.Hard => 100,
+						TaskDifficulty.VeryHard => 150,
+						_ => 50
+					};
 				}
 
 				db.Tasks.Add(task);
@@ -1056,6 +1060,68 @@ namespace TeamUpBackEnd.Extensions
 					await db.SaveChangesAsync();
 				}
 
+				//tags logic
+				var taskTags = new List<TaskItemTag>();
+
+				if (data.TagIds != null && data.TagIds.Count > 0)
+				{
+					foreach(var tagId in data.TagIds)
+					{
+						var tagExists = await db.Tags
+							.AnyAsync(t => t.Id == tagId && t.WorkSpaceId == data.WorkspaceId);
+
+						if (tagExists)
+						{
+							taskTags.Add(new TaskItemTag
+							{
+								TaskItemId = task.Id,
+								TagId = tagId
+							});
+						}	
+					}
+				}
+
+				if (data.NewTags != null && data.NewTags.Count > 0)
+				{
+					foreach (var tagName in data.NewTags)
+					{
+						var existingTag = await db.Tags
+							.FirstOrDefaultAsync(t =>
+								t.Name == tagName &&
+								t.WorkSpaceId == data.WorkspaceId);
+
+						if (existingTag == null)
+						{
+							existingTag = new Tag
+							{
+								Name = tagName,
+								WorkSpaceId = data.WorkspaceId
+							};
+
+							db.Tags.Add(existingTag);
+							await db.SaveChangesAsync();
+						}
+
+						taskTags.Add(new TaskItemTag
+						{
+							TaskItemId = task.Id,
+							TagId = existingTag.Id
+						});
+					}
+				}
+
+				if (taskTags.Count > 0)
+				{
+					await db.TaskItemTags.AddRangeAsync(taskTags);
+					await db.SaveChangesAsync();
+				}
+
+				var tags = await db.TaskItemTags
+					.Where(tt => tt.TaskItemId == task.Id)
+					.Include(tt => tt.Tag)
+					.Select(tt => tt.Tag.Name)
+					.ToListAsync();
+
 				return Results.Ok(new
 				{
 					task.PublicId,
@@ -1064,14 +1130,9 @@ namespace TeamUpBackEnd.Extensions
 					task.DueDate,
 					task.StartDate,
 					task.Points,
-					Status = (data.Status == TasksStatus.ToDo) ? "ToDo" : (data.Status == TasksStatus.InProgress) ? "InProgress" : (data.Status == TasksStatus.Done) ? "Done" : "Overdue",
-					Difficulty = task.Difficulty switch
-					{
-						TaskDifficulty.Easy => "Easy",
-						TaskDifficulty.Medium => "Medium",
-						TaskDifficulty.Hard => "Hard",
-						_ => "Very Hard"
-					}
+					Status = task.Status.ToString(),
+					Difficulty = task.Difficulty.ToString(),
+					Tags = tags
 				});
 			}).RequireAuthorization()
 				.WithSummary("Creates a new task").WithTags("Task Management");
