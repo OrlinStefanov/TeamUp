@@ -24,8 +24,12 @@ namespace TeamUpBackEnd.DbContext
 
 		public DbSet<WorkSpaceMember> WorkspaceMembers { get; set; }
 		public DbSet<WorkspaceInvitation> WorkspaceInvitations { get; set; }
+
+		//tasks related
 		public DbSet<TaskItem> Tasks { get; set; }
 		public DbSet<TaskAssignment> TaskAssignments { get; set; }
+		public DbSet<Tag> Tags { get; set; }
+		public DbSet<TaskItemTag> TaskItemTags { get; set; }
 
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
 		{
@@ -190,6 +194,19 @@ namespace TeamUpBackEnd.DbContext
 				.HasOne(ta => ta.User)
 				.WithMany(u => u.Tasks)
 				.HasForeignKey(ta => ta.UserId);
+
+			modelBuilder.Entity<TaskItemTag>()
+				.HasKey(tt => new { tt.TaskItemId, tt.TagId });
+
+			modelBuilder.Entity<TaskItemTag>()
+				.HasOne(tt => tt.TaskItem)
+				.WithMany(t => t.TaskItemTags)
+				.HasForeignKey(tt => tt.TaskItemId);
+
+			modelBuilder.Entity<TaskItemTag>()
+				.HasOne(tt => tt.Tag)
+				.WithMany(t => t.TaskItemTags)
+				.HasForeignKey(tt => tt.TagId);
 
 			// ------------------------
 			// Indexes
