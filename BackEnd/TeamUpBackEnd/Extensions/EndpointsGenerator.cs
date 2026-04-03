@@ -27,6 +27,7 @@ namespace TeamUpBackEnd.Extensions
 			WorkspaceEndpoints(app);
 			TaskEndpoints(app);
 			ChatEndpoints(app);
+			LeaderBoard(app);
 		}
 
 		public static void UserEndpoints(WebApplication app)
@@ -1450,6 +1451,43 @@ namespace TeamUpBackEnd.Extensions
 				return Results.Ok(messages);
 
 			}).RequireAuthorization().WithSummary("Returns all messages that are stored in the database").WithTags("Chat Management");
+		}
+	
+		public static void LeaderBoard(WebApplication app)
+		{
+			app.MapGet("/leaderboard/{workspaceId}", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, string workspaceId) =>
+			{
+				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
+
+				if (userId is null) return Results.BadRequest("User id not found");
+
+				var workspace = await db.Workspaces
+					.Include(w => w.Members)
+						.ThenInclude(m => m.User)
+					.Include(w => w.Tasks)
+						.ThenInclude(t => t.Assignments)
+					.FirstOrDefaultAsync(w => w.PublicId.ToString() == workspaceId);
+
+				if (workspace is null) return Results.BadRequest("Workspace not found");
+
+				if (!workspace.Members.Any(m => m.UserId == userId))
+					return Results.BadRequest("You are not a member of this workspace");
+				
+				var leaderboard = workspace.Members
+					.Select(m => new
+					{
+						UserName = m.User!.UserName,
+						ProfilePictureUrl = m.User.ProfilePictureUrl,
+						Points = m.User.Tasks!
+							.Where(a => a.TaskItem!.WorkSpaceId == workspace.Id && a.TaskItem.Status == TasksStatus.Done)
+							.Sum(a => a.TaskItem!.Points)
+					})
+					.OrderByDescending(m => m.Points)
+					.ToList();
+
+				return Results.Ok(leaderboard);
+
+			}).RequireAuthorization().WithSummary("Returns the leaderboard for the workspace").WithTags("LeaderBoard");
 		}
 	}
 
