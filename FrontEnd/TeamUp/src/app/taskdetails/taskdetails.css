@@ -425,7 +425,20 @@
 }
 
 .form-control:focus {
-    outline: 1.5px solid #a64bfb;
-    border-color: #a64bfb;
-    box-shadow: 0 0 0 4px rgba(168, 85, 247, 0.2);
+  outline: 1.5px solid #a64bfb;
+  border-color: #a64bfb;
+  box-shadow: 0 0 0 4px rgba(168, 85, 247, 0.2);
+}
+
+.cdk-drag-preview {
+  box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+  border-radius: 10px;
+}
+
+.cdk-drag-placeholder {
+  opacity: 0.3;
+}
+
+.cdk-drop-list-dragging .card {
+  transition: transform 0.2s ease;
 }

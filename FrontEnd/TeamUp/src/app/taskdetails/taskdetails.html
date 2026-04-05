@@ -55,7 +55,7 @@
                cdkDropList
                id="todoList"
                [cdkDropListData]="tasksToDo"
-               [cdkDropListConnectedTo]="['inProgressList','doneList','overdueList']"
+               [cdkDropListConnectedTo]="['inProgressList','doneList']"
                (cdkDropListDropped)="drop($event, 0)">
 
             <div class="d-flex align-items-center mb-3" style="border-bottom: 2px solid rgb(209, 209, 209); height: 60px;">
@@ -76,7 +76,7 @@
                cdkDropList
                id="inProgressList"
                [cdkDropListData]="tasksInProgress"
-               [cdkDropListConnectedTo]="['todoList','doneList','overdueList']"
+               [cdkDropListConnectedTo]="['todoList','doneList']"
                (cdkDropListDropped)="drop($event, 1)">
 
             <div class="d-flex align-items-center mb-3" style="border-bottom: 2px solid rgb(3, 255, 255); height: 60px;">
@@ -98,7 +98,7 @@
                cdkDropList
                id="doneList"
                [cdkDropListData]="tasksCompleted"
-               [cdkDropListConnectedTo]="['todoList','inProgressList','overdueList']"
+               [cdkDropListConnectedTo]="['todoList','inProgressList']"
                (cdkDropListDropped)="drop($event, 2)">
 
             <div class="d-flex align-items-center mb-3" style="border-bottom: 2px solid rgb(0, 255, 0); height: 60px;">
@@ -116,12 +116,7 @@
           </div>
 
           <!-- 🔴 OVERDUE -->
-          <div class="flex-fill"
-               cdkDropList
-               id="overdueList"
-               [cdkDropListData]="tasksOverdue"
-               [cdkDropListConnectedTo]="['todoList','inProgressList','doneList']"
-               (cdkDropListDropped)="drop($event, 3)">
+          <div class="flex-fill">
 
             <div class="d-flex align-items-center mb-3" style="border-bottom: 2px solid rgb(255, 0, 0); height: 60px;">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" style="color: rgb(255, 0, 0);" fill="currentColor" class="bi bi-exclamation-circle mt-1" viewBox="0 0 16 16">
@@ -143,7 +138,6 @@
   </div>
 </div>
 
-<!-- ✅ REUSABLE CARD (UNCHANGED DESIGN) -->
 <ng-template #taskCard let-task="task">
   <div class="card h-100">
 
