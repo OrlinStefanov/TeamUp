@@ -52,9 +52,6 @@
   font-weight: 600;
 }
 
-/* =========================
-   FORM
-========================= */
 
 .form-group { margin-bottom: 20px; text-align: left; }
 
@@ -67,10 +64,6 @@
   color: inherit;
 }
 
-/* =========================
-   OVERLAYS (MODALS FIXED)
-========================= */
-
 .createWorkspace-overlay,
 .joinWorkspace-overlay {
   position: fixed;
@@ -82,10 +75,6 @@
   z-index: 1000;
 }
 
-/* =========================
-   MODAL BOX
-========================= */
-
 .createWorkspace-box,
 .joinWorkspace-box,
 .deleteWorkspace-box {
@@ -95,7 +84,40 @@
   overflow: hidden;
 }
 
-/* LIGHT MODE */
+.tm-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tm-icon {
+  width: 38px;
+  height: 38px;
+  background: linear-gradient(135deg, #9333ea, #a64bfb);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.tm-title {
+  font-size: 23px;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+.createWorkspace-overlay.dark-mode .tm-title, .joinWorkspace-overlay.dark-mode .tm-title  { color: #f0eeff; }
+.createWorkspace-overlay.light-mode .tm-title, .joinWorkspace-overlay.light-mode .tm-title { color: #1a1a2e; }
+
+.tm-subtitle {
+  font-size: 11px;
+  margin: 0;
+}
+
+.createWorkspace-overlay.dark-mode .tm-subtitle, .joinWorkspace-overlay.dark-mode .tm-subtitle, .joinWorkspace-overlay.dark-mode .separator-text  { color: #6b6b8a; }
+.createWorkspace-overlay.light-mode .tm-subtitle, .joinWorkspace-overlay.light-mode .tm-subtitle, .joinWorkspace-overlay.light-mode .separator-text  { color: #9898b8; }
+
 .createWorkspace-overlay.light-mode .createWorkspace-box,
 .joinWorkspace-overlay.light-mode .joinWorkspace-box {
   background:
@@ -105,17 +127,12 @@
   color: #1a1a2e;
 }
 
-/* DARK MODE */
 .createWorkspace-overlay.dark-mode .createWorkspace-box,
 .joinWorkspace-overlay.dark-mode .joinWorkspace-box {
   background: #111;
   color: #f0eeff;
   border: 1px solid #2a2a3a;
 }
-
-/* =========================
-   HEADER
-========================= */
 
 .header-row,
 .join-header {
@@ -131,10 +148,6 @@
   border-bottom: 1px solid #1e1e2e;
 }
 
-/* =========================
-   BODY
-========================= */
-
 .tm-body {
   padding: 20px 24px;
   display: flex;
@@ -143,10 +156,6 @@
   max-height: 480px;
   overflow-y: auto;
 }
-
-/* =========================
-   INPUTS
-========================= */
 
 .form-control,
 .tm-input {
@@ -158,9 +167,10 @@
   color: inherit;
 }
 
-/* =========================
-   ACTIONS
-========================= */
+.form-control::placeholder,
+.tm-input::placeholder {
+  color: #777; opacity: 1;
+}
 
 .createWorkspace-actions,
 .joinWorkspace-actions {
@@ -176,10 +186,6 @@
   border-top: 1px solid #1e1e2e;
 }
 
-/* =========================
-   CLOSE BUTTON
-========================= */
-
 .btn-cancel {
   background: transparent;
   border: none;
@@ -189,10 +195,6 @@
 }
 
 .btn-cancel:hover { color: red; }
-
-/* =========================
-   SUGGESTIONS
-========================= */
 
 .suggestions-dropdown {
   position: absolute;
@@ -212,10 +214,6 @@
   background: #333;
 }
 
-/* =========================
-   WORKSPACES GRID (RESTORED)
-========================= */
-
 .workspaces-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(400px, 450px));
@@ -224,8 +222,6 @@
   align-items: stretch;
   grid-auto-rows: 220px;
 }
-
-/* WORKSPACE CARD (RESTORED FULL STYLE) */
 
 .workspace-card {
   border: 1px solid #bbb;
@@ -250,15 +246,10 @@
   overflow: hidden;
 }
 
-/* DARK MODE CARD */
 .page.dark-mode .workspace-card {
   border-color: #555;
   background-color: rgba(255, 255, 255, 0.04);
 }
-
-/* =========================
-   WORKSPACE ICON (RESTORED)
-========================= */
 
 .workspace-icon {
   display: flex;
@@ -271,10 +262,6 @@
   border: #a64bfb solid 1px;
   background-color: #a64bfb26;
 }
-
-/* =========================
-   ADD WORKSPACE TILE (IMPORTANT FIX)
-========================= */
 
 .workspaces-grid-add {
   display: flex;
@@ -295,14 +282,12 @@
   background-color: #a64bfb26;
 }
 
-/* DARK MODE ADD TILE */
 .workspace-content.dark-mode .workspaces-grid-add {
   color: #fff;
   border-color: #555;
   background-color: transparent;
 }
 
-/* ADD BUTTON INSIDE TILE */
 .workspaces-grid-add a {
   display: flex;
   align-items: center;
@@ -316,10 +301,6 @@
   background-color: #a64bfb26;
   margin-bottom: 10px;
 }
-
-/* =========================
-   FOOTER (HOVER ACTIONS)
-========================= */
 
 .footer {
   display: flex;
@@ -336,9 +317,57 @@
   max-height: 100px;
 }
 
-/* =========================
-   RESPONSIVE
-========================= */
+.btn-delete:hover {
+  background:red;
+  color: white !important;
+}
+
+.separator-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.separator-line {
+  flex: 1;
+  height: 1px;
+  background-color: #9333ea; 
+}
+
+.separator-text {
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.dropdown-toggle {
+  background: transparent;
+  color: #bbb;
+  border-radius: 8px;
+  z-index: 10;
+}
+
+.dropdown-toggle:hover {
+  color: #1a1a2e;
+}
+
+.createWorkspace-overlay.dark-mode .dropdown-toggle:hover{
+  background: transparent;
+  color: #fff;
+}
+
+.dropdown-menu {
+  color: #333;
+}
+
+.createWorkspace-overlay.dark-mode .dropdown-menu {
+  background: #222;
+  color: #f0eeff;
+  cursor: pointer;
+}
+
+.bi-shield {
+  color: yellow;
+}
 
 @media (max-width: 768px) {
   .steps-grid { grid-template-columns: 1fr; }
