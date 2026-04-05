@@ -26,6 +26,8 @@ export class ChatComponent {
 
   typingUsers: any[] = [];
   typingTimeout: any;
+
+  isDarkMode: boolean = false;
   
   constructor(
     private chat: ChatService,
@@ -79,6 +81,11 @@ export class ChatComponent {
       });
 
     });
+
+    const savedMode = localStorage.getItem('darkMode');
+    if (savedMode !== null) {
+      this.isDarkMode = savedMode === 'true';
+    }
   }
 
   onTyping() {

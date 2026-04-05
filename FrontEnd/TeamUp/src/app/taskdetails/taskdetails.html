@@ -1,20 +1,42 @@
-<div class="container-fluid">
-  <div class="row" style="border-top: 2px solid whitesmoke;">
-    <div class="col-12 mt-4">
-      <h4>Task Board</h4>
-      <div class="col-12 text-end" style="margin-top: -20px;">
-        <button class="btn btn-m btn-primary" (click)="openTaskModal()">Add Task</button>
+<div class="container-fluid" [ngClass]="{'dark-mode': isDarkMode, 'light-mode': !isDarkMode}">
+  <div class="row border-bottom px-3" style="margin-bottom: 10px;">
+  <div class="col-12 d-flex align-items-center justify-content-between flex-wrap gap-2 py-2">
+    
+    <div class="align-items-center gap-3">
+      <h4 style="font-weight: bold; margin: 0;">Task Board</h4>
+      <span style="color: #999; font-size: 14px;">{{tasks.length}} {{ tasks.length === 1 ? 'task' : 'tasks' }}</span>
+    </div>
+
+    <div class="d-flex align-items-center gap-2">
+      <div class="input-group" style="max-width: 300px;">
+        <input class="form-control" type="search" placeholder="Search" aria-label="Search" id="search-input">
+        <span class="input-group-text bg-white" id="search-btn">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search text-muted" viewBox="0 0 16 16">
+            <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
+          </svg>
+        </span>
       </div>
+
+      <button class="btn btn-m btn-primary" style="white-space: nowrap;">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24">
+          <path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+        </svg> Filter
+      </button>
+
+      <button class="btn btn-m btn-primary" (click)="openTaskModal()" style="white-space: nowrap;">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24">
+          <path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+        </svg> Add Task
+      </button>
     </div>
-    <div class="col-12" style="margin-top: -10px;">
-      <p style="color: #999;">{{tasks.length}} {{ tasks.length === 1 ? 'task' : 'tasks' }}</p>
-    </div>
+
   </div>
+</div>
 
   <div class="row">
-    <div class="col-12" style="border-top: 2px solid whitesmoke;">
+    <div class="col-12 px-3">
       <div class="row mt-2">
-        <div class="col-12 d-flex flex-row gap-4">
+        <div class="col-12 d-flex flex-row gap-4 task-board" [ngClass]="{'dark-mode': isDarkMode, 'light-mode': !isDarkMode}">
           <!-- To Do Column -->
           <div class="flex-fill" style="min-width:250px;">
             <div class="d-flex align-items-center mb-3" style="border-bottom: 2px solid rgb(209, 209, 209); height: 60px;">
@@ -30,9 +52,24 @@
                   <div class="card h-100">
                     <div class="card-body">
                       <h5 class="card-title">{{ task.title }}</h5>
-                      <p class="card-text">{{ task.description }}</p>
+                      <p class="card-text" style="color: #999;">{{ task.description }}</p>
+                      <div class="d-flex align-items-center justify-content-between">
+                        <span class="difficulty-badge"
+                          [ngClass]="{
+                            'easy':  task.difficulty === 0,
+                            'medium': task.difficulty === 1,
+                            'hard': task.difficulty === 2,
+                            'vhard': task.difficulty === 3
+                          }">
+                          {{ ['Easy', 'Medium', 'Hard', 'Very Hard'][task.difficulty] }}
+                        </span>
+                        <div class="d-flex align-items-center gap-1 ms-auto">
+                          <span class="points" style="color: rgb(3, 255, 255);">+{{ task.points }} pts</span>
+                          <img src="{{ user_data.profilePictureUrl }}" alt="Profile" class="rounded-circle me-3">
+                        </div>
+                      </div>
                     </div>
-                    <div class="card-footer text-muted">
+                    <div class="card-footer">
                       Due: {{ task.dueDate | date:'mediumDate' }}
                     </div>
                   </div>
@@ -56,9 +93,24 @@
                   <div class="card h-100">
                     <div class="card-body">
                       <h5 class="card-title">{{ task.title }}</h5>
-                      <p class="card-text">{{ task.description }}</p>
+                      <p class="card-text" style="color: #999;">{{ task.description }}</p>
+                      <div class="d-flex align-items-center justify-content-between">
+                        <span class="difficulty-badge"
+                          [ngClass]="{
+                            'easy':  task.difficulty === 0,
+                            'medium': task.difficulty === 1,
+                            'hard': task.difficulty === 2,
+                            'vhard': task.difficulty === 3
+                          }">
+                          {{ ['Easy', 'Medium', 'Hard', 'Very Hard'][task.difficulty] }}
+                        </span>
+                        <div class="d-flex align-items-center gap-1 ms-auto">
+                          <span class="points" style="color: rgb(3, 255, 255);">+{{ task.points }} pts</span>
+                          <img src="{{ user_data.profilePictureUrl }}" alt="Profile" class="rounded-circle me-3">
+                        </div>
+                      </div>
                     </div>
-                    <div class="card-footer text-muted">
+                    <div class="card-footer">
                       Due: {{ task.dueDate | date:'mediumDate' }}
                     </div>
                   </div>
@@ -82,9 +134,24 @@
                   <div class="card h-100">
                     <div class="card-body">
                       <h5 class="card-title">{{ task.title }}</h5>
-                      <p class="card-text">{{ task.description }}</p>
+                      <p class="card-text" style="color: #999;">{{ task.description }}</p>
+                      <div class="d-flex align-items-center justify-content-between">
+                        <span class="difficulty-badge"
+                          [ngClass]="{
+                            'easy':  task.difficulty === 0,
+                            'medium': task.difficulty === 1,
+                            'hard': task.difficulty === 2,
+                            'vhard': task.difficulty === 3
+                          }">
+                          {{ ['Easy', 'Medium', 'Hard', 'Very Hard'][task.difficulty] }}
+                        </span>
+                        <div class="d-flex align-items-center gap-1 ms-auto">
+                          <span class="points" style="color: rgb(3, 255, 255);">+{{ task.points }} pts</span>
+                          <img src="{{ user_data.profilePictureUrl }}" alt="Profile" class="rounded-circle me-3">
+                        </div>
+                      </div>
                     </div>
-                    <div class="card-footer text-muted">
+                    <div class="card-footer">
                       Due: {{ task.dueDate | date:'mediumDate' }}
                     </div>
                   </div>
@@ -108,7 +175,22 @@
                   <div class="card h-100 border-danger">
                     <div class="card-body">
                       <h5 class="card-title">{{ task.title }}</h5>
-                      <p class="card-text">{{ task.description }}</p>
+                      <p class="card-text" style="color: #999;">{{ task.description }}</p>
+                      <div class="d-flex align-items-center justify-content-between">
+                        <span class="difficulty-badge"
+                          [ngClass]="{
+                            'easy':  task.difficulty === 0,
+                            'medium': task.difficulty === 1,
+                            'hard': task.difficulty === 2,
+                            'vhard': task.difficulty === 3
+                          }">
+                          {{ ['Easy', 'Medium', 'Hard', 'Very Hard'][task.difficulty] }}
+                        </span>
+                        <div class="d-flex align-items-center gap-1 ms-auto">
+                          <span class="points" style="color: rgb(3, 255, 255);">+{{ task.points }} pts</span>
+                          <img src="{{ user_data.profilePictureUrl }}" alt="Profile" class="rounded-circle me-3">
+                        </div>
+                      </div>
                     </div>
                     <div class="card-footer text-danger">
                       Due: {{ task.dueDate | date:'mediumDate' }}
@@ -207,36 +289,108 @@
         </div>
 
         <div class="tm-field">
-          <label class="tm-label">Assign To</label>
-          <div class="dropdown">
+        <label class="tm-label">Assign To</label>
 
-            <ul class="dropdown-menu w-100">
-              <li *ngIf="worksapce_info.owner">
-                <a class="dropdown-item d-flex align-items-center" (click)="newTask.assignedUsers = worksapce_info.owner.id">
-                  <img *ngIf="worksapce_info.owner.profilePictureUrl" [src]="worksapce_info.owner.profilePictureUrl" class="rounded-circle me-2" width="28" height="28">
-                  <div *ngIf="!worksapce_info.owner.profilePictureUrl" class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-2" style="width:28px;height:28px;font-size:12px;">
+        <div class="dropdown w-100">
+          <!-- BUTTON -->
+          <button
+            class="btn btn-outline-secondary w-100 text-start"
+            type="button"
+            data-bs-toggle="dropdown"
+          >
+            <span *ngIf="selectedUsers.length === 0">
+              Select users
+            </span>
+
+            <span *ngIf="selectedUsers.length > 0">
+              {{ selectedUsers.length }} selected
+            </span>
+          </button>
+
+          <!-- MENU -->
+          <ul class="dropdown-menu w-100">
+            
+            <!-- OWNER -->
+            <li *ngIf="worksapce_info?.owner" >
+              <a
+                class="dropdown-item owner d-flex align-items-center justify-content-between"
+                (click)="toggleUser(worksapce_info.owner)"
+              >
+                <div class="d-flex align-items-center">
+                  <img *ngIf="worksapce_info.owner.profilePictureUrl"
+                      [src]="worksapce_info.owner.profilePictureUrl"
+                      class="rounded-circle me-2"
+                      width="28" height="28">
+
+                  <div *ngIf="!worksapce_info.owner.profilePictureUrl"
+                      class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-2"
+                      style="width:28px;height:28px;font-size:12px;">
                     {{ worksapce_info.owner.userName.charAt(0) }}
                   </div>
+
                   {{ worksapce_info.owner.userName }}
+                </div>
+
+                <!-- CHECK -->
+                  <div class="d-flex align-items-center gap-2">
+                    <span
+                      *ngIf="selectedUsers.some(u => u.id === worksapce_info.owner.id)"
+                      class="check-icon"
+                      (click)="toggleUser(worksapce_info.owner.id)"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-lg" viewBox="0 0 16 16">
+                        <path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425z"/>
+                      </svg>
+                    </span>
+
+                    <svg width="20" height="20"
+                        class="owner-icon"
+                        viewBox="-4 0 32 32"
+                        xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 10.938c-1.375 0-2.5-1.125-2.5-2.5 0-1.406 1.125-2.5 2.5-2.5s2.5 1.094 2.5 2.5c0 1.375-1.125 2.5-2.5 2.5zM2.031 9.906c1.094 0 1.969 0.906 1.969 2 0 1.125-0.875 2-1.969 2-1.125 0-2.031-0.875-2.031-2 0-1.094 0.906-2 2.031-2zM22.031 9.906c1.094 0 1.969 0.906 1.969 2 0 1.125-0.875 2-1.969 2-1.125 0-2.031-0.875-2.031-2 0-1.094 0.906-2 2.031-2zM4.219 23.719l-1.656-9.063c0.5-0.094 0.969-0.375 1.344-0.688 1.031 0.938 2.344 1.844 3.594 1.844 1.5 0 2.719-2.313 3.563-4.25 0.281 0.094 0.625 0.188 0.938 0.188s0.656-0.094 0.938-0.188c0.844 1.938 2.063 4.25 3.563 4.25 1.25 0 2.563-0.906 3.594-1.844 0.375 0.313 0.844 0.594 1.344 0.688l-1.656 9.063h-15.563zM3.875 24.5h16.25v1.531h-16.25v-1.531z"/>
+                    </svg>
+
+                  </div>
                 </a>
-              </li>
-              <li *ngFor="let user of worksapce_info.members">
-                <a class="dropdown-item d-flex align-items-center" (click)="newTask.assignedUsers = user.id">
-                  <img *ngIf="user.profilePictureUrl" [src]="user.profilePictureUrl" class="rounded-circle me-2" width="28" height="28">
-                  <div *ngIf="!user.profilePictureUrl" class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-2" style="width:28px;height:28px;font-size:12px;">
+            </li>
+
+            <!-- MEMBERS -->
+            <li *ngFor="let user of worksapce_info?.members">
+              <a
+                class="dropdown-item d-flex align-items-center justify-content-between"
+                (click)="toggleUser(user)"
+              >
+                <div class="d-flex align-items-center">
+                  <img *ngIf="user.profilePictureUrl"
+                      [src]="user.profilePictureUrl"
+                      class="rounded-circle me-2"
+                      width="28" height="28">
+
+                  <div *ngIf="!user.profilePictureUrl"
+                      class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-2"
+                      style="width:28px;height:28px;font-size:12px;">
                     {{ user.userName.charAt(0) }}
                   </div>
+
                   {{ user.userName }}
-                </a>
-              </li>
-            </ul>
-          </div>
+                </div>
+
+                <!-- CHECK -->
+                <span *ngIf="selectedUsers.some(u => u.id === user.id)">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-lg" viewBox="0 0 16 16">
+                    <path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425z"/>
+                  </svg>
+                </span>
+              </a>
+            </li>
+
+          </ul>
         </div>
+      </div>
 
       </div>
 
       <div class="tm-footer">
-        <span class="tm-footer-hint"><span class="tm-accent">*</span> required fields</span>
         <div class="tm-footer-actions">
           <button class="btn-cancel-tm" data-bs-dismiss="modal">Cancel</button>
           <button class="btn-create" (click)="createTask()">

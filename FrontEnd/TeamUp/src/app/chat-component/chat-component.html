@@ -1,8 +1,9 @@
-<div class="chat-container d-flex flex-column h-100">
+<div class="chat-container d-flex flex-column h-100 border" [ngClass]="{'dark-mode': isDarkMode, 'light-mode': !isDarkMode}">
 
   <!-- HEADER -->
-  <div *ngIf="channel != null" class="chat-header border-bottom p-3 bg-white">
+  <div *ngIf="channel != null" class="chat-header border-bottom p-2">
     <h5 class="mb-0"># {{channel.name}}</h5>
+    <span class=" font-weight-light ms-2" style="color: #666; font-size: 0.85rem;">{{ channel.memberCount }} members</span>
   </div>
 
   <!-- ✅ SCROLLABLE MESSAGES CONTAINER -->
@@ -36,7 +37,7 @@
 
         <div class="d-flex align-items-center">
           <strong class="me-2">{{ msg.sender?.userName }}</strong>
-          <small class="text-muted">
+          <small style="color: #666;">
             {{ msg.sentAt | date:'shortTime' }}
           </small>
         </div>

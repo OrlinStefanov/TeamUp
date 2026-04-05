@@ -20,9 +20,11 @@ export class Taskdetails {
 
   //different status for task
   tasksToDo : any[] = [];
-  tasksInProgress : any[] = []
+  tasksInProgress : any[] = [];
   tasksCompleted : any[] = [];
   tasksOverdue : any[] = [];
+
+  selectedUsers: any[] = [];
 
   newTask : any = {
     title: '',
@@ -78,13 +80,15 @@ export class Taskdetails {
   filterTasksStatus()
   {
       this.tasksToDo = this.tasks.filter(t => t.status == 'ToDo');
-      this.tasksInProgress = this.tasks.filter(t => t.status == 'In Progress');
+      this.tasksInProgress = this.tasks.filter(t => t.status == 'InProgress');
       this.tasksCompleted = this.tasks.filter(t => t.status == 'Done');
       this.tasksOverdue = this.tasks.filter(t => t.status == 'Overdue');
   }
 
   createTask()
   {
+    this.newTask.workspaceId = this.worksapce_info.id;
+
     this.auth.createTask(this.newTask).subscribe((res : any) =>
     {
       console.log(res);
@@ -113,5 +117,17 @@ export class Taskdetails {
 
   setDifficulty(level: number) {
     this.newTask.difficulty = level;
+  }
+
+  toggleUser(user: any) {
+    const exists = this.selectedUsers.find(u => u.id === user.id);
+
+    if (exists) {
+      this.selectedUsers = this.selectedUsers.filter(u => u.id !== user.id);
+    } else {
+      this.selectedUsers.push(user);
+    }
+
+    this.newTask.assignedUsers = this.selectedUsers.map(u => u.id);
   }
 }

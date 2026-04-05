@@ -1,3 +1,45 @@
+.container-fluid.dark-mode .bg-white {
+    background-color: #1a1a22 !important; 
+    border-color: #333 !important;
+}
+
+.container-fluid.dark-mode .channel-item {
+    color: #9ca3af; 
+}
+
+.container-fluid.dark-mode .channel-item:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: #fff;
+}
+
+.container-fluid.dark-mode .input-group-text,
+.container-fluid.dark-mode .form-control {
+    background-color: #0f0f14 !important;
+    border-color: #333 !important;
+    color: white;
+}
+
+.container-fluid .form-control:focus {
+    outline: 1.5px solid #a64bfb;
+    border-color: #a64bfb;
+    box-shadow: 0 0 0 4px rgba(168, 85, 247, 0.2);
+}
+
+.dark-mode .modal-content {
+    background-color: #1a1a22;
+    color: white;
+    border: 1px solid #333;
+}
+
+.dark-mode .modal-header, 
+.dark-mode .modal-footer {
+    border-color: #333;
+}
+
+.dark-mode .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%); /* Прави хиксчето бяло */
+}
+
 .channel-item {
   width: 100%;
   padding: 8px 12px;
@@ -7,13 +49,23 @@
 
 .channel-item:hover {
   background-color: #f3f4f6;
+  color: #0f0f14;
 }
 
-.active-channel {
+.container-fluid.dark-mode .channel-item {
+  color: #9ca3af; 
+}
+
+.container-fluid.dark-mode .channel-item:hover {
+  background-color: #7c7c7d34;
+  color: #fff;
+}
+
+.active-channel, .container-fluid.dark-mode .active-channel {
   background-color: rgba(147, 51, 234, 0.15);
   color: #6b21a8;
 
-  border-right: #a855f7 3px solid;
+  border-left: #a855f7 3px solid;
 }
 
 .badge {

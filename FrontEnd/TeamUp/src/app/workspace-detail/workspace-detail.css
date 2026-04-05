@@ -15,7 +15,13 @@
 }
 
 .nav-3items {
+    padding-top: 10px;
     display: flex;
+}
+
+.nav-3items.dark-mode{
+    background: rgba(255, 255, 255, 0.04);
+    color: #f3f4f6;
 }
 
 .nav-link {

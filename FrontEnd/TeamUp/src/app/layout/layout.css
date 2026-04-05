@@ -65,19 +65,16 @@
   background: rgba(255, 255, 255, 0.04);
   backdrop-filter: blur(10px);
   transition: width 0.3s ease, padding 0.3s ease;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden;
   flex-shrink: 0;
 }
 
 .page.dark-mode .side-navbar {
   border-right: 1px solid #333;
-  box-shadow: 0 0 4px #333;
 }
 
 .page.light-mode .side-navbar {
   border-right: 1px solid #bbb;
-  box-shadow: 0 0 4px #bbb;
 }
 
 .side-navbar.collapsed {
@@ -178,6 +175,47 @@
   gap: 10px;
   border-top: 1px solid #9333ea;
   padding-top: 12px;
+  pointer-events: all;
+  position: relative;
+  z-index: 1;
+}
+
+.settings-wrapper {
+  position: relative;
+  display: inline-block;
+  align-items: center;   
+  z-index: 667;
+}
+
+.settings-dropdown {
+  position: absolute;
+  right: -40%;
+  bottom: calc(100% + 20px); 
+  
+  z-index: 666; 
+  pointer-events: all;;
+
+  border-radius: 10px;
+  padding: 8px;
+  min-width: 150px;
+  animation: fadeIn 0.15s ease;
+
+  box-shadow: 0 10px 20px rgba(0,0,0,0.35);
+}
+
+.page.dark-mode .settings-dropdown {
+  background: #1a1a22;
+  color: #f5f5f5;
+}
+
+.page.light-mode .settings-dropdown {
+  background: #f5f5f5;
+  color: #111;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px) translateX(100%); }
+  to { opacity: 1; }
 }
 
 .nav-footer .userName {
@@ -200,7 +238,7 @@
 /* ── KEY FIX: lock the row, let only content scroll ── */
 .row.g-0 {
   height: 100vh;
-  overflow: hidden;
+  position: relative;
 }
 
 .content-wrapper {
@@ -209,9 +247,8 @@
   position: relative;
 }
 
-.content {
-  padding: 24px;
-}
+.content.dark-mode { background: #0f0f14; color: #f5f5f5; }
+.content.light-mode { background: #f5f5f5; color: #111; }
 
 .desktop-menu-btn,
 .menu-toggle,
