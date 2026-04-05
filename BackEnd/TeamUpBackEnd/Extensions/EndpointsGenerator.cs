@@ -1181,7 +1181,7 @@ namespace TeamUpBackEnd.Extensions
 							? "Overdue"
 							: t.Status.ToString(),
 
-						Difficulty = t.Difficulty.ToString(),
+						Difficulty = t.Difficulty,
 
 						AssignedUsers = t.Assignments!.Select(a => new
 						{
@@ -1337,15 +1337,11 @@ namespace TeamUpBackEnd.Extensions
 
 				if (task.WorkSpace!.OwnerId == userId || task.Assignments!.Any(t => t.UserId == userId))
 				{
-					task.Status = data.status switch
-					{
-						0 => TasksStatus.ToDo,
-						1 => TasksStatus.InProgress,
-						2 => TasksStatus.Done,
-						_ => TasksStatus.ToDo
-					};
+					task.Status = (TasksStatus)data.status;
 
-					return Results.Ok("Successfully changed");
+					await db.SaveChangesAsync();
+
+					return Results.Ok("Successfully changed " + task.Status);
 				} else
 				{
 					return Results.Forbid();
@@ -1556,6 +1552,6 @@ namespace TeamUpBackEnd.Extensions
 
 	public record TaskStatusChangeAction
 	{
-		public int status; // 0 - To Do 1 - In Progress 2 - Done 
+		public int status { get; set; } // 0 - To Do 1 - In Progress 2 - Done 
 	}
 }
