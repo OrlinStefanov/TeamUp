@@ -27,6 +27,7 @@ namespace TeamUpBackEnd.Extensions
 			WorkspaceEndpoints(app);
 			TaskEndpoints(app);
 			ChatEndpoints(app);
+			LeaderBoard(app);
 		}
 
 		public static void UserEndpoints(WebApplication app)
@@ -1028,10 +1029,14 @@ namespace TeamUpBackEnd.Extensions
 
 				if (task.Points == 0)
 				{
-					if (task.Difficulty == TaskDifficulty.Easy) task.Points = 50;
-					if (task.Difficulty == TaskDifficulty.Medium) task.Points = 75;
-					if (task.Difficulty == TaskDifficulty.Hard) task.Points = 100;
-					if (task.Difficulty == TaskDifficulty.VeryHard) task.Points = 150;
+					task.Points = task.Difficulty switch
+					{
+						TaskDifficulty.Easy => 50,
+						TaskDifficulty.Medium => 75,
+						TaskDifficulty.Hard => 100,
+						TaskDifficulty.VeryHard => 150,
+						_ => 50
+					};
 				}
 
 				db.Tasks.Add(task);
@@ -1055,6 +1060,68 @@ namespace TeamUpBackEnd.Extensions
 					await db.SaveChangesAsync();
 				}
 
+				//tags logic
+				var taskTags = new List<TaskItemTag>();
+
+				if (data.TagIds != null && data.TagIds.Count > 0)
+				{
+					foreach(var tagId in data.TagIds)
+					{
+						var tagExists = await db.Tags
+							.AnyAsync(t => t.Id == tagId && t.WorkSpaceId == data.WorkspaceId);
+
+						if (tagExists)
+						{
+							taskTags.Add(new TaskItemTag
+							{
+								TaskItemId = task.Id,
+								TagId = tagId
+							});
+						}	
+					}
+				}
+
+				if (data.NewTags != null && data.NewTags.Count > 0)
+				{
+					foreach (var tagName in data.NewTags)
+					{
+						var existingTag = await db.Tags
+							.FirstOrDefaultAsync(t =>
+								t.Name == tagName &&
+								t.WorkSpaceId == data.WorkspaceId);
+
+						if (existingTag == null)
+						{
+							existingTag = new Tag
+							{
+								Name = tagName,
+								WorkSpaceId = data.WorkspaceId
+							};
+
+							db.Tags.Add(existingTag);
+							await db.SaveChangesAsync();
+						}
+
+						taskTags.Add(new TaskItemTag
+						{
+							TaskItemId = task.Id,
+							TagId = existingTag.Id
+						});
+					}
+				}
+
+				if (taskTags.Count > 0)
+				{
+					await db.TaskItemTags.AddRangeAsync(taskTags);
+					await db.SaveChangesAsync();
+				}
+
+				var tags = await db.TaskItemTags
+					.Where(tt => tt.TaskItemId == task.Id)
+					.Include(tt => tt.Tag)
+					.Select(tt => tt.Tag.Name)
+					.ToListAsync();
+
 				return Results.Ok(new
 				{
 					task.PublicId,
@@ -1063,14 +1130,9 @@ namespace TeamUpBackEnd.Extensions
 					task.DueDate,
 					task.StartDate,
 					task.Points,
-					Status = (data.Status == TasksStatus.ToDo) ? "ToDo" : (data.Status == TasksStatus.InProgress) ? "InProgress" : (data.Status == TasksStatus.Done) ? "Done" : "Overdue",
-					Difficulty = task.Difficulty switch
-					{
-						TaskDifficulty.Easy => "Easy",
-						TaskDifficulty.Medium => "Medium",
-						TaskDifficulty.Hard => "Hard",
-						_ => "Very Hard"
-					}
+					Status = task.Status.ToString(),
+					Difficulty = task.Difficulty.ToString(),
+					Tags = tags
 				});
 			}).RequireAuthorization()
 				.WithSummary("Creates a new task").WithTags("Task Management");
@@ -1081,59 +1143,60 @@ namespace TeamUpBackEnd.Extensions
 				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
 
 				if (userId is null)
-				{
 					return Results.BadRequest("Id not found");
-				}
 
 				var workspace = await db.Workspaces
-					.Include(w => w.Members)
-					.Include(w => w.Tasks)
-					.ThenInclude(t => t.Assignments!)
-					.ThenInclude(u => u.User)
-					.FirstOrDefaultAsync(w => w.PublicId.ToString() == workspaceId);
+					.Where(w => w.PublicId.ToString() == workspaceId)
+					.Select(w => new
+					{
+						w.Id,
+						IsMember = w.Members.Any(m => m.UserId == userId)
+					})
+					.FirstOrDefaultAsync();
 
 				if (workspace == null)
-				{
 					return Results.BadRequest("Workspace not found");
-				}
 
-				if (!workspace.Members.Any(m => m.UserId == userId))
-				{
+				if (!workspace.IsMember)
 					return Results.BadRequest("You are not a member of this workspace");
-				}
 
-				foreach (var t in workspace.Tasks)
-				{
-					if (t.DueDate < DateTime.UtcNow)
+				var tasks = await db.Tasks
+					.Where(t => t.WorkSpaceId == workspace.Id)
+					.Include(t => t.Assignments!)
+						.ThenInclude(a => a.User)
+					.Include(t => t.TaskItemTags!)
+						.ThenInclude(tt => tt.Tag)
+					.OrderByDescending(t => t.StartDate)
+					.Select(t => new
 					{
-						t.Status = TasksStatus.Overdue;
-					}
-				}
+						t.PublicId,
+						t.Title,
+						t.Description,
+						t.DueDate,
+						t.StartDate,
+						t.UpadeAt,
+						t.Points,
 
-				var tasks = workspace.Tasks.Select(t => new
-				{
-					t.PublicId,
-					t.Title,
-					t.Description,
-					t.DueDate,
-					t.StartDate,
-					t.UpadeAt,
-					t.Points,
-					Status = t.Status switch
-					{
-						TasksStatus.ToDo => "ToDo",
-						TasksStatus.InProgress => "InProgress",
-						TasksStatus.Done => "Done",
-						_ => "Overdue"
-					},
-					Difficulty = t.Difficulty,
-					AssignedUsers = t.Assignments!.Select(a => new
-					{
-						a.User!.UserName,
-						a.User.Email,
-						a.User.ProfilePictureUrl
-					}).ToList()
-				}).ToList();
+						Status = t.DueDate < DateTime.UtcNow && t.Status != TasksStatus.Done
+							? "Overdue"
+							: t.Status.ToString(),
+
+						Difficulty = t.Difficulty,
+
+						AssignedUsers = t.Assignments!.Select(a => new
+						{
+							a.User!.UserName,
+							a.User.Email,
+							a.User.ProfilePictureUrl
+						}).ToList(),
+
+						Tags = t.TaskItemTags!.Select(tt => new
+						{
+							tt.Tag!.Id,
+							tt.Tag.Name
+						}).ToList()
+					})
+					.ToListAsync();
 
 				return Results.Ok(tasks);
 			}).RequireAuthorization()
@@ -1274,15 +1337,11 @@ namespace TeamUpBackEnd.Extensions
 
 				if (task.WorkSpace!.OwnerId == userId || task.Assignments!.Any(t => t.UserId == userId))
 				{
-					task.Status = data.status switch
-					{
-						0 => TasksStatus.ToDo,
-						1 => TasksStatus.InProgress,
-						2 => TasksStatus.Done,
-						_ => TasksStatus.ToDo
-					};
+					task.Status = (TasksStatus)data.status;
 
-					return Results.Ok("Successfully changed");
+					await db.SaveChangesAsync();
+
+					return Results.Ok("Successfully changed " + task.Status);
 				} else
 				{
 					return Results.Forbid();
@@ -1445,6 +1504,43 @@ namespace TeamUpBackEnd.Extensions
 
 			}).RequireAuthorization().WithSummary("Returns all messages that are stored in the database").WithTags("Chat Management");
 		}
+	
+		public static void LeaderBoard(WebApplication app)
+		{
+			app.MapGet("/leaderboard/{workspaceId}", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, string workspaceId) =>
+			{
+				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
+
+				if (userId is null) return Results.BadRequest("User id not found");
+
+				var workspace = await db.Workspaces
+					.Include(w => w.Members)
+						.ThenInclude(m => m.User)
+					.Include(w => w.Tasks)
+						.ThenInclude(t => t.Assignments)
+					.FirstOrDefaultAsync(w => w.PublicId.ToString() == workspaceId);
+
+				if (workspace is null) return Results.BadRequest("Workspace not found");
+
+				if (!workspace.Members.Any(m => m.UserId == userId))
+					return Results.BadRequest("You are not a member of this workspace");
+				
+				var leaderboard = workspace.Members
+					.Select(m => new
+					{
+						UserName = m.User!.UserName,
+						ProfilePictureUrl = m.User.ProfilePictureUrl,
+						Points = m.User.Tasks!
+							.Where(a => a.TaskItem!.WorkSpaceId == workspace.Id && a.TaskItem.Status == TasksStatus.Done)
+							.Sum(a => a.TaskItem!.Points)
+					})
+					.OrderByDescending(m => m.Points)
+					.ToList();
+
+				return Results.Ok(leaderboard);
+
+			}).RequireAuthorization().WithSummary("Returns the leaderboard for the workspace").WithTags("LeaderBoard");
+		}
 	}
 
 	public record MemberSearch(string emailOrUsername);
@@ -1456,6 +1552,6 @@ namespace TeamUpBackEnd.Extensions
 
 	public record TaskStatusChangeAction
 	{
-		public int status; // 0 - To Do 1 - In Progress 2 - Done 
+		public int status { get; set; } // 0 - To Do 1 - In Progress 2 - Done 
 	}
 }

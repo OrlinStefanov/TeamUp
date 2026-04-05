@@ -1,58 +1,87 @@
 import { Component } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
-
 import { Auth } from '../services/auth/auth';
-import { RouterLink } from "@angular/router";
+import { ActivatedRoute, RouterLink } from "@angular/router";
 import { FormsModule } from '@angular/forms';
+import {
+  DragDropModule,
+  CdkDragDrop,
+  moveItemInArray,
+  transferArrayItem
+} from '@angular/cdk/drag-drop';
 
 @Component({
   selector: 'app-taskdetails',
-  imports: [DatePipe, RouterLink, CommonModule, FormsModule],
-  standalone : true,
+  imports: [DatePipe, RouterLink, CommonModule, FormsModule, DragDropModule],
+  standalone: true,
   templateUrl: './taskdetails.html',
   styleUrl: './taskdetails.css',
 })
-export class Taskdetails {
-  worksapce_info : any = null;
-  tasks : any[] = [];
-  user_data : any = null;
-   isDarkMode = false;
 
-  //different status for task
-  tasksToDo : any[] = [];
-  tasksInProgress : any[] = [];
-  tasksCompleted : any[] = [];
-  tasksOverdue : any[] = [];
+export class Taskdetails {
+
+  worksapce_info: any = null;
+  tasks: any[] = [];
+  user_data: any = null;
+  isDarkMode = false;
+
+  tasksToDo: any[] = [];
+  tasksInProgress: any[] = [];
+  tasksCompleted: any[] = [];
+  tasksOverdue: any[] = [];
 
   selectedUsers: any[] = [];
+  availableTags: any[] = [];
+  newTag: string = '';
 
-  newTask : any = {
+  statusMap: any = {
+    0: 'ToDo',
+    1: 'InProgress',
+    2: 'Done',
+    3: 'Overdue'
+  };
+
+  newTask: any = {
     title: '',
     description: '',
     dueDate: '',
     startDate: '',
-    status: 0, //0-ToDo 1-InProgress 2-Done
-    difficulty: 0, //0-Easy 1-Medium 2-Hard 3-veryHard
+    status: 0,
+    difficulty: 0,
     points: 0,
-    assignedUserIds : [],
-    workspaceId: 0 // number
+    assignedUserIds: [] as string[],
+    tagIds: [] as number[],
+    newTags: [] as string[],
+    workspaceId: 0
   };
 
-  constructor(private auth : Auth) {}
+  constructor(private auth: Auth, private route: ActivatedRoute) {}
 
   ngOnInit() {
-    const workspaceId = window.location.pathname.split('/')[2]; // assuming URL is /workspace/{id}/tasks
-    
-    this.auth.getWorkspaceInfo(workspaceId).subscribe((response: any) => {
-      this.worksapce_info = response;
-      console.log('Workspace Info:', this.worksapce_info);
-    });
+    this.route.parent?.paramMap.subscribe(params => {
+      const workspaceId = params.get('id');
+      if (!workspaceId) return;
 
-    this.auth.getWorkspaceTasks(workspaceId).subscribe((response: any) => {
-      this.tasks = response;
-      console.log('Tasks:', this.tasks);
-      // Categorize tasks by status
-      this.filterTasksStatus();
+      this.auth.getWorkspaceInfo(workspaceId).subscribe((res: any) => {
+        this.worksapce_info = res;
+      });
+
+      this.auth.getWorkspaceTasks(workspaceId).subscribe((res: any) => {
+        this.tasks = res;
+
+        console.log('Fetched tasks:', this.tasks);
+
+        this.availableTags = this.tasks.reduce((acc: any[], task) => {
+          task.tags?.forEach((tag: any) => {
+            if (!acc.find(t => t.name === tag.name)) {
+              acc.push(tag);
+            }
+          });
+          return acc;
+        }, []);
+
+        this.filterTasksStatus();
+      });
     });
 
     const savedMode = localStorage.getItem('darkMode');
@@ -63,47 +92,189 @@ export class Taskdetails {
     this.user_data = this.auth.getCurrentUser();
   }
 
-  openTaskModal() {
-    const modal = new (window as any).bootstrap.Modal(
-      document.getElementById('createTaskModal')
+  // FILTER TASKS
+  filterTasksStatus() {
+    this.tasksToDo = [];
+    this.tasksInProgress = [];
+    this.tasksCompleted = [];
+    this.tasksOverdue = [];
+
+    this.tasks.forEach(task => {
+
+      if (this.isOverdue(task)) {
+        this.tasksOverdue.push(task);
+        return;
+      }
+
+      switch (task.status) {
+        case 'ToDo':
+          this.tasksToDo.push(task);
+          break;
+        case 'InProgress':
+          this.tasksInProgress.push(task);
+          break;
+        case 'Done':
+          this.tasksCompleted.push(task);
+          break;
+        case 'Overdue':
+          this.tasksOverdue.push(task);
+          break;
+      }
+    });
+  }
+
+  // TAGS
+  toggleTag(tag: any) {
+
+    if (tag.id) {
+      const exists = this.newTask.tagIds.includes(tag.id);
+
+      if (exists) {
+        this.newTask.tagIds = this.newTask.tagIds.filter((id: number) => id !== tag.id);
+      } else {
+        this.newTask.tagIds.push(tag.id);
+      }
+
+    } else {
+      const exists = this.newTask.newTags.includes(tag.name);
+
+      if (exists) {
+        this.newTask.newTags = this.newTask.newTags.filter((t: string) => t !== tag.name);
+      } else {
+        this.newTask.newTags.push(tag.name);
+      }
+    }
+  }
+
+  getSelectedTags() {
+    return this.availableTags.filter(tag =>
+      (tag.id && this.newTask.tagIds.includes(tag.id)) ||
+      (!tag.id && this.newTask.newTags.includes(tag.name))
     );
-    modal.show();
   }
 
-  filterTasksStatus()
-  {
-      this.tasksToDo = this.tasks.filter(t => t.status == 'ToDo');
-      this.tasksInProgress = this.tasks.filter(t => t.status == 'InProgress');
-      this.tasksCompleted = this.tasks.filter(t => t.status == 'Done');
-      this.tasksOverdue = this.tasks.filter(t => t.status == 'Overdue');
+  addTag() {
+    if (this.newTag.trim() === '') return;
+
+    const trimmed = this.newTag.trim();
+
+    const existing = this.availableTags.find(
+      t => t.name.toLowerCase() === trimmed.toLowerCase()
+    );
+
+    if (existing) {
+      this.toggleTag(existing);
+    } else {
+      this.newTask.newTags.push(trimmed);
+      this.availableTags.push({ name: trimmed });
+    }
+
+    this.newTag = '';
   }
 
-  createTask()
-  {
+  removeTag(tag: any) {
+
+    if (tag.id) {
+      this.newTask.tagIds = this.newTask.tagIds.filter((id: number) => id !== tag.id);
+    } else {
+      this.newTask.newTags = this.newTask.newTags.filter((t: string) => t !== tag.name);
+    }
+
+    this.availableTags = this.availableTags.filter(t => t.name !== tag.name);
+  }
+
+  // DRAG & DROP
+  drop(event: CdkDragDrop<any[]>, newStatusIndex: number) {
+
+    if (event.previousContainer === event.container) {
+      moveItemInArray(
+        event.container.data,
+        event.previousIndex,
+        event.currentIndex
+      );
+      return;
+    }
+
+    transferArrayItem(
+      event.previousContainer.data,
+      event.container.data,
+      event.previousIndex,
+      event.currentIndex
+    );
+
+    const movedTask = event.container.data[event.currentIndex];
+
+    movedTask.status = newStatusIndex;
+
+    if (this.isOverdue(movedTask)) {
+      movedTask.status = 'Overdue';
+    }
+
+    const index = this.tasks.findIndex(t => t.id === movedTask.id);
+    if (index !== -1) {
+      this.tasks[index] = movedTask;
+    }
+
+    console.log('Moved task:', movedTask.status);
+    
+    this.auth.updateTaskStatus(movedTask.publicId, movedTask.status)
+      .subscribe({
+        next: () => console.log('Status updated'),
+        error: (err) => {
+          console.error('Update failed', err);
+          this.filterTasksStatus();
+        }
+      });
+  }
+
+  // OVERDUE
+  isOverdue(task: any): boolean {
+    return new Date(task.dueDate) < new Date() && task.status !== 'Done';
+  }
+
+  // CREATE TASK 
+  createTask() {
+
     this.newTask.workspaceId = this.worksapce_info.id;
 
-    this.auth.createTask(this.newTask).subscribe((res : any) =>
-    {
-      console.log(res);
+    const payload = {
+      title: this.newTask.title,
+      description: this.newTask.description,
+      dueDate: this.newTask.dueDate,
+      startDate: this.newTask.startDate,
+      status: this.newTask.status,
+      difficulty: this.newTask.difficulty,
+      points: this.newTask.points,
+      assignedUserIds: this.selectedUsers.map(u => String(u.id)),
+      tagIds: this.newTask.tagIds,
+      newTags: this.newTask.newTags,
+      workspaceId: this.newTask.workspaceId
+    };
+
+    this.auth.createTask(payload).subscribe((res: any) => {
 
       this.tasks.push(res);
-    
       this.filterTasksStatus();
-      
+
       this.newTask = {
         title: '',
         description: '',
         dueDate: '',
         startDate: '',
-        status: 0, //0-ToDo 1-InProgress 2-Done
-        difficulty: 0, //0-Easy 1-Medium 2-Hard 3-veryHard
+        status: 0,
+        difficulty: 0,
         points: 0,
-        assignedUserIds : [],
-        workspaceId: 0 // number
-      }
+        assignedUserIds: [],
+        tagIds: [],
+        newTags: [],
+        workspaceId: 0
+      };
+
+      this.selectedUsers = [];
     });
   }
 
+  // UI HELPERS
   setStatus(status: number) {
     this.newTask.status = status;
   }
@@ -120,7 +291,12 @@ export class Taskdetails {
     } else {
       this.selectedUsers.push(user);
     }
+  }
 
-    this.newTask.assignedUsers = this.selectedUsers.map(u => u.id);
+  openTaskModal() {
+    const modal = new (window as any).bootstrap.Modal(
+      document.getElementById('createTaskModal')
+    );
+    modal.show();
   }
 }

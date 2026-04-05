@@ -14,6 +14,8 @@ namespace TeamUpBackEnd.DTO
 			public TaskDifficulty Difficulty { get; init; }
 			public int Points { get; init; }
 			public List<string>? AssignedUserIds { get; init; }
+			public List<int>? TagIds { get; init; }
+			public List<string>? NewTags { get; init; }
 			public int WorkspaceId { get; init; }
 		}
 

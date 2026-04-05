@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TeamUpBackEnd.Models;
 using TeamUpBackEnd.Models.Chat;
 using TeamUpBackEnd.Models.Tasks;
@@ -23,12 +24,48 @@ namespace TeamUpBackEnd.DbContext
 
 		public DbSet<WorkSpaceMember> WorkspaceMembers { get; set; }
 		public DbSet<WorkspaceInvitation> WorkspaceInvitations { get; set; }
+
+		//tasks related
 		public DbSet<TaskItem> Tasks { get; set; }
 		public DbSet<TaskAssignment> TaskAssignments { get; set; }
+		public DbSet<Tag> Tags { get; set; }
+		public DbSet<TaskItemTag> TaskItemTags { get; set; }
 
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
 		{
 			base.OnModelCreating(modelBuilder);
+
+			var dateTimeConverter = new ValueConverter<DateTime, DateTime>(
+				v => v.Kind == DateTimeKind.Utc ? v : DateTime.SpecifyKind(v, DateTimeKind.Utc),
+				v => DateTime.SpecifyKind(v, DateTimeKind.Utc)
+			);
+
+			var nullableDateTimeConverter = new ValueConverter<DateTime?, DateTime?>(
+				v => v.HasValue
+					? (v.Value.Kind == DateTimeKind.Utc
+						? v.Value
+						: DateTime.SpecifyKind(v.Value, DateTimeKind.Utc))
+					: v,
+				v => v.HasValue
+					? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc)
+					: v
+			);
+
+			foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+			{
+				foreach (var property in entityType.GetProperties())
+				{
+					if (property.ClrType == typeof(DateTime))
+					{
+						property.SetValueConverter(dateTimeConverter);
+					}
+
+					if (property.ClrType == typeof(DateTime?))
+					{
+						property.SetValueConverter(nullableDateTimeConverter);
+					}
+				}
+			}
 
 			modelBuilder.Entity<WorkSpaceMember>()
 				.HasKey(wm => new { wm.WorkspaceId, wm.UserId });
@@ -157,6 +194,19 @@ namespace TeamUpBackEnd.DbContext
 				.HasOne(ta => ta.User)
 				.WithMany(u => u.Tasks)
 				.HasForeignKey(ta => ta.UserId);
+
+			modelBuilder.Entity<TaskItemTag>()
+				.HasKey(tt => new { tt.TaskItemId, tt.TagId });
+
+			modelBuilder.Entity<TaskItemTag>()
+				.HasOne(tt => tt.TaskItem)
+				.WithMany(t => t.TaskItemTags)
+				.HasForeignKey(tt => tt.TaskItemId);
+
+			modelBuilder.Entity<TaskItemTag>()
+				.HasOne(tt => tt.Tag)
+				.WithMany(t => t.TaskItemTags)
+				.HasForeignKey(tt => tt.TagId);
 
 			// ------------------------
 			// Indexes

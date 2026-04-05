@@ -1,426 +1,453 @@
-<div class="container-fluid" [ngClass]="{'dark-mode': isDarkMode, 'light-mode': !isDarkMode}">
-  <div class="row border-bottom px-3" style="margin-bottom: 10px;">
-  <div class="col-12 d-flex align-items-center justify-content-between flex-wrap gap-2 py-2">
-    
-    <div class="align-items-center gap-3">
-      <h4 style="font-weight: bold; margin: 0;">Task Board</h4>
-      <span style="color: #999; font-size: 14px;">{{tasks.length}} {{ tasks.length === 1 ? 'task' : 'tasks' }}</span>
-    </div>
+  <div class="container-fluid workspace-content pt-5" >
 
-    <div class="d-flex align-items-center gap-2">
-      <div class="input-group" style="max-width: 300px;">
-        <input class="form-control" type="search" placeholder="Search" aria-label="Search" id="search-input">
-        <span class="input-group-text bg-white" id="search-btn">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search text-muted" viewBox="0 0 16 16">
-            <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
-          </svg>
-        </span>
-      </div>
-
-      <button class="btn btn-m btn-primary" style="white-space: nowrap;">
-        <svg width="14" height="14" fill="none" viewBox="0 0 24 24">
-          <path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
-        </svg> Filter
-      </button>
-
-      <button class="btn btn-m btn-primary" (click)="openTaskModal()" style="white-space: nowrap;">
-        <svg width="14" height="14" fill="none" viewBox="0 0 24 24">
-          <path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
-        </svg> Add Task
-      </button>
-    </div>
-
-  </div>
-</div>
-
-  <div class="row">
-    <div class="col-12 px-3">
-      <div class="row mt-2">
-        <div class="col-12 d-flex flex-row gap-4 task-board" [ngClass]="{'dark-mode': isDarkMode, 'light-mode': !isDarkMode}">
-<<<<<<< Updated upstream
-          <!-- To Do Column -->
-          <div class="flex-fill" style="min-width:250px;">
-=======
-
-          <!-- 🔵 TO DO -->
-          <div class="flex-fill"
-               cdkDropList
-               id="todoList"
-               [cdkDropListData]="tasksToDo"
-               [cdkDropListConnectedTo]="['inProgressList','doneList']"
-               (cdkDropListDropped)="drop($event, 0)">
-
->>>>>>> Stashed changes
-            <div class="d-flex align-items-center mb-3" style="border-bottom: 2px solid rgb(209, 209, 209); height: 60px;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-circle mt-1" viewBox="0 0 16 16">
-                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
-              </svg>
-              <h4 style="margin-left: 10px;" class="mb-0">To Do</h4>
-              <span class="badge bg-secondary ms-auto mt-2">{{ tasksToDo.length }}</span>
+    <!-- MAIN STATE -->
+    @if (workspaces$ | async; as workspaces) {
+      <!-- HAS WORKSPACES -->
+      @if (workspaces.length > 0) {
+        <div class="row">
+          <div class="col-12">
+            <div class="workspace-header">
+              <h2>Welcome to your dashboard,<a style="color: #a64bfb; text-shadow: #9333ea 0 0 3px;"> {{ (user$ | async)?.userName }}</a></h2>              
+              <h6 style=" color: #999; padding-bottom: 20px;">Pick a workspace to continue where you left off.</h6>
             </div>
-            <div>
-              @for (task of tasksToDo; track task) {
-                <div class="mb-4">
-                  <div class="card h-100">
-                    <div class="card-body">
-                      <h5 class="card-title">{{ task.title }}</h5>
-                      <p class="card-text" style="color: #999;">{{ task.description }}</p>
-                      <div class="d-flex align-items-center justify-content-between">
-                        <span class="difficulty-badge"
-                          [ngClass]="{
-                            'easy':  task.difficulty === 0,
-                            'medium': task.difficulty === 1,
-                            'hard': task.difficulty === 2,
-                            'vhard': task.difficulty === 3
-                          }">
-                          {{ ['Easy', 'Medium', 'Hard', 'Very Hard'][task.difficulty] }}
+            <div class="workspaces-grid">
+              @for (workspace of workspaces; track workspace) {
+                <div class="workspace-card" [routerLink]="['/workspace', workspace.publicId, 'tasks']">
+                  <span class="workspace-icon">
+                    {{ workspace.title.charAt(0) }}
+                  </span>
+                  <h3>{{ workspace.title }}</h3>
+ 
+                  <div class="d-flex justify-content-between">
+                    <p style="color: #999;">{{ workspace.description }}</p>
+                    <div class="members d-flex align-items-center">
+                      
+                      @for (member of workspace.members.slice(0, 5); track member) {
+                        
+                        @if (member.profilePicture) {
+                          <img [src]="member.profilePicture" 
+                              style="width: 30px; height: 30px; border-radius: 50%; margin-right: 5px; object-fit: cover;" 
+                              [title]="member.userName">
+                        } @else {
+                          <span class="badge" 
+                                style="display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; color: #fff; background-color: #999; border-radius: 50%; font-size: 14px; margin-right: 5px;" 
+                                [title]="member.userName">
+                            {{ member.userName.charAt(0) }}
+                          </span>
+                        }
+
+                      }
+
+                      @if (workspace.members.length > 5) {
+                        <span class="extra-members" 
+                              style="font-size: 14px; color: #666; font-weight: bold; margin-left: 2px;">
+                          +{{ workspace.members.length - 5 }}
                         </span>
-                        <div class="d-flex align-items-center gap-1 ms-auto">
-                          <span class="points" style="color: rgb(3, 255, 255);">+{{ task.points }} pts</span>
-                          <img src="{{ user_data.profilePictureUrl }}" alt="Profile" class="rounded-circle me-3">
-                        </div>
-                      </div>
-                    </div>
-                    <div class="card-footer">
-                      Due: {{ task.dueDate | date:'mediumDate' }}
+                      }
+
                     </div>
                   </div>
-                </div>
-              }
-            </div>
-          </div>
-          <!-- In Progress Column -->
-          <div class="flex-fill" style="min-width:250px;">
-            <div class="d-flex align-items-center mb-3" style="border-bottom: 2px solid rgb(3, 255, 255); height: 60px;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" style="color: rgb(3, 255, 255);" fill="currentColor" class="bi bi-clock mt-1" viewBox="0 0 16 16">
-                <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71z"/>
-                <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0"/>
-              </svg>
-              <h4 style="margin-left: 10px;" class="mb-0">In Progress</h4>
-              <span class="badge bg-secondary ms-auto mt-2">{{ tasksInProgress.length }}</span>
-            </div>
-            <div>
-              @for (task of tasksInProgress; track task) {
-                <div class="mb-4">
-                  <div class="card h-100">
-                    <div class="card-body">
-                      <h5 class="card-title">{{ task.title }}</h5>
-                      <p class="card-text" style="color: #999;">{{ task.description }}</p>
-                      <div class="d-flex align-items-center justify-content-between">
-                        <span class="difficulty-badge"
-                          [ngClass]="{
-                            'easy':  task.difficulty === 0,
-                            'medium': task.difficulty === 1,
-                            'hard': task.difficulty === 2,
-                            'vhard': task.difficulty === 3
-                          }">
-                          {{ ['Easy', 'Medium', 'Hard', 'Very Hard'][task.difficulty] }}
-                        </span>
-                        <div class="d-flex align-items-center gap-1 ms-auto">
-                          <span class="points" style="color: rgb(3, 255, 255);">+{{ task.points }} pts</span>
-                          <img src="{{ user_data.profilePictureUrl }}" alt="Profile" class="rounded-circle me-3">
-                        </div>
-                      </div>
-                    </div>
-                    <div class="card-footer">
-                      Due: {{ task.dueDate | date:'mediumDate' }}
-                    </div>
-                  </div>
-                </div>
-              }
-            </div>
-          </div>
-          <!-- Done Column -->
-          <div class="flex-fill" style="min-width:250px;">
-            <div class="d-flex align-items-center mb-3" style="border-bottom: 2px solid rgb(0, 255, 0); height: 60px;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" style="color: rgb(0, 255, 0);" fill="currentColor" class="bi bi-check-circle mt-1" viewBox="0 0 16 16">
-                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
-                <path d="M10.97 6.97a.75.75 0 0 0-1.08-1.04L7.477 8.417l-1.384-1.384a.75.75 0 1 0-1.06 1.06l2 2a.75.75 0 0 0 1.08 0l3-3z"/>
-              </svg>
-              <h4 style="margin-left: 10px;" class="mb-0">Done</h4>
-              <span class="badge bg-secondary ms-auto mt-2">{{ tasksCompleted.length }}</span>
-            </div>
-            <div>
-              @for (task of tasksCompleted; track task) {
-                <div class="mb-4">
-                  <div class="card h-100">
-                    <div class="card-body">
-                      <h5 class="card-title">{{ task.title }}</h5>
-                      <p class="card-text" style="color: #999;">{{ task.description }}</p>
-                      <div class="d-flex align-items-center justify-content-between">
-                        <span class="difficulty-badge"
-                          [ngClass]="{
-                            'easy':  task.difficulty === 0,
-                            'medium': task.difficulty === 1,
-                            'hard': task.difficulty === 2,
-                            'vhard': task.difficulty === 3
-                          }">
-                          {{ ['Easy', 'Medium', 'Hard', 'Very Hard'][task.difficulty] }}
-                        </span>
-                        <div class="d-flex align-items-center gap-1 ms-auto">
-                          <span class="points" style="color: rgb(3, 255, 255);">+{{ task.points }} pts</span>
-                          <img src="{{ user_data.profilePictureUrl }}" alt="Profile" class="rounded-circle me-3">
-                        </div>
-                      </div>
-                    </div>
-                    <div class="card-footer">
-                      Due: {{ task.dueDate | date:'mediumDate' }}
-                    </div>
-                  </div>
-                </div>
-              }
-            </div>
-          </div>
-<<<<<<< Updated upstream
-          <!-- Overdue Column -->
-          <div class="flex-fill" style="min-width:250px;">
-=======
 
-          <!-- 🔴 OVERDUE -->
-          <div class="flex-fill ">
-
->>>>>>> Stashed changes
-            <div class="d-flex align-items-center mb-3" style="border-bottom: 2px solid rgb(255, 0, 0); height: 60px;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" style="color: rgb(255, 0, 0);" fill="currentColor" class="bi bi-exclamation-circle" viewBox="0 0 16 16">
-                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
-                <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0M7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0z"/>
-              </svg>
-              <h4 style="margin-left: 10px;" class="mb-0">Overdue</h4>
-              <span class="badge bg-secondary ms-auto mt-2">{{ tasksOverdue.length }}</span>
-            </div>
-            <div>
-              @for (task of tasksOverdue; track task) {
-                <div class="mb-4">
-                  <div class="card h-100 border-danger">
-                    <div class="card-body">
-                      <h5 class="card-title">{{ task.title }}</h5>
-                      <p class="card-text" style="color: #999;">{{ task.description }}</p>
-                      <div class="d-flex align-items-center justify-content-between">
-                        <span class="difficulty-badge"
-                          [ngClass]="{
-                            'easy':  task.difficulty === 0,
-                            'medium': task.difficulty === 1,
-                            'hard': task.difficulty === 2,
-                            'vhard': task.difficulty === 3
-                          }">
-                          {{ ['Easy', 'Medium', 'Hard', 'Very Hard'][task.difficulty] }}
-                        </span>
-                        <div class="d-flex align-items-center gap-1 ms-auto">
-                          <span class="points" style="color: rgb(3, 255, 255);">+{{ task.points }} pts</span>
-                          <img src="{{ user_data.profilePictureUrl }}" alt="Profile" class="rounded-circle me-3">
-                        </div>
-                      </div>
-                    </div>
-                    <div class="card-footer text-danger">
-                      Due: {{ task.dueDate | date:'mediumDate' }}
-                    </div>
-                  </div>
-                </div>
-              }
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- CREATE TASK MODAL -->
-<div class="modal fade" id="createTaskModal">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="tm-box" [ngClass]="{'dark-mode': isDarkMode, 'light-mode': !isDarkMode}">
-
-      <div class="tm-header">
-        <div class="tm-header-left">
-          <div class="tm-icon">
-            <svg width="18" height="18" fill="none" viewBox="0 0 24 24">
-              <path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
-            </svg>
-          </div>
-          <div>
-            <p class="tm-title">New Task</p>
-            <p class="tm-subtitle">workspace / board</p>
-          </div>
-        </div>
-        <button class="tm-close" data-bs-dismiss="modal">✕</button>
-      </div>
-
-      <div class="tm-body">
-
-        <div class="tm-field">
-          <label class="tm-label">Title</label>
-          <input class="tm-input" type="text" name="taskTitle" [(ngModel)]="newTask.title" placeholder="What needs to be done?" required />
-        </div>
-
-        <div class="tm-field">
-          <label class="tm-label">Description</label>
-          <textarea class="tm-textarea" name="taskDescription" rows="3" [(ngModel)]="newTask.description" placeholder="Add context, links, or notes..."></textarea>
-        </div>
-
-        <div class="tm-row">
-          <div class="tm-field">
-            <label class="tm-label">Start Date</label>
-            <input class="tm-input" type="date" name="taskStartDate" [(ngModel)]="newTask.startDate" required />
-          </div>
-          <div class="tm-field">
-            <label class="tm-label">Due Date</label>
-            <input class="tm-input" type="date" name="taskDueDate" [(ngModel)]="newTask.dueDate" required />
-          </div>
-        </div>
-
-        <hr class="tm-divider" />
-
-        <div class="tm-field">
-          <label class="tm-label">Status</label>
-          <div class="tm-pills">
-            <button class="tm-pill pill-todo" [class.active]="newTask.status === 0" (click)="setStatus(0)"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-circle" viewBox="0 0 16 16">
-                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
-              </svg> To Do</button>
-            <button class="tm-pill pill-progress" [class.active]="newTask.status === 1" (click)="setStatus(1)"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" style="color: rgb(3, 255, 255);" fill="currentColor" class="bi bi-clock" viewBox="0 0 16 16">
-                <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71z"/>
-                <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0"/>
-              </svg> In Progress</button>
-            <button class="tm-pill pill-done" [class.active]="newTask.status === 2" (click)="setStatus(2)"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" style="color: rgb(0, 255, 0);" fill="currentColor" class="bi bi-check-circle" viewBox="0 0 16 16">
-                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
-                <path d="M10.97 6.97a.75.75 0 0 0-1.08-1.04L7.477 8.417l-1.384-1.384a.75.75 0 1 0-1.06 1.06l2 2a.75.75 0 0 0 1.08 0l3-3z"/>
-              </svg> Done</button>
-          </div>
-        </div>
-
-        <div class="tm-field">
-          <label class="tm-label">Difficulty</label>
-          <div class="tm-pills">
-            <button class="tm-pill pill-easy"   [class.active]="newTask.difficulty === 0" (click)="setDifficulty(0)">Easy</button>
-            <button class="tm-pill pill-med"   [class.active]="newTask.difficulty === 1" (click)="setDifficulty(1)">Medium</button>
-            <button class="tm-pill pill-hard"  [class.active]="newTask.difficulty === 2" (click)="setDifficulty(2)">Hard</button>
-            <button class="tm-pill pill-vhard" [class.active]="newTask.difficulty === 3" (click)="setDifficulty(3)">Very Hard</button>
-          </div>
-        </div>
-
-        <hr class="tm-divider" />
-
-        <div class="tm-field">
-          <label class="tm-label">Points</label>
-          <div class="tm-points-row">
-            <input class="tm-input tm-points-input" type="number" name="taskPoints" [(ngModel)]="newTask.points" placeholder="0" />
-            <span class="tm-points-hint">Leave blank — the system will<br>auto-evaluate based on difficulty.</span>
-          </div>
-        </div>
-
-        <div class="tm-field">
-        <label class="tm-label">Assign To</label>
-
-        <div class="dropdown w-100">
-          <!-- BUTTON -->
-          <button
-            class="btn btn-outline-secondary w-100 text-start"
-            type="button"
-            data-bs-toggle="dropdown"
-          >
-            <span *ngIf="selectedUsers.length === 0">
-              Select users
-            </span>
-
-            <span *ngIf="selectedUsers.length > 0">
-              {{ selectedUsers.length }} selected
-            </span>
-          </button>
-
-          <!-- MENU -->
-          <ul class="dropdown-menu w-100">
-            
-            <!-- OWNER -->
-            <li *ngIf="worksapce_info?.owner" >
-              <a
-                class="dropdown-item owner d-flex align-items-center justify-content-between"
-                (click)="toggleUser(worksapce_info.owner)"
-              >
-                <div class="d-flex align-items-center">
-                  <img *ngIf="worksapce_info.owner.profilePictureUrl"
-                      [src]="worksapce_info.owner.profilePictureUrl"
-                      class="rounded-circle me-2"
-                      width="28" height="28">
-
-                  <div *ngIf="!worksapce_info.owner.profilePictureUrl"
-                      class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-2"
-                      style="width:28px;height:28px;font-size:12px;">
-                    {{ worksapce_info.owner.userName.charAt(0) }}
-                  </div>
-
-                  {{ worksapce_info.owner.userName }}
-                </div>
-
-                <!-- CHECK -->
-                  <div class="d-flex align-items-center gap-2">
-                    <span
-                      *ngIf="selectedUsers.some(u => u.id === worksapce_info.owner.id)"
-                      class="check-icon"
-                      (click)="toggleUser(worksapce_info.owner.id)"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-lg" viewBox="0 0 16 16">
-                        <path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425z"/>
+                  <div class="footer d-flex justify-content-end mt-auto">
+                    <button class="btn btn-sm" title="edit" (click)="openEditWorkspace(workspace); $event.stopPropagation()">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" style="color: #9333ea;" height="16" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
+                        <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
+                        <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z"/>
                       </svg>
-                    </span>
-
-                    <svg width="20" height="20"
-                        class="owner-icon"
-                        viewBox="-4 0 32 32"
-                        xmlns="http://www.w3.org/2000/svg">
-                      <path d="M12 10.938c-1.375 0-2.5-1.125-2.5-2.5 0-1.406 1.125-2.5 2.5-2.5s2.5 1.094 2.5 2.5c0 1.375-1.125 2.5-2.5 2.5zM2.031 9.906c1.094 0 1.969 0.906 1.969 2 0 1.125-0.875 2-1.969 2-1.125 0-2.031-0.875-2.031-2 0-1.094 0.906-2 2.031-2zM22.031 9.906c1.094 0 1.969 0.906 1.969 2 0 1.125-0.875 2-1.969 2-1.125 0-2.031-0.875-2.031-2 0-1.094 0.906-2 2.031-2zM4.219 23.719l-1.656-9.063c0.5-0.094 0.969-0.375 1.344-0.688 1.031 0.938 2.344 1.844 3.594 1.844 1.5 0 2.719-2.313 3.563-4.25 0.281 0.094 0.625 0.188 0.938 0.188s0.656-0.094 0.938-0.188c0.844 1.938 2.063 4.25 3.563 4.25 1.25 0 2.563-0.906 3.594-1.844 0.375 0.313 0.844 0.594 1.344 0.688l-1.656 9.063h-15.563zM3.875 24.5h16.25v1.531h-16.25v-1.531z"/>
-                    </svg>
-
+                    </button>
+                    <button class="btn btn-sm" title="delete" (click)="openDeleteWorkspace(workspace); $event.stopPropagation()">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" style="color: #9333ea;" height="16" fill="currentColor" class="bi bi-trash-fill" viewBox="0 0 16 16">
+                        <path d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1zm3 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5M8 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 5m3 .5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 1 0"/>
+                      </svg>
+                    </button>
                   </div>
-                </a>
-            </li>
-
-            <!-- MEMBERS -->
-            <li *ngFor="let user of worksapce_info?.members">
-              <a
-                class="dropdown-item d-flex align-items-center justify-content-between"
-                (click)="toggleUser(user)"
-              >
-                <div class="d-flex align-items-center">
-                  <img *ngIf="user.profilePictureUrl"
-                      [src]="user.profilePictureUrl"
-                      class="rounded-circle me-2"
-                      width="28" height="28">
-
-                  <div *ngIf="!user.profilePictureUrl"
-                      class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-2"
-                      style="width:28px;height:28px;font-size:12px;">
-                    {{ user.userName.charAt(0) }}
-                  </div>
-
-                  {{ user.userName }}
                 </div>
-
-                <!-- CHECK -->
-                <span *ngIf="selectedUsers.some(u => u.id === user.id)">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-lg" viewBox="0 0 16 16">
-                    <path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425z"/>
-                  </svg>
-                </span>
-              </a>
-            </li>
-
-          </ul>
+              }
+              <button class="workspaces-grid-add" style="display: flex;" (click)="openCreateWorkspace()">
+                <a>+</a>
+                Add New Workspace
+                <p style="color: #999; font-size: x-small; padding: 20px;">Create or Join a new workspace to get started.</p>
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
+      } @else {
+        <div class="empty-dashboard d-flex flex-column justify-content-center align-items-center text-center">
+          <h1>
+            Welcome to <span class="accent">Team Up</span>
+          </h1>
+          <p class="subtitle">
+            Your gamified workspace for developer teams. Ship code, earn points,
+            and compete with your crew.
+          </p>
+          <div class="steps-grid">
+            <div class="step-card">
+              <h6>STEP 1</h6>
+              <h5>Create or join a workspace</h5>
+              <p>Start fresh with your own workspace or join an existing team.</p>
+            </div>
+            <div class="step-card">
+              <h6>STEP 2</h6>
+              <h5>Invite your team</h5>
+              <p>Add teammates via email or invite link.</p>
+            </div>
+            <div class="step-card">
+              <h6>STEP 3</h6>
+              <h5>Complete tasks & earn points</h5>
+              <p>Track progress on boards and earn points.</p>
+            </div>
+            <div class="step-card">
+              <h6>STEP 4</h6>
+              <h5>Climb the leaderboard</h5>
+              <p>Compete with your team and build streaks.</p>
+            </div>
+          </div>
+          
+          <div class="empty-actions d-flex justify-content-center align-items-center gap-3 me-3">
+            <button class="btn-primary" (click)="openCreateWorkspace()">
+              + Create Workspace
+            </button>
+            <button class="btn-secondary" (click)="openJoinWorkspace()">
+              Join Workspace
+            </button>
+          </div>
+        </div>
+      }
+    }
 
-      </div>
+    <!-- EMPTY STATE -->
 
-      <div class="tm-footer">
-        <div class="tm-footer-actions">
-          <button class="btn-cancel-tm" data-bs-dismiss="modal">Cancel</button>
-          <button class="btn-create" (click)="createTask()">
-            <svg width="14" height="14" fill="none" viewBox="0 0 24 24">
-              <path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
-            </svg>
-            Create Task
+  </div>
+
+  <!-- ================= CREATE WORKSPACE MODAL ================= -->
+  @if (showCreateWorkspace) {
+  <div #createWorkspaceModal class="createWorkspace-overlay" [ngClass]="{'light-mode': !isDarkMode, 'dark-mode': isDarkMode}">
+
+    <form #createWorkspaceForm="ngForm" (ngSubmit)="createWorkspace()">
+
+      <div class="createWorkspace-box">
+
+        <!-- HEADER -->
+        <div class="header-row tm-header">
+          <div class="header-text tm-header-left">
+              <div class="tm-icon">
+                <svg width="18" height="18" fill="none" viewBox="0 0 24 24">
+                  <path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <div>
+                <h4 class="tm-title">Create <span class="accent">workspace</span></h4>
+                <p class="tm-subtitle" style="font-size: 0.85rem;">Set up a new workspace and invite your team.</p>
+              </div>
+          </div>
+
+          <button type="button" class="btn-cancel tm-close" (click)="closeCreateWorkspace()">✕</button>
+        </div>
+
+        <!-- BODY -->
+        <div class="tm-body">
+
+          <div class="form-group tm-field">
+            <label class="form-label tm-label">Workspace name</label>
+            <input
+              type="text"
+              class="form-control"
+              name="title"
+              required
+              placeholder="Enter workspace name"
+              [(ngModel)]="workspace.title">
+          </div>
+
+          <div class="form-group tm-field">
+            <label class="form-label tm-label">Workspace description</label>
+            <textarea
+              class="form-control tm-textarea"
+              name="description"
+              placeholder="Enter workspace description"
+              [(ngModel)]="workspace.description">
+            </textarea>
+          </div>
+
+          <div class="form-group tm-field" style="position: relative;">
+            <label class="form-label tm-label">Invite people</label>
+
+            <input
+              type="text"
+              class="form-control tm-input"
+              name="invitePeople"
+              placeholder="Enter email or username"
+              [(ngModel)]="inviteInput"
+              (ngModelChange)="onInviteInputChange($event)">
+
+            @if (suggestions.length > 0) {
+            <ul class="suggestions-dropdown">
+              @for (user of suggestions; track user) {
+                <li class="suggestion-item" (click)="selectUser(user)">
+                  @if (user.profilePictureUrl) {
+                    <img [src]="user.profilePictureUrl" width="24" height="24" />
+                  } @else {
+                    <span class="badge">
+                      {{ user.userName.charAt(0) }}
+                    </span>
+                  }
+                  <span>{{ user.userName }} ({{ user.email }})</span>
+                </li>
+              }
+            </ul>
+            }
+          </div>
+
+          @if (invitedMembers.length > 0) {
+          <div class="selected-members tm-field">
+            @for (member of invitedMembers; track member.emailOrUsername) {
+              <div class="member-row">
+                <span>{{ member.emailOrUsername }}</span>
+
+                <div class="actions">
+                  <div class="dropdown">
+                    <button class="btn btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                      {{ member.role === 1 ? 'Admin' : 'Member' }}
+                    </button>
+
+                    <ul class="dropdown-menu">
+                      <li><a (click)="member.role = 0">Member</a></li>
+                      <li><a (click)="member.role = 1">Admin</a></li>
+                    </ul>
+                  </div>
+
+                  <button type="button" (click)="removeMember(member)">✕</button>
+                </div>
+              </div>
+            }
+          </div>
+          }
+
+        </div>
+
+        <!-- FOOTER -->
+        <div class="createWorkspace-actions tm-footer">
+          <button
+            class="btn-primary"
+            type="submit"
+            [disabled]="createWorkspaceForm.invalid">
+            Create workspace
           </button>
         </div>
+
+      </div>
+    </form>
+  </div>
+  }
+
+  @if (showEditWorkspace) {
+  <div class="createWorkspace-overlay" [ngClass]="{'light-mode': !isDarkMode, 'dark-mode': isDarkMode}">
+
+    <form (ngSubmit)="updateWorkspace()">
+
+      <div class="createWorkspace-box">
+
+        <div class="header-row tm-header">
+          <div class="tm-header-left">
+              <div class="tm-icon">
+                <svg width="18" height="18" fill="none" viewBox="0 0 24 24">
+                  <path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <div>
+                <h4 class="tm-title">Edit <span class="accent">workspace</span></h4>
+                <p class="tm-subtitle" style="font-size: 0.85rem;">Update workspace details and manage members.</p>
+              </div>
+          </div>
+          <button type="button" class="btn-cancel tm-close" (click)="closeEditWorkspace()">✕</button>
+        </div>
+
+        <div class="tm-body">
+
+          <div class="form-group tm-field">
+            <label>Workspace name</label>
+            <input class="form-control"
+                  [(ngModel)]="selectedWorkspace.title"
+                  name="editTitle"
+                  required>
+          </div>
+
+          <div class="form-group tm-field">
+            <label>Description</label>
+            <textarea class="form-control"
+                      [(ngModel)]="selectedWorkspace.description"
+                      name="editDescription"></textarea>
+          </div>
+
+          <div class="form-group tm-field">
+            <label>Add / remove members</label>
+
+            <input type="text"
+                  class="form-control"
+                  [(ngModel)]="editInviteInput"
+                  (ngModelChange)="onEditInputChange($event)"
+                  name="editInvite">
+
+            @if (editSuggestions.length > 0) {
+            <ul class="suggestions-dropdown">
+              @for (user of editSuggestions; track user) {
+                <li (click)="addMember(user)">
+                  <img [src]="user.profilePictureUrl" width="24" height="24" />
+                  {{ user.userName }}
+                </li>
+              }
+            </ul>
+            }
+          </div>
+
+          <div class="selected-members tm-field">
+            @for (member of editMembers; track member) {
+              <div class="member-row d-flex align-items-center justify-content-between">
+                <span>{{ member.userName || member.email }}</span>
+                <div class="actions d-flex align-items-center gap-2">
+                  <div>
+                    <div class="dropdown">
+                      <button class="btn btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                        {{ member.role === 1 ? 'Admin' : 'Member' }}
+                      </button>
+
+                      <ul class="dropdown-menu p-2">
+                        <li><a (click)="member.role = 0">Member</a></li>
+                        <li><a class="d-flex align-items-center justify-content-between text-decoration-none text-reset" (click)="member.role = 1">Admin <a><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-shield" viewBox="0 0 16 16">
+  <path d="M5.338 1.59a61 61 0 0 0-2.837.856.48.48 0 0 0-.328.39c-.554 4.157.726 7.19 2.253 9.188a10.7 10.7 0 0 0 2.287 2.233c.346.244.652.42.893.533q.18.085.293.118a1 1 0 0 0 .101.025 1 1 0 0 0 .1-.025q.114-.034.294-.118c.24-.113.547-.29.893-.533a10.7 10.7 0 0 0 2.287-2.233c1.527-1.997 2.807-5.031 2.253-9.188a.48.48 0 0 0-.328-.39c-.651-.213-1.75-.56-2.837-.855C9.552 1.29 8.531 1.067 8 1.067c-.53 0-1.552.223-2.662.524zM5.072.56C6.157.265 7.31 0 8 0s1.843.265 2.928.56c1.11.3 2.229.655 2.887.87a1.54 1.54 0 0 1 1.044 1.262c.596 4.477-.787 7.795-2.465 9.99a11.8 11.8 0 0 1-2.517 2.453 7 7 0 0 1-1.048.625c-.28.132-.581.24-.829.24s-.548-.108-.829-.24a7 7 0 0 1-1.048-.625 11.8 11.8 0 0 1-2.517-2.453C1.928 10.487.545 7.169 1.141 2.692A1.54 1.54 0 0 1 2.185 1.43 63 63 0 0 1 5.072.56"/>
+</svg></a></a></li>
+                      </ul>
+                    </div>
+                  </div>
+                  <button type="button" class="btn-cancel tm-close" (click)="removeEditMember(member)">✕</button>
+                </div>
+              </div>
+            }
+          </div>
+
+        </div>
+
+        <div class="createWorkspace-actions tm-footer">
+          <button class="btn-primary" type="submit">
+            Save changes
+          </button>
+        </div>
+
+      </div>
+    </form>
+  </div>
+  }
+
+  @if (showDeleteWorkspace) {
+  <div class="createWorkspace-overlay" [ngClass]="{'light-mode': !isDarkMode, 'dark-mode': isDarkMode}">
+
+    <div class="createWorkspace-box">
+
+      <!-- HEADER -->
+      <div class="header-row tm-header">
+        <div class="tm-header-left">
+            <div class="tm-icon">
+              <svg width="18" height="18" fill="none" viewBox="0 0 24 24">
+                <path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <div>
+              <h4 class="tm-title">Delete <span class="accent">workspace</span></h4>
+              <p class="tm-subtitle" style="font-size: 0.85rem;">This action cannot be undone.</p>
+            </div>
+        </div>
+        <button class="btn-cancel tm-close" (click)="closeDeleteWorkspace()">✕</button>
+      </div>
+
+      <!-- BODY -->
+      <div class="tm-body">
+        <p class="tm-field">
+          Are you sure you want to delete
+          <strong>{{ selectedWorkspace?.title }}</strong>?
+        </p>
+      </div>
+
+      <!-- FOOTER -->
+      <div class="createWorkspace-actions tm-footer gap-3 align-items-center justify-content-center">
+        <button class="btn btn-secondary" (click)="closeDeleteWorkspace()">
+          Cancel
+        </button>
+
+        <button class="btn btn-secondary btn-delete" style="color: red; border-color: red;" (click)="deleteWorkspace()">
+          Delete
+        </button>
       </div>
 
     </div>
   </div>
-</div>
+  }
+
+  <!-- ================= JOIN WORKSPACE MODAL ================= -->
+  @if (showJoinWorkspace) {
+  <div #joinWorkspaceModal class="joinWorkspace-overlay" [ngClass]="{'light-mode': !isDarkMode, 'dark-mode': isDarkMode}">
+
+    <form #joinForm="ngForm" (ngSubmit)="joinWorkspace()">
+
+      <div class="joinWorkspace-box">
+
+        <!-- HEADER -->
+        <div class="header-row tm-header">
+          <div class="tm-header-left">
+              <div class="tm-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-box-arrow-in-right" viewBox="0 0 16 14">
+                  <path fill-rule="evenodd" d="M6 3.5a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 0-1 0v2A1.5 1.5 0 0 0 6.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-8A1.5 1.5 0 0 0 5 3.5v2a.5.5 0 0 0 1 0z"/>
+                  <path fill-rule="evenodd" d="M11.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 1 0-.708.708L10.293 7.5H1.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708z"/>
+                </svg>
+              </div>
+              <div>
+                <h4 class="tm-title">Join <span class="accent">Workspace</span></h4>
+                <p class="tm-subtitle" style=" font-size: 0.85rem;">Enter an invite code or workspace link to join.</p>
+              </div>
+          </div>
+          <button type="button" class="btn-cancel tm-close" (click)="closeJoinWorkspace()">✕</button>
+        </div>
+
+        <!-- BODY -->
+        <div class="tm-body">
+
+          <div class="form-group tm-field">
+            <label class="form-label tm-label">Invite Code</label>
+            <input
+              type="text"
+              class="form-control tm-input"
+              name="inviteCode"
+              placeholder="e.g. ACME-2024-XXYZ"
+              [(ngModel)]="joinInput.inviteCode">
+          </div>
+
+          <div class="separator-row tm-field d-flex align-items-center gap-3" >
+            <div class="separator-line" style="color: #666;"></div>
+            <div class="separator-text">OR PASTE LINK</div>
+            <div class="separator-line" style="color: #666;"></div>
+          </div>
+
+          <div class="form-group tm-field">
+            <label class="form-label tm-label">Workspace Link</label>
+            <input
+              type="text"
+              class="form-control tm-input"
+              name="workspaceLink"
+              placeholder="https://teamup.io/join/..."
+              [(ngModel)]="joinInput.workspaceLink">
+          </div>
+
+        </div>
+
+        <!-- FOOTER -->
+        <div class="joinWorkspace-actions tm-footer">
+          <button
+            class="btn-primary"
+            type="submit"
+            [disabled]="!joinInput.inviteCode && !joinInput.workspaceLink">
+            Join Workspace →
+          </button>
+        </div>
+
+      </div>
+    </form>
+  </div>
+  }

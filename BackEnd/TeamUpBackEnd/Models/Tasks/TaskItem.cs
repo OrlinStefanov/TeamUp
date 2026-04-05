@@ -20,6 +20,7 @@ namespace TeamUpBackEnd.Models.Tasks
 		public WorkSpace? WorkSpace { get; set; }
 
 		public ICollection<TaskAssignment>? Assignments { get; set; }
+		public ICollection<TaskItemTag> TaskItemTags { get; set; } = new List<TaskItemTag>();
 	}
 
 	public enum TasksStatus
