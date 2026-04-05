@@ -1143,65 +1143,60 @@ namespace TeamUpBackEnd.Extensions
 				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
 
 				if (userId is null)
-				{
 					return Results.BadRequest("Id not found");
-				}
 
 				var workspace = await db.Workspaces
-					.Include(w => w.Members)
-					.Include(w => w.Tasks)
-					.ThenInclude(t => t.Assignments!)
-					.ThenInclude(u => u.User)
-					.FirstOrDefaultAsync(w => w.PublicId.ToString() == workspaceId);
+					.Where(w => w.PublicId.ToString() == workspaceId)
+					.Select(w => new
+					{
+						w.Id,
+						IsMember = w.Members.Any(m => m.UserId == userId)
+					})
+					.FirstOrDefaultAsync();
 
 				if (workspace == null)
-				{
 					return Results.BadRequest("Workspace not found");
-				}
 
-				if (!workspace.Members.Any(m => m.UserId == userId))
-				{
+				if (!workspace.IsMember)
 					return Results.BadRequest("You are not a member of this workspace");
-				}
 
-				foreach (var t in workspace.Tasks)
-				{
-					if (t.DueDate < DateTime.UtcNow)
+				var tasks = await db.Tasks
+					.Where(t => t.WorkSpaceId == workspace.Id)
+					.Include(t => t.Assignments!)
+						.ThenInclude(a => a.User)
+					.Include(t => t.TaskItemTags!)
+						.ThenInclude(tt => tt.Tag)
+					.OrderByDescending(t => t.StartDate)
+					.Select(t => new
 					{
-						t.Status = TasksStatus.Overdue;
-					}
-				}
+						t.PublicId,
+						t.Title,
+						t.Description,
+						t.DueDate,
+						t.StartDate,
+						t.UpadeAt,
+						t.Points,
 
-				var tasks = workspace.Tasks.Select(t => new
-				{
-					t.PublicId,
-					t.Title,
-					t.Description,
-					t.DueDate,
-					t.StartDate,
-					t.UpadeAt,
-					t.Points,
-					Status = t.Status switch
-					{
-						TasksStatus.ToDo => "ToDo",
-						TasksStatus.InProgress => "InProgress",
-						TasksStatus.Done => "Done",
-						_ => "Overdue"
-					},
-					Difficulty = t.Difficulty switch
-					{
-						TaskDifficulty.Easy => "Easy",
-						TaskDifficulty.Medium => "Medium",
-						TaskDifficulty.Hard => "Hard",
-						_ => "Very Hard"
-					},
-					AssignedUsers = t.Assignments!.Select(a => new
-					{
-						a.User!.UserName,
-						a.User.Email,
-						a.User.ProfilePictureUrl
-					}).ToList()
-				}).ToList();
+						Status = t.DueDate < DateTime.UtcNow && t.Status != TasksStatus.Done
+							? "Overdue"
+							: t.Status.ToString(),
+
+						Difficulty = t.Difficulty.ToString(),
+
+						AssignedUsers = t.Assignments!.Select(a => new
+						{
+							a.User!.UserName,
+							a.User.Email,
+							a.User.ProfilePictureUrl
+						}).ToList(),
+
+						Tags = t.TaskItemTags!.Select(tt => new
+						{
+							tt.Tag!.Id,
+							tt.Tag.Name
+						}).ToList()
+					})
+					.ToListAsync();
 
 				return Results.Ok(tasks);
 			}).RequireAuthorization()
