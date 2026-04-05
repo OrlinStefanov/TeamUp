@@ -1524,7 +1524,15 @@ namespace TeamUpBackEnd.Extensions
 
 				if (!workspace.Members.Any(m => m.UserId == userId))
 					return Results.BadRequest("You are not a member of this workspace");
-				
+
+				var totalTasks = workspace.Tasks.Count;
+
+				var totalPoints = workspace.Tasks
+					.Where(t => t.Status == TasksStatus.Done)
+					.Sum(t => t.Points);
+
+				var completedTasks = workspace.Tasks.Count(t => t.Status == TasksStatus.Done);
+
 				var leaderboard = workspace.Members
 					.Select(m => new
 					{
@@ -1537,7 +1545,13 @@ namespace TeamUpBackEnd.Extensions
 					.OrderByDescending(m => m.Points)
 					.ToList();
 
-				return Results.Ok(leaderboard);
+				return Results.Ok(new
+				{
+					totalTasks,
+					totalPoints,
+					completedTasks,
+					leaderboard
+				});
 
 			}).RequireAuthorization().WithSummary("Returns the leaderboard for the workspace").WithTags("LeaderBoard");
 		}

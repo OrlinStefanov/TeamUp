@@ -10,6 +10,7 @@ import { Taskdetails } from './taskdetails/taskdetails';
 import { WorkspaceDetail } from './workspace-detail/workspace-detail';
 import { Chatdetails } from './chatdetails/chatdetails';
 import { ChatComponent } from './chat-component/chat-component';
+import { Leaderboard } from './pages/leaderboard/leaderboard';
 export const routes: Routes = [
   { path: '', component: StartUp },
   { path: 'signup', component: SignUp },
@@ -38,9 +39,9 @@ export const routes: Routes = [
               { path: '', component: ChatComponent }, 
               { path: ':channelId', component: ChatComponent }
             ]
-          }
+          },
 
-          // { path: 'leaderboard', component: Leaderboard }
+          { path: 'leaderboard', component: Leaderboard }
         ]
       }
     ]

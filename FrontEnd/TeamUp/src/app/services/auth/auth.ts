@@ -212,6 +212,13 @@ export class Auth {
       headers: { 'Content-Type': 'application/json' }
     })
   };
+
+  getLeaderboard(workspaceId : string)
+  {
+    return this.http.get(`${this.apiUrl}/leaderboard/${workspaceId}`, {
+      withCredentials: true
+    })
+  }
   //-----------------------Decoding the token--------------------------------------------
   getToken(): string | null {
     return localStorage.getItem(this.tokenKey);
