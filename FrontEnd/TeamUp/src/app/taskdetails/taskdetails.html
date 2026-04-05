@@ -37,8 +37,20 @@
     <div class="col-12 px-3">
       <div class="row mt-2">
         <div class="col-12 d-flex flex-row gap-4 task-board" [ngClass]="{'dark-mode': isDarkMode, 'light-mode': !isDarkMode}">
+<<<<<<< Updated upstream
           <!-- To Do Column -->
           <div class="flex-fill" style="min-width:250px;">
+=======
+
+          <!-- 🔵 TO DO -->
+          <div class="flex-fill"
+               cdkDropList
+               id="todoList"
+               [cdkDropListData]="tasksToDo"
+               [cdkDropListConnectedTo]="['inProgressList','doneList']"
+               (cdkDropListDropped)="drop($event, 0)">
+
+>>>>>>> Stashed changes
             <div class="d-flex align-items-center mb-3" style="border-bottom: 2px solid rgb(209, 209, 209); height: 60px;">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-circle mt-1" viewBox="0 0 16 16">
                 <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
@@ -159,8 +171,15 @@
               }
             </div>
           </div>
+<<<<<<< Updated upstream
           <!-- Overdue Column -->
           <div class="flex-fill" style="min-width:250px;">
+=======
+
+          <!-- 🔴 OVERDUE -->
+          <div class="flex-fill ">
+
+>>>>>>> Stashed changes
             <div class="d-flex align-items-center mb-3" style="border-bottom: 2px solid rgb(255, 0, 0); height: 60px;">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" style="color: rgb(255, 0, 0);" fill="currentColor" class="bi bi-exclamation-circle" viewBox="0 0 16 16">
                 <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
