@@ -199,11 +199,19 @@ export class Auth {
 
   editWorkspace(workspace : any)
   {
-    return this.http.put(`${this.apiUrl}/edit/workspace}`, workspace, {
+    return this.http.put(`${this.apiUrl}/edit/workspace`, workspace, {
       withCredentials: true,
       headers: { 'Content-Type': 'application/json' }
     })
   }
+
+  updateTaskStatus(taskId : string, status : number)
+  {
+    return this.http.put(`${this.apiUrl}/task/status/${taskId}`, { status }, {
+      withCredentials: true,
+      headers: { 'Content-Type': 'application/json' }
+    })
+  };
   //-----------------------Decoding the token--------------------------------------------
   getToken(): string | null {
     return localStorage.getItem(this.tokenKey);
