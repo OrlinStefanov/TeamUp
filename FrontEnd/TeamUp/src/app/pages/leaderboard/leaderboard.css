@@ -1,0 +1,41 @@
+.container-fluid
+{
+    padding: 0 20px;
+}
+
+.bg-blue
+{
+    background-color: #00ffff2c !important;
+    border: #00eeff 1px solid !important;
+    border-radius: 20px;
+    color: #00eeff !important;
+
+    font-weight: 900 !important;
+}
+
+.rank-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: white;
+}
+
+.gold {
+  color: #ffda07;
+}
+
+.silver {
+  color: #c0c0c0;
+}
+
+.bronze {
+  color: #a9704257;
+}
+
+.default {
+  color: #6c757d;
+}
