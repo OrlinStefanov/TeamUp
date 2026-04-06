@@ -197,6 +197,10 @@
             }
           </div>
 
+            <div *ngFor="let task of tasksOverdue" cdkDrag class="mb-4">
+              <ng-container *ngTemplateOutlet="taskCard; context:{task: task}"></ng-container>
+            </div>
+          </div> 
           @if (invitedMembers.length > 0) {
           <div class="selected-members tm-field">
             @for (member of invitedMembers; track member.emailOrUsername) {
