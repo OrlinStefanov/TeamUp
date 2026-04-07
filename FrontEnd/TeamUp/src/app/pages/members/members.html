@@ -1,0 +1,68 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-12 align-items-center d-flex mb-4 justify-content-between" style="padding: 0px 30px;">
+        <div class="align-items-center d-flex justify-content-center">
+            <svg xmlns="http://www.w3.org/2000/svg" style="color: #9938fa; " width="20" height="20" fill="currentColor" class="bi bi-people-fill" viewBox="0 0 16 16">
+                <path d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6m-5.784 6A2.24 2.24 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.3 6.3 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1zM4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5"/>
+            </svg>
+            <span class="fs-4 ms-2">Members</span>
+            <span class="badge bg-secondary ms-2">{{members.length}}</span>
+        </div>
+        <div>
+            <button class="btn btn-primary" type="button">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-plus-fill" viewBox="0 0 16 16">
+                    <path d="M1 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6"/>
+                    <path fill-rule="evenodd" d="M13.5 5a.5.5 0 0 1 .5.5V7h1.5a.5.5 0 0 1 0 1H14v1.5a.5.5 0 0 1-1 0V8h-1.5a.5.5 0 0 1 0-1H13V5.5a.5.5 0 0 1 .5-.5"/>
+                </svg>
+                Add Member
+            </button>
+        </div>
+    </div>
+    <div class="col-md-12 d-flex justify-content-center gap-4">
+        <div class="col-md-6 p-4">
+            <button 
+                class="btn"
+                [ngClass]="activeTab === 'members' ? 'btn-secondary active' : 'btn-outline-secondary'"
+                style="width: 100%;"
+                (click)="setTab('members')">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-people-fill" viewBox="0 0 16 16">
+                    <path d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6m-5.784 6A2.24 2.24 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.3 6.3 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1zM4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5"/>
+                </svg>
+                Members ({{members.length}})
+            </button>
+        </div>
+        <div class="col-md-6 p-4">
+            <button 
+                class="btn"
+                [ngClass]="activeTab === 'pending' ? 'btn-secondary active' : 'btn-outline-secondary'"
+                style="width: 100%;"
+                (click)="setTab('pending')">   
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-envelope-fill" viewBox="0 0 16 16">
+                    <path d="M.05 3.555A2 2 0 0 1 2 2h12a2 2 0 0 1 1.95 1.555L8 8.414zM0 4.697v7.104l5.803-3.558zM6.761 8.83l-6.57 4.027A2 2 0 0 0 2 14h12a2 2 0 0 0 1.808-1.144l-6.57-4.027L8 9.586zm3.436-.586L16 11.801V4.697z"/>
+                </svg>
+                Pending
+            </button>
+        </div>
+    </div>  
+    <div class="col-md-12">
+        <form>
+            <input type="search" class="form-control me-2" placeholder="Search members..." aria-label="Search">
+        </form>
+    </div>
+    <div class="col-md-12">
+            <ul>
+                @for (member of members; track member) {
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-secondary ms-2">{{returnRoleName(member.role)}}</span>
+                            <span>{{member.userName}}</span>
+                        </div>
+                        <div>
+                            <button class="btn btn-outline-danger btn-sm">Remove</button>
+                        </div>
+                    </li>
+                }
+            </ul>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,14 @@
+.btn-primary {
+  background: #9333ea;
+  border: none;
+  border-radius: 9px;
+  color: #fff;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 10px 22px;
+  cursor: pointer;
+  gap: 7px;
+  transition: opacity 0.15s, transform 0.1s;
+}
+
