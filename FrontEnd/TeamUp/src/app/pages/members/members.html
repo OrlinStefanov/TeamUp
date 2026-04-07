@@ -9,7 +9,7 @@
             <span class="badge bg-secondary ms-2">{{members.length}}</span>
         </div>
         <div>
-            <button class="btn btn-primary" type="button">
+            <button class="btn btn-primary" type="button" *ngIf="canManageMembers()">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-plus-fill" viewBox="0 0 16 16">
                     <path d="M1 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6"/>
                     <path fill-rule="evenodd" d="M13.5 5a.5.5 0 0 1 .5.5V7h1.5a.5.5 0 0 1 0 1H14v1.5a.5.5 0 0 1-1 0V8h-1.5a.5.5 0 0 1 0-1H13V5.5a.5.5 0 0 1 .5-.5"/>
@@ -19,7 +19,7 @@
         </div>
     </div>
     <div class="col-md-12 d-flex justify-content-center gap-4">
-        <div class="col-md-6 p-4">
+        <div class="col-md-6 p-4" style="padding-top: 0px !important;">
             <button 
                 class="btn"
                 [ngClass]="activeTab === 'members' ? 'btn-secondary active' : 'btn-outline-secondary'"
@@ -31,7 +31,7 @@
                 Members ({{members.length}})
             </button>
         </div>
-        <div class="col-md-6 p-4">
+        <div class="col-md-6 p-4" style="padding-top: 0px !important;">
             <button 
                 class="btn"
                 [ngClass]="activeTab === 'pending' ? 'btn-secondary active' : 'btn-outline-secondary'"
@@ -45,20 +45,88 @@
         </div>
     </div>  
     <div class="col-md-12">
-        <form>
-            <input type="search" class="form-control me-2" placeholder="Search members..." aria-label="Search">
+        <form class="d-flex gap-4">
+            <input
+                type="search"
+                class="form-control"
+                placeholder="Search members..."
+                aria-label="Search"
+                name="searchMembers"
+                [(ngModel)]="searchTerm">
+            <select
+                class="form-select"
+                style="max-width: 220px;"
+                name="roleFilter"
+                [(ngModel)]="selectedRole">
+                <option value="all">All Roles</option>
+                <option value="owner">Owner</option>
+                <option value="admin">Admin</option>
+                <option value="member">Member</option>
+            </select>
         </form>
     </div>
-    <div class="col-md-12">
-            <ul>
-                @for (member of members; track member) {
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <div class="d-flex align-items-center gap-2">
-                            <span class="badge bg-secondary ms-2">{{returnRoleName(member.role)}}</span>
+    <div class="col-md-12 mt-4">
+            <ul class="list-group">
+                @for (member of filteredMembers; track member) {
+                    <li class="list-group-item d-flex justify-content-between align-items-center member-row">
+                        <div class="d-flex align-items-center gap-3">
+                            <img
+                                *ngIf="member.profilePictureUrl; else userInitial"
+                                [src]="member.profilePictureUrl"
+                                [alt]="member.userName"
+                                class="rounded-circle"
+                                style="width: 30px; height: 30px; object-fit: cover;">
+                            <ng-template #userInitial>
+                                <div
+                                    class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold"
+                                    style="width: 30px; height: 30px; background-color: #6c757d;">
+                                    {{getUserInitial(member.userName)}}
+                                </div>
+                            </ng-template>
+                            <span
+                                class="badge"
+                                [ngClass]="{
+                                    'role-owner': member.role === 2,
+                                    'role-admin': member.role === 1,
+                                    'role-member': member.role === 0
+                                }">
+                                {{returnRoleName(member.role)}}
+                            </span>
                             <span>{{member.userName}}</span>
                         </div>
-                        <div>
-                            <button class="btn btn-outline-danger btn-sm">Remove</button>
+                        <div class="member-actions-menu" *ngIf="canOpenActionsMenu(member)" (click)="$event.stopPropagation()">
+                            <button
+                                class="btn btn-sm btn-outline-secondary action-trigger"
+                                (click)="toggleMemberMenu(member, $event)">
+                                ...
+                            </button>
+
+                            <div class="member-actions-dropdown" *ngIf="isMenuOpen(member)">
+                                <button
+                                    class="dropdown-item"
+                                    *ngIf="canAssignRole(member, 0)"
+                                    (click)="changeRole(member, 0, $event)">
+                                    Change to Member
+                                </button>
+                                <button
+                                    class="dropdown-item"
+                                    *ngIf="canAssignRole(member, 1)"
+                                    (click)="changeRole(member, 1, $event)">
+                                    Change to Admin
+                                </button>
+                                <button
+                                    class="dropdown-item"
+                                    *ngIf="canAssignRole(member, 2)"
+                                    (click)="changeRole(member, 2, $event)">
+                                    Change to Owner
+                                </button>
+                                <button
+                                    class="dropdown-item text-danger"
+                                    *ngIf="canRemoveMember(member)"
+                                    (click)="removeMember(member, $event)">
+                                    Remove
+                                </button>
+                            </div>
                         </div>
                     </li>
                 }
