@@ -12,3 +12,74 @@
   transition: opacity 0.15s, transform 0.1s;
 }
 
+.role-owner {
+  background-color: #facc154d;
+  border: 1px solid #facc15;
+  color: #1f2937;
+}
+
+.role-admin {
+  background-color: #9233ea2d;
+  border: 1px solid #9333ea;
+  color: #1f2937;
+}
+
+.role-member {
+  background-color: #6b7280;
+  color: #ffffff;
+}
+
+.member-row {
+  width: 100%;
+  height: 45px;
+  transition: background-color 0.15s ease-in-out;
+}
+
+.member-row:hover {
+  background-color: #d2d5d8;
+}
+
+.member-actions-menu {
+  position: relative;
+}
+
+.action-trigger {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  padding: 0;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 12px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.member-actions-dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  min-width: 180px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  z-index: 20;
+  overflow: hidden;
+}
+
+.member-actions-dropdown .dropdown-item {
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  padding: 8px 12px;
+  font-size: 14px;
+}
+
+.member-actions-dropdown .dropdown-item:hover {
+  background: #f3f4f6;
+}
+

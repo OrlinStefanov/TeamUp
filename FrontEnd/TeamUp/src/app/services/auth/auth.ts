@@ -108,8 +108,11 @@ export class Auth {
       return this.workspaceRequests.get(id)!;
     }
 
-    const request$ = this.http.get(`${this.apiUrl}/workspace/info/${id}`).pipe(
-      tap(data => this.workspaceCache.set(id, data)),
+    const request$ = this.http.get<any>(`${this.apiUrl}/workspace/info/${id}`).pipe(
+      tap(data => {
+        this.workspaceCache.set(id, data);
+        this.updateWorkspaceInList(id, data);
+      }),
       finalize(() => this.workspaceRequests.delete(id)),
       shareReplay(1)
     );
@@ -138,7 +141,34 @@ export class Auth {
   }
 
   getCachedWorkspaceById(id: string): any | undefined {
-    return this.workspaceSubject.value.find(w => w.publicId === id);
+    const fullFromCache = this.workspaceCache.get(id);
+    if (fullFromCache) {
+      return fullFromCache;
+    }
+
+    const fromWorkspaceList = this.workspaceSubject.value.find(w => w.publicId === id);
+    if (fromWorkspaceList && this.hasWorkspaceDetails(fromWorkspaceList)) {
+      return fromWorkspaceList;
+    }
+
+    return undefined;
+  }
+
+  private hasWorkspaceDetails(workspace: any): boolean {
+    return Array.isArray(workspace?.members) &&
+           Array.isArray(workspace?.invitations) &&
+           !!workspace?.owner;
+  }
+
+  private updateWorkspaceInList(id: string, fullWorkspace: any): void {
+    const current = this.workspaceSubject.value;
+    const idx = current.findIndex(w => w.publicId === id);
+
+    if (idx === -1) return;
+
+    const updated = [...current];
+    updated[idx] = { ...updated[idx], ...fullWorkspace };
+    this.workspaceSubject.next(updated);
   }
 
   createWorkspace(workspace: any) {
