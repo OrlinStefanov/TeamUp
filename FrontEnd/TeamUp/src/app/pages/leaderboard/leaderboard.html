@@ -39,47 +39,47 @@
             </div>
         </div>
     </div>
-<div class="col-md-12 justify-content-center d-flex align-items-center gap-4 mb-4 flex-wrap">
-  @for (user of leaderboardData.leaderboard; track user; let i = $index) {
-    <div class="col-md-12">
-      <div class="d-flex p-3 align-items-center gap-3"
-           style="border: 1px solid #9938fa; border-radius: 20px;">
+    <div class="col-md-12 justify-content-center d-flex align-items-center gap-4 mb-4 flex-wrap">
+      @for (user of leaderboardData.leaderboard; track user; let i = $index) {
+        <div class="col-md-12">
+          <div class="d-flex p-3 align-items-center gap-3"
+              style="border: 1px solid #9938fa; border-radius: 20px;">
 
-        <div>
-          <span *ngIf="i === 0">🥇</span>
-            <span *ngIf="i === 1">🥈</span>
-            <span *ngIf="i === 2">🥉</span>
-            <span *ngIf="i > 2">{{ i + 1 }}</span>
-        </div>
-
-        @if (user.profilePictureUrl) {
-          <img src="{{ user.profilePictureUrl }}"
-               alt="Profile Picture"
-               style="width: 30px; height: 30px; border-radius: 50%; object-fit: cover;">
-        } @else {
-          <div style="width: 30px; height: 30px; border-radius: 50%; background-color: #33333350; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
-            {{ user.userName.charAt(0).toUpperCase() }}
-          </div>
-        }
-
-        <p class="mb-0 mt-1" [ngClass]="{
-          'gold': i === 0,
-          'silver': i === 1,
-          'bronze': i === 2,
-          'default': i > 2
-        }" ><b>{{ user.userName }}</b></p>
-
-        <div class="ms-auto d-flex flex-column">
-            <span class="fw-bold">{{ user.points }}</span>
-            <div style="color: #00eeff;">
-              <svg xmlns="http://www.w3.org/2000/svg" style="color: #00eeff;" width="16" height="16" fill="currentColor" class="bi bi-arrow-up-right" viewBox="0 0 16 16">
-                <path fill-rule="evenodd" d="M14 2.5a.5.5 0 0 0-.5-.5h-6a.5.5 0 0 0 0 1h4.793L2.146 13.146a.5.5 0 0 0 .708.708L13 3.707V8.5a.5.5 0 0 0 1 0z"/>
-              </svg>pts
+            <div>
+              <span *ngIf="i === 0">🥇</span>
+                <span *ngIf="i === 1">🥈</span>
+                <span *ngIf="i === 2">🥉</span>
+                <span *ngIf="i > 2">{{ i + 1 }}</span>
             </div>
+
+            @if (user.profilePictureUrl) {
+              <img src="{{ user.profilePictureUrl }}"
+                  alt="Profile Picture"
+                  style="width: 30px; height: 30px; border-radius: 50%; object-fit: cover;">
+            } @else {
+              <div style="width: 30px; height: 30px; border-radius: 50%; background-color: #33333350; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
+                {{ user.userName.charAt(0).toUpperCase() }}
+              </div>
+            }
+
+            <p class="mb-0 mt-1" [ngClass]="{
+              'gold': i === 0,
+              'silver': i === 1,
+              'bronze': i === 2,
+              'default': i > 2
+            }" ><b>{{ user.userName }}</b></p>
+
+            <div class="ms-auto d-flex flex-column">
+                <span class="fw-bold text-center">{{ user.points }}</span>
+                <div style="color: #00eeff;">
+                  <svg xmlns="http://www.w3.org/2000/svg" style="color: #00eeff;" width="16" height="16" fill="currentColor" class="bi bi-arrow-up-right" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M14 2.5a.5.5 0 0 0-.5-.5h-6a.5.5 0 0 0 0 1h4.793L2.146 13.146a.5.5 0 0 0 .708.708L13 3.707V8.5a.5.5 0 0 0 1 0z"/>
+                  </svg>pts
+                </div>
+            </div>
+          </div>
         </div>
-      </div>
+      }
     </div>
-  }
-</div>
   </div>
 </div>

@@ -39,6 +39,8 @@ export class WorkspaceDetail implements OnInit {
             this.workspace_info = ws;
           });
         }
+
+        console.log('Workspace: ', this.workspace_info);
       }
     });
 

@@ -11,6 +11,7 @@ import { WorkspaceDetail } from './workspace-detail/workspace-detail';
 import { Chatdetails } from './chatdetails/chatdetails';
 import { ChatComponent } from './chat-component/chat-component';
 import { Leaderboard } from './pages/leaderboard/leaderboard';
+import { Members } from './pages/members/members';
 export const routes: Routes = [
   { path: '', component: StartUp },
   { path: 'signup', component: SignUp },
@@ -41,7 +42,8 @@ export const routes: Routes = [
             ]
           },
 
-          { path: 'leaderboard', component: Leaderboard }
+          { path: 'leaderboard', component: Leaderboard },
+          { path: 'members', component: Members}
         ]
       }
     ]
