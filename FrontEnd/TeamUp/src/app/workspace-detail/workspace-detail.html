@@ -2,10 +2,13 @@
   <div class="container-fluid">
     <span class="navbar-brand px-3 pt-2"> <b>{{ workspace_info?.title }}</b></span>
     <div class="d-flex align-items-center ms-auto">
-      <img src="{{ user_data.profilePictureUrl }}" alt="Profile" class="rounded-circle me-3" style="width:40px;height:40px;object-fit:cover;">
-      <button class="btn btn-outline-secondary" type="button">
-        <i class="bi bi-gear"></i>
-      </button>
+      @if (user_data.profilePictureUrl) {
+        <img [routerLink]="['/profile']" src="{{ user_data.profilePictureUrl }}" alt="Profile" class="rounded-circle" style="width:30px;height:30px;object-fit:cover;">
+      } @else {
+        <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" style="width:30px;height:30px;font-size:18px;">
+          <a [routerLink]="['/profile']" style="text-decoration: none; color: inherit;">{{ user_data.userName.charAt(0) }}</a> 
+        </div>
+      }
     </div>
   </div>
 </nav>

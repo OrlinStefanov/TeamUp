@@ -68,6 +68,9 @@
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
   z-index: 20;
   overflow: hidden;
+
+  justify-content: center;
+  align-items: center;
 }
 
 .member-actions-dropdown .dropdown-item {
@@ -83,3 +86,54 @@
   background: #f3f4f6;
 }
 
+.role-filter-menu {
+  position: relative;
+  width: 220px;
+}
+
+.role-filter-trigger {
+  width: 100%;
+  display: inline-flex;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 10px;
+}
+
+.role-filter-dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  z-index: 30;
+  overflow: hidden;
+}
+
+.dropdown-item
+{
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #1f2937;
+  text-align: left;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: background-color 0.15s ease-in-out;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.bg-blue
+{
+    background-color: #00ffff2c !important;
+    border: #00eeff 1px solid !important;
+    border-radius: 20px;
+    color: #00eeff !important;
+
+    font-weight: 900 !important;
+}
