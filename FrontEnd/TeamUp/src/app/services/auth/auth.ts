@@ -99,12 +99,17 @@ export class Auth {
     );
   }
 
-  getWorkspaceInfo(id: string): Observable<any> {
-    if (this.workspaceCache.has(id)) {
+  getWorkspaceInfo(id: string, forceRefresh = false): Observable<any> {
+    if (forceRefresh) {
+      this.workspaceCache.delete(id);
+      this.workspaceRequests.delete(id);
+    }
+
+    if (!forceRefresh && this.workspaceCache.has(id)) {
       return of(this.workspaceCache.get(id));
     }
 
-    if (this.workspaceRequests.has(id)) {
+    if (!forceRefresh && this.workspaceRequests.has(id)) {
       return this.workspaceRequests.get(id)!;
     }
 
@@ -248,6 +253,49 @@ export class Auth {
     return this.http.get(`${this.apiUrl}/leaderboard/${workspaceId}`, {
       withCredentials: true
     })
+  }
+
+  addMemberToWorkspace(member : any)
+  {
+    return this.http.post(`${this.apiUrl}/workspace/add-member`, member, {
+      withCredentials: true,
+      headers: { 'Content-Type': 'application/json' }
+    })
+  }
+
+  changeMemberRole(member : any)
+  {
+    return this.http.post(`${this.apiUrl}/workspace/change-role`, member, {
+      withCredentials: true,
+      headers: { 'Content-Type': 'application/json' }
+    })
+  }
+
+  removeMemberFromWorkspace(publicId : string, userId : string)
+  {
+    return this.http.delete(`${this.apiUrl}/workspace/${publicId}/members/${userId}`, {
+      withCredentials: true,
+      headers: { 'Content-Type': 'application/json' }
+    })
+  }
+
+  acceptInvitation(invitationId : string, action : string)
+  {
+    return this.http.post(`${this.apiUrl}/workspace/invitations/${invitationId}`, { action }, {
+      withCredentials: true,
+      headers: { 'Content-Type': 'application/json' }
+    })
+  }
+
+  uploadProfilePic(file: File) {
+    const formData = new FormData();
+    formData.append('file', file);
+  
+    return this.http.post(`${this.apiUrl}/upload-profile-picture`, formData, {
+      headers: {
+        Authorization: `Bearer ${this.getToken()}`
+      }
+    });
   }
   //-----------------------Decoding the token--------------------------------------------
   getToken(): string | null {

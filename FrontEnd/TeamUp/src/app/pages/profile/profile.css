@@ -1,0 +1,17 @@
+.profile-container {
+  padding-left: 20%;
+}
+
+.profile-avatar {
+  width: 84px;
+  height: 84px;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.profile-avatar-fallback {
+  background-color: #9833ea2a;
+  border: #9933ea 1px solid;
+  color: #9933ea;
+  font-size: 35px;
+}

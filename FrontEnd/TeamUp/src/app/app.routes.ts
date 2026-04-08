@@ -12,12 +12,13 @@ import { Chatdetails } from './chatdetails/chatdetails';
 import { ChatComponent } from './chat-component/chat-component';
 import { Leaderboard } from './pages/leaderboard/leaderboard';
 import { Members } from './pages/members/members';
+import { Profile } from './pages/profile/profile';
 export const routes: Routes = [
   { path: '', component: StartUp },
   { path: 'signup', component: SignUp },
   { path: 'login', component: LogIn },
   { path: 'forgot-password', component: ForgotPassword },
-
+  { path: 'profile', component: Profile },
   {
     path: '',
     component: Layout,

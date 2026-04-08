@@ -17,11 +17,18 @@ export class Members implements OnInit {
 
   members: any[] = [];
   invitations: any[] = [];
+
+  workspacePublicId: string = '';
   searchTerm: string = '';
   selectedRole: string = 'all';
   currentUserId: string = '';
   currentUserRole: number = 0;
   openMenuMemberId: string | null = null;
+  roleMenuOpen: boolean = false;
+  addMemberQuery: string = '';
+  addMemberSuggestions: any[] = [];
+  addMemberIsLoading: boolean = false;
+  private addMemberSearchTimeout: any;
 
   activeTab: string = 'members';
 
@@ -30,6 +37,7 @@ export class Members implements OnInit {
 
     this.route.parent?.paramMap.subscribe(params => {
       const id = params.get('id');
+      this.workspacePublicId = id ?? '';
 
       console.log('Workspace ID from route: ', id);
 
@@ -79,6 +87,21 @@ export class Members implements OnInit {
       const roleMatches = this.selectedRole === 'all' || roleName === this.selectedRole;
 
       return nameMatches && roleMatches;
+    });
+  }
+
+  get filteredInvitations(): any[] {
+    const term = this.searchTerm.trim().toLowerCase();
+
+    return this.invitations.filter((invitation) => {
+      const inviteName = String(
+        invitation?.emailOrUsername ??
+        invitation?.userName ??
+        invitation?.email ??
+        ''
+      ).toLowerCase();
+
+      return !term || inviteName.includes(term);
     });
   }
 
@@ -165,8 +188,28 @@ export class Members implements OnInit {
       return;
     }
 
-    member.role = role;
-    this.openMenuMemberId = null;
+    const userId = this.getMemberId(member);
+    if (!this.workspacePublicId || !userId) {
+      return;
+    }
+
+    const payload = {
+      publicId: this.workspacePublicId,
+      userId,
+      role
+    };
+
+    this.auth.changeMemberRole(payload).subscribe({
+      next: () => {
+        member.role = role;
+        this.setCurrentUserRole();
+        this.openMenuMemberId = null;
+        this.refreshWorkspaceInfo();
+      },
+      error: () => {
+        this.openMenuMemberId = null;
+      }
+    });
   }
 
   removeMember(member: any, event?: Event): void {
@@ -176,8 +219,35 @@ export class Members implements OnInit {
     }
 
     const memberId = this.getMemberId(member);
-    this.members = this.members.filter((m) => this.getMemberId(m) !== memberId);
-    this.openMenuMemberId = null;
+    if (!this.workspacePublicId || !memberId) {
+      return;
+    }
+
+    this.auth.removeMemberFromWorkspace(this.workspacePublicId, memberId).subscribe({
+      next: () => {
+        this.members = this.members.filter((m) => this.getMemberId(m) !== memberId);
+        this.openMenuMemberId = null;
+        this.refreshWorkspaceInfo();
+      },
+      error: () => {
+        this.openMenuMemberId = null;
+      }
+    });
+  }
+
+  respondToInvitation(invitation: any, action: 'accept' | 'reject', event?: Event): void {
+    event?.stopPropagation();
+    const invitationId = this.getInvitationId(invitation);
+    if (!invitationId) {
+      return;
+    }
+
+    this.auth.acceptInvitation(invitationId, action).subscribe({
+      next: () => {
+        this.refreshWorkspaceInfo();
+      },
+      error: () => {}
+    });
   }
 
   canAssignRole(member: any, role: number): boolean {
@@ -195,6 +265,128 @@ export class Members implements OnInit {
   @HostListener('document:click')
   closeMenus(): void {
     this.openMenuMemberId = null;
+    this.roleMenuOpen = false;
+  }
+
+  openAddMemberModal(): void {
+    this.addMemberQuery = '';
+    this.addMemberSuggestions = [];
+    this.addMemberIsLoading = false;
+
+    const modalEl = document.getElementById('addMemberModal');
+    if (!modalEl) return;
+    const modal = new (window as any).bootstrap.Modal(modalEl);
+    modal.show();
+  }
+
+  onAddMemberInputChange(value: string): void {
+    this.addMemberQuery = value;
+
+    if (this.addMemberSearchTimeout) {
+      clearTimeout(this.addMemberSearchTimeout);
+    }
+
+    const query = value.trim();
+    if (query.length < 2) {
+      this.addMemberSuggestions = [];
+      this.addMemberIsLoading = false;
+      return;
+    }
+
+    this.addMemberIsLoading = true;
+    this.addMemberSearchTimeout = setTimeout(() => {
+      this.auth.searchUsers(query).subscribe({
+        next: (res: any) => {
+          const list = Array.isArray(res) ? res : (res?.items ?? []);
+
+          this.addMemberSuggestions = list.filter((u: any) => !this.isUserInWorkspace(u));
+          this.addMemberIsLoading = false;
+        },
+        error: () => {
+          this.addMemberSuggestions = [];
+          this.addMemberIsLoading = false;
+        }
+      });
+    }, 300);
+  }
+
+  selectUserToAdd(user: any): void {
+    if (this.isUserInWorkspace(user)) {
+      return;
+    }
+
+    if (!this.workspacePublicId) {
+      return;
+    }
+
+    const emailOrUsername = String(user?.emailOrUsername ?? user?.userName ?? '').trim();
+    if (!emailOrUsername) {
+      return;
+    }
+
+    this.addMemberIsLoading = true;
+    const payload = {
+      publicId: this.workspacePublicId,
+      emailOrUsername,
+      role: 0
+    };
+
+    this.auth.addMemberToWorkspace(payload).subscribe({
+      next: () => {
+        this.addMemberIsLoading = false;
+        this.addMemberQuery = '';
+        this.addMemberSuggestions = [];
+
+        const modalEl = document.getElementById('addMemberModal');
+        const modal = modalEl ? (window as any).bootstrap.Modal.getInstance(modalEl) : null;
+        modal?.hide();
+
+        this.refreshWorkspaceInfo();
+      },
+      error: () => {
+        this.addMemberIsLoading = false;
+      }
+    });
+  }
+
+  private isUserInWorkspace(user: any): boolean {
+    const userId = this.getMemberId(user);
+    if (userId) {
+      return this.members.some((m) => this.getMemberId(m) === userId);
+    }
+
+    const username = String(user?.userName ?? '').trim().toLowerCase();
+    if (!username) return false;
+
+    return this.members.some((m) => String(m?.userName ?? '').trim().toLowerCase() === username);
+  }
+
+  private getInvitationId(invitation: any): string {
+    return String(invitation?.id ?? invitation?.invitationId ?? invitation?.publicId ?? '');
+  }
+
+  toggleRoleMenu(event: Event): void {
+    event.stopPropagation();
+    this.roleMenuOpen = !this.roleMenuOpen;
+  }
+
+  setRoleFilter(role: string, event?: Event): void {
+    event?.stopPropagation();
+    this.selectedRole = role;
+    this.roleMenuOpen = false;
+  }
+
+  getRoleFilterLabel(): string {
+    switch (this.selectedRole) {
+      case 'owner':
+        return 'Owner';
+      case 'admin':
+        return 'Admin';
+      case 'member':
+        return 'Member';
+      default:
+        return 'All Roles';
+    }
   }
 
   getUserInitial(userName: string): string {
@@ -214,5 +406,18 @@ export class Members implements OnInit {
     }
 
     return members;
+  }
+
+  private refreshWorkspaceInfo(): void {
+    if (!this.workspacePublicId) return;
+
+    this.auth.getWorkspaceInfo(this.workspacePublicId, true).subscribe({
+      next: (ws) => {
+        this.members = this.buildMembersWithOwner(ws);
+        this.invitations = ws.invitations;
+        this.setCurrentUserRole();
+      },
+      error: () => {}
+    });
   }
 }
