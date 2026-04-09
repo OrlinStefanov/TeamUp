@@ -303,6 +303,71 @@ namespace TeamUpBackEnd.Extensions
 
 			}).RequireAuthorization().Accepts<IFormFile>("multipart/form-data").DisableAntiforgery()
 				.WithSummary("Uploading user profile picture").WithTags("User Management");
+
+			//change user info 
+			app.MapPost("/profile/update", [Authorize] async (
+				ClaimsPrincipal userClaims,
+				AppDbContext db,
+				UserManager<ApplicationUser> userManager,
+				user_data.UpdateUser model) =>
+			{
+				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
+
+				if (userId is null)
+					return Results.BadRequest("User id not found");
+
+				var user = await userManager.FindByIdAsync(userId);
+
+				if (user is null)
+					return Results.BadRequest("User not found");
+
+				if (!string.IsNullOrWhiteSpace(model.UserName) && model.UserName != user.UserName)
+				{
+					var usernameResult = await userManager.SetUserNameAsync(user, model.UserName);
+					if (!usernameResult.Succeeded)
+						return Results.BadRequest(usernameResult.Errors);
+				}
+
+				if (!string.IsNullOrWhiteSpace(model.Email) && model.Email != user.Email)
+				{
+					var emailResult = await userManager.SetEmailAsync(user, model.Email);
+					if (!emailResult.Succeeded)
+						return Results.BadRequest(emailResult.Errors);
+				}
+
+				if (!string.IsNullOrWhiteSpace(model.PhoneNumber))
+					user.PhoneNumber = model.PhoneNumber;
+
+				if (!string.IsNullOrWhiteSpace(model.FirstName))
+					user.FirstName = model.FirstName;
+
+				if (!string.IsNullOrWhiteSpace(model.LastName))
+					user.LastName = model.LastName;
+
+				if (model.BirthDate.HasValue)
+					user.BirthDate = model.BirthDate;
+
+				var result = await userManager.UpdateAsync(user);
+
+				if (!result.Succeeded)
+					return Results.BadRequest(result.Errors);
+
+				return Results.Ok(new
+				{
+					user.Id,
+					user.UserName,
+					user.Email,
+					user.FirstName,
+					user.LastName,
+					user.PhoneNumber,
+					user.BirthDate,
+					user.ProfilePictureUrl
+				});
+
+			})
+			.RequireAuthorization()
+			.WithSummary("Updates user's personal info")
+			.WithTags("User Management");
 		}
 
 		public static void WorkspaceEndpoints(WebApplication app)

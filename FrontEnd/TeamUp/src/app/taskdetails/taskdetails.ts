@@ -185,6 +185,10 @@ export class Taskdetails {
 
   // DRAG & DROP
   drop(event: CdkDragDrop<any[]>, newStatusIndex: number) {
+    const movedTask = event.previousContainer.data[event.previousIndex];
+    if (!this.canMoveTask(movedTask)) {
+      return;
+    }
 
     if (event.previousContainer === event.container) {
       moveItemInArray(
@@ -202,22 +206,22 @@ export class Taskdetails {
       event.currentIndex
     );
 
-    const movedTask = event.container.data[event.currentIndex];
+    const updatedTask = event.container.data[event.currentIndex];
 
-    movedTask.status = newStatusIndex;
+    updatedTask.status = newStatusIndex;
 
-    if (this.isOverdue(movedTask)) {
-      movedTask.status = 'Overdue';
+    if (this.isOverdue(updatedTask)) {
+      updatedTask.status = 'Overdue';
     }
 
-    const index = this.tasks.findIndex(t => t.id === movedTask.id);
+    const index = this.tasks.findIndex(t => t.id === updatedTask.id);
     if (index !== -1) {
-      this.tasks[index] = movedTask;
+      this.tasks[index] = updatedTask;
     }
 
-    console.log('Moved task:', movedTask.status);
+    console.log('Moved task:', updatedTask.status);
     
-    this.auth.updateTaskStatus(movedTask.publicId, movedTask.status)
+    this.auth.updateTaskStatus(updatedTask.publicId, updatedTask.status)
       .subscribe({
         next: () => console.log('Status updated'),
         error: (err) => {
@@ -281,6 +285,38 @@ export class Taskdetails {
 
   setDifficulty(level: number) {
     this.newTask.difficulty = level;
+  }
+
+  canMoveTask(task: any): boolean {
+    if (!task) return false;
+    if (this.isOwnerOrAdmin()) return true;
+    return this.isTaskAssignedToCurrentUser(task);
+  }
+
+  private isOwnerOrAdmin(): boolean {
+    const currentUserId = this.getEntityId(this.user_data);
+    if (!currentUserId || !this.worksapce_info) {
+      return false;
+    }
+
+    const ownerId = this.getEntityId(this.worksapce_info.owner);
+    if (ownerId && ownerId === currentUserId) {
+      return true;
+    }
+
+    const matchedMember = this.worksapce_info.members?.find((m: any) => this.getEntityId(m) === currentUserId);
+    return matchedMember?.role === 1 || matchedMember?.role === 2;
+  }
+
+  private isTaskAssignedToCurrentUser(task: any): boolean {
+    const currentUserId = this.getEntityId(this.user_data);
+    if (!currentUserId) return false;
+
+    return task?.assignedUsers?.some((u: any) => this.getEntityId(u) === currentUserId) ?? false;
+  }
+
+  private getEntityId(entity: any): string {
+    return String(entity?.id ?? entity?.userId ?? entity?.publicId ?? '');
   }
 
   toggleUser(user: any) {
