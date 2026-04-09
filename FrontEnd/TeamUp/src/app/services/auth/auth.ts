@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { LoginUser, RegisterUser, ResetUser, User } from './auth-types';
+import { LoginUser, RegisterUser, ResetUser, UpdateUser, User } from './auth-types';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, finalize, Observable, of, shareReplay, tap } from 'rxjs';
 
@@ -297,6 +297,15 @@ export class Auth {
       }
     });
   }
+
+  updateUserInfo(user : UpdateUser)
+  {
+    return this.http.post(`${this.apiUrl}/profile/update`, user, {
+      withCredentials: true,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+
   //-----------------------Decoding the token--------------------------------------------
   getToken(): string | null {
     return localStorage.getItem(this.tokenKey);

@@ -20,16 +20,25 @@ export class Profile {
   isUploadingProfilePicture: boolean = false;
   mockUserData = {
     fullName: 'John Doe',
+    userName: 'john.doe',
     email: 'john.doe@example.com',
     phone: '+359 88 123 4567',
-    location: 'Sofia, Bulgaria',
-    bio: 'Productive teammate focused on collaboration and delivery.'
+    birthDate: '1998-01-01'
   };
+  editableUserData = {
+    fullName: '',
+    userName: '',
+    email: '',
+    phone: '',
+    birthDate: ''
+  };
+  saveInfoMessage: string = '';
 
   ngOnInit() {
     this.auth.me().subscribe((res) => {
       this.user_data = res;
       this.previewProfilePictureUrl = this.user_data?.profilePictureUrl ?? '';
+      this.populateEditableData();
       console.log(this.user_data);
     });
   }
@@ -83,5 +92,39 @@ export class Profile {
         this.isUploadingProfilePicture = false;
       }
     });
+  }
+
+  saveUserInfo(): void {
+    // Local save for now (until profile update endpoint is available)
+    const [firstName, ...rest] = this.editableUserData.fullName.trim().split(' ');
+    const lastName = rest.join(' ');
+
+    this.user_data = {
+      ...(this.user_data || {}),
+      firstName: firstName || '',
+      lastName: lastName || '',
+      userName: this.editableUserData.userName,
+      email: this.editableUserData.email,
+      phoneNumber: this.editableUserData.phone,
+      birthDate: this.editableUserData.birthDate
+    };
+
+    this.auth.updateUserInfo(this.user_data);
+
+    this.saveInfoMessage = 'Profile info saved locally.';
+  }
+
+  private populateEditableData(): void {
+    const firstName = this.user_data?.firstName ?? '';
+    const lastName = this.user_data?.lastName ?? '';
+    const fullNameFromApi = `${firstName} ${lastName}`.trim();
+
+    this.editableUserData = {
+      fullName: fullNameFromApi || this.mockUserData.fullName,
+      userName: this.user_data?.userName || this.mockUserData.userName,
+      email: this.user_data?.email || this.mockUserData.email,
+      phone: this.user_data?.phoneNumber || this.mockUserData.phone,
+      birthDate: this.user_data?.birthDate || this.mockUserData.birthDate
+    };
   }
 }

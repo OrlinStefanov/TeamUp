@@ -8,6 +8,16 @@ export interface RegisterUser {
     phoneNumber: string;
 }
 
+export interface UpdateUser 
+{
+    userName: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    birthDate: Date;
+    phoneNumber: string;
+}
+
 export interface LoginUser {
     emailOrUsername: string;
     password: string;
