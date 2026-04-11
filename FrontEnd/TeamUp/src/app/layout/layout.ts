@@ -1,30 +1,50 @@
-import { Component } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { Auth } from '../services/auth/auth';
 import { RouterOutlet, RouterLinkWithHref, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Observable } from 'rxjs';
-import { HostListener } from '@angular/core';
+import { Workspace, WorkspaceMember } from '../services/auth/auth-types';
 
 @Component({
   selector: 'app-layout',
-  imports: [RouterOutlet, RouterLinkWithHref, CommonModule],
+  imports: [RouterOutlet, RouterLinkWithHref, CommonModule, FormsModule],
   templateUrl: './layout.html',
   styleUrl: './layout.css',
 })
-export class Layout {
+export class Layout implements OnInit {
   isSidebarOpen = false;
   isDesktopSidebarCollapsed = false;
   isDarkMode = false;
   isSettingsOpen = false;
   activeLink: string = '';
 
-  workspaces : any[] = [];
+  workspaces: any[] = [];
+
+  showCreateWorkspace = false;
+  showJoinWorkspace = false;
+
+  workspace: Workspace = {
+    title: '',
+    description: '',
+    ownerId: '',
+    members: [],
+  };
+
+  joinInput = {
+    inviteCode: '',
+    workspaceLink: '',
+  };
+
+  inviteInput = '';
+  suggestions: any[] = [];
+  invitedMembers: WorkspaceMember[] = [];
+  private searchTimeout: ReturnType<typeof setTimeout> | undefined;
 
   constructor(private auth: Auth, private router: Router) {}
-  
+
   user$!: Observable<any>;
   workspaces$!: Observable<any[]>;
-
 
   ngOnInit() {
     this.user$ = this.auth.user$;
@@ -78,8 +98,136 @@ export class Layout {
   }
 
   logout() {
-    this.auth.logout(); 
+    this.auth.logout();
     this.router.navigate(['/login']);
   }
 
+  openCreateWorkspace() {
+    this.showCreateWorkspace = true;
+  }
+
+  closeCreateWorkspace() {
+    this.showCreateWorkspace = false;
+    this.workspace = { title: '', description: '', ownerId: '', members: [] };
+    this.invitedMembers = [];
+    this.inviteInput = '';
+    this.suggestions = [];
+  }
+
+  createWorkspace() {
+    if (!this.workspace.title.trim()) {
+      console.log('Workspace name is required');
+      return;
+    }
+
+    this.workspace.members = [...this.invitedMembers];
+
+    this.auth.createWorkspace(this.workspace).subscribe({
+      next: () => {
+        this.auth.getWorkspaces(true).subscribe();
+
+        this.workspace = { title: '', description: '', ownerId: '', members: [] };
+        this.invitedMembers = [];
+        this.inviteInput = '';
+        this.suggestions = [];
+        this.showCreateWorkspace = false;
+      },
+    });
+  }
+
+  openJoinWorkspace() {
+    this.showJoinWorkspace = true;
+  }
+
+  closeJoinWorkspace() {
+    this.showJoinWorkspace = false;
+    this.joinInput = { inviteCode: '', workspaceLink: '' };
+  }
+
+  joinWorkspace() {
+    const code = this.joinInput.inviteCode?.trim();
+    const link = this.joinInput.workspaceLink?.trim();
+
+    if (!code && !link) return;
+
+    if (code) {
+      this.auth.joinWorkspaceByCode(code).subscribe({
+        next: () => this.afterJoinSuccess(),
+        error: (err) => console.error(err),
+      });
+      return;
+    }
+
+    if (link) {
+      const publicId = this.extractPublicIdFromLink(link);
+
+      if (!publicId) {
+        console.error('Invalid link');
+        return;
+      }
+
+      this.auth.joinWorkspaceByLink(publicId).subscribe({
+        next: () => this.afterJoinSuccess(),
+        error: (err) => console.error(err),
+      });
+    }
+  }
+
+  extractPublicIdFromLink(link: string): string | null {
+    try {
+      const url = new URL(link);
+      const parts = url.pathname.split('/');
+
+      return parts[parts.length - 1];
+    } catch {
+      return null;
+    }
+  }
+
+  afterJoinSuccess() {
+    this.auth.getWorkspaces(true).subscribe();
+
+    this.joinInput = {
+      inviteCode: '',
+      workspaceLink: '',
+    };
+
+    this.closeJoinWorkspace();
+  }
+
+  onInviteInputChange(value: string) {
+    if (this.searchTimeout) clearTimeout(this.searchTimeout);
+
+    this.searchTimeout = setTimeout(() => {
+      if (value.length < 2) {
+        this.suggestions = [];
+        return;
+      }
+
+      this.auth.searchUsers(value).subscribe({
+        next: (res: any) => {
+          this.suggestions = res.filter(
+            (u: any) =>
+              !this.invitedMembers.some((m) => m.emailOrUsername === u.userName)
+          );
+        },
+        error: () => {
+          this.suggestions = [];
+        },
+      });
+    }, 300);
+  }
+
+  selectUser(user: any) {
+    this.invitedMembers.push({
+      role: 0,
+      emailOrUsername: user.userName,
+    });
+    this.inviteInput = '';
+    this.suggestions = [];
+  }
+
+  removeMember(member: WorkspaceMember) {
+    this.invitedMembers = this.invitedMembers.filter((m) => m !== member);
+  }
 }

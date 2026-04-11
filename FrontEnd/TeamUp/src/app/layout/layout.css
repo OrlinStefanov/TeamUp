@@ -353,6 +353,17 @@
   visibility: visible;
 }
 
+.workspace-icon 
+{
+  background-color: #9233ea2c;
+  border: 1px solid #9333ea;
+
+  width: 25px;
+  height: 25px;
+
+  border-radius: 10px;
+}
+
 /* Responsive */
 @media (max-width: 767.98px) {
   .content {
@@ -394,4 +405,284 @@
   .side-navbar.collapsed {
     width: 78px;
   }
+}
+
+/* Sidebar workspace Create / Join (button reset) */
+button.workspace-item.workspace-action-btn {
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+/* Create / Join modals (aligned with dashboard) */
+.accent {
+  color: #a64bfb;
+}
+
+.form-group {
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.createWorkspace-overlay .btn-primary,
+.joinWorkspace-overlay .btn-primary {
+  padding: 12px 30px;
+  border: none;
+  border-radius: 8px;
+  background: #a64bfb;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.createWorkspace-overlay .btn-primary:disabled,
+.joinWorkspace-overlay .btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.createWorkspace-overlay,
+.joinWorkspace-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.createWorkspace-box,
+.joinWorkspace-box {
+  width: 100%;
+  max-width: 460px;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.tm-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tm-icon {
+  width: 38px;
+  height: 38px;
+  background: linear-gradient(135deg, #9333ea, #a64bfb);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.tm-title {
+  font-size: 23px;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.createWorkspace-overlay.dark-mode .tm-title,
+.joinWorkspace-overlay.dark-mode .tm-title {
+  color: #f0eeff;
+}
+
+.createWorkspace-overlay.light-mode .tm-title,
+.joinWorkspace-overlay.light-mode .tm-title {
+  color: #1a1a2e;
+}
+
+.tm-subtitle {
+  font-size: 11px;
+  margin: 0;
+}
+
+.createWorkspace-overlay.dark-mode .tm-subtitle,
+.joinWorkspace-overlay.dark-mode .tm-subtitle,
+.joinWorkspace-overlay.dark-mode .separator-text {
+  color: #6b6b8a;
+}
+
+.createWorkspace-overlay.light-mode .tm-subtitle,
+.joinWorkspace-overlay.light-mode .tm-subtitle,
+.joinWorkspace-overlay.light-mode .separator-text {
+  color: #9898b8;
+}
+
+.createWorkspace-overlay.light-mode .createWorkspace-box,
+.joinWorkspace-overlay.light-mode .joinWorkspace-box {
+  background:
+    linear-gradient(rgba(168, 85, 247, 0.5) 0px, #f7f7f7 0px),
+    linear-gradient(90deg, rgba(168, 85, 247, 0.5) 0px, #f7f7f7 0px);
+  background-size: 50px 50px;
+  color: #1a1a2e;
+}
+
+.createWorkspace-overlay.dark-mode .createWorkspace-box,
+.joinWorkspace-overlay.dark-mode .joinWorkspace-box {
+  background: #111;
+  color: #f0eeff;
+  border: 1px solid #2a2a3a;
+}
+
+.header-row,
+.join-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 20px 24px 15px;
+  border-bottom: 1px solid #ebebf5;
+}
+
+.createWorkspace-overlay.dark-mode .header-row,
+.joinWorkspace-overlay.dark-mode .header-row,
+.createWorkspace-overlay.dark-mode .join-header,
+.joinWorkspace-overlay.dark-mode .join-header {
+  border-bottom: 1px solid #1e1e2e;
+}
+
+.createWorkspace-overlay.light-mode .header-row,
+.joinWorkspace-overlay.light-mode .header-row,
+.createWorkspace-overlay.light-mode .join-header,
+.joinWorkspace-overlay.light-mode .join-header {
+  border-bottom: 1px solid #ebebf5;
+}
+
+.tm-body {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-height: 480px;
+  overflow-y: auto;
+}
+
+.createWorkspace-overlay .form-control,
+.createWorkspace-overlay .tm-input,
+.joinWorkspace-overlay .form-control,
+.joinWorkspace-overlay .tm-input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #a64bfb;
+  background: rgba(255, 255, 255, 0.05);
+  color: inherit;
+  box-sizing: border-box;
+}
+
+.createWorkspace-overlay .form-control::placeholder,
+.createWorkspace-overlay .tm-input::placeholder,
+.joinWorkspace-overlay .form-control::placeholder,
+.joinWorkspace-overlay .tm-input::placeholder {
+  color: #777;
+  opacity: 1;
+}
+
+.createWorkspace-actions,
+.joinWorkspace-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 30px;
+  padding: 16px 24px;
+  border-top: 1px solid #ebebf5;
+}
+
+.createWorkspace-overlay.dark-mode .createWorkspace-actions,
+.joinWorkspace-overlay.dark-mode .joinWorkspace-actions {
+  border-top: 1px solid #1e1e2e;
+}
+
+.createWorkspace-overlay.light-mode .createWorkspace-actions,
+.joinWorkspace-overlay.light-mode .joinWorkspace-actions {
+  border-top: 1px solid #ebebf5;
+}
+
+.btn-cancel {
+  background: transparent;
+  border: none;
+  color: #666;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.btn-cancel:hover {
+  color: red;
+}
+
+.createWorkspace-overlay .suggestions-dropdown {
+  position: absolute;
+  width: 100%;
+  background: #222;
+  border: 1px solid #a64bfb;
+  border-radius: 0 0 8px 8px;
+  z-index: 10;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.createWorkspace-overlay.light-mode .suggestions-dropdown {
+  background: #fff;
+  color: #1a1a2e;
+}
+
+.createWorkspace-overlay .suggestions-dropdown li {
+  padding: 10px;
+  cursor: pointer;
+}
+
+.createWorkspace-overlay .suggestions-dropdown li:hover {
+  background: #333;
+}
+
+.createWorkspace-overlay.light-mode .suggestions-dropdown li:hover {
+  background: #eee;
+}
+
+.separator-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.separator-line {
+  flex: 1;
+  height: 1px;
+  background-color: #9333ea;
+}
+
+.separator-text {
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.createWorkspace-overlay .dropdown-toggle {
+  background: transparent;
+  color: #bbb;
+  border-radius: 8px;
+  z-index: 10;
+}
+
+.createWorkspace-overlay .dropdown-toggle:hover {
+  color: #1a1a2e;
+}
+
+.createWorkspace-overlay.dark-mode .dropdown-toggle:hover {
+  background: transparent;
+  color: #fff;
+}
+
+.createWorkspace-overlay .dropdown-menu {
+  color: #333;
+}
+
+.createWorkspace-overlay.dark-mode .dropdown-menu {
+  background: #222;
+  color: #f0eeff;
+  cursor: pointer;
 }

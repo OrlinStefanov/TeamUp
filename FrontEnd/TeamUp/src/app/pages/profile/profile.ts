@@ -3,6 +3,7 @@ import { Auth } from '../../services/auth/auth';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { error } from 'node:console';
 
 @Component({
   selector: 'app-profile',
@@ -109,7 +110,13 @@ export class Profile {
       birthDate: this.editableUserData.birthDate
     };
 
-    this.auth.updateUserInfo(this.user_data);
+    this.auth.updateUserInfo(this.user_data).subscribe({
+      next: (res) => {
+        console.log(res);
+      },
+      error: () => {
+      } 
+    });
 
     this.saveInfoMessage = 'Profile info saved locally.';
   }
