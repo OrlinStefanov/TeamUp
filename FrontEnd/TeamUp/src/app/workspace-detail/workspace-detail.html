@@ -3,9 +3,9 @@
     <span class="navbar-brand px-3 pt-2"> <b>{{ workspace_info?.title }}</b></span>
     <div class="d-flex align-items-center ms-auto">
       @if (user_data.profilePictureUrl) {
-        <img [routerLink]="['/profile']" src="{{ user_data.profilePictureUrl }}" alt="Profile" class="rounded-circle" style="width:30px;height:30px;object-fit:cover;">
+        <img [routerLink]="['/profile']" src="{{ user_data.profilePictureUrl }}" alt="Profile" class="rounded-circle" style="width:30px;height:30px;object-fit:cover; cursor: pointer;">
       } @else {
-        <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" style="width:30px;height:30px;font-size:18px;">
+        <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" style="width:30px;height:30px;font-size:18px; cursor: pointer;">
           <a [routerLink]="['/profile']" style="text-decoration: none; color: inherit;">{{ user_data.userName.charAt(0) }}</a> 
         </div>
       }

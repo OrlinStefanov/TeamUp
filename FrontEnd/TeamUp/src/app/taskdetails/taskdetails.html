@@ -66,7 +66,7 @@
               <span class="badge bg-secondary ms-auto mt-2">{{ tasksToDo.length }}</span>
             </div>
 
-            <div *ngFor="let task of tasksToDo" cdkDrag [cdkDragDisabled]="!canMoveTask(task)" class="mb-4">
+            <div *ngFor="let task of tasksToDo" style="cursor: pointer;" cdkDrag [cdkDragDisabled]="!canMoveTask(task)" class="mb-4">
               <ng-container *ngTemplateOutlet="taskCard; context:{task: task}"></ng-container>
             </div>
           </div>
@@ -88,7 +88,7 @@
               <span class="badge bg-secondary ms-auto mt-2">{{ tasksInProgress.length }}</span>
             </div>
 
-            <div *ngFor="let task of tasksInProgress" cdkDrag [cdkDragDisabled]="!canMoveTask(task)" class="mb-4">
+            <div *ngFor="let task of tasksInProgress" style="cursor: pointer;" cdkDrag [cdkDragDisabled]="!canMoveTask(task)" class="mb-4">
               <ng-container *ngTemplateOutlet="taskCard; context:{task: task}"></ng-container>
             </div>
           </div>
@@ -110,7 +110,7 @@
               <span class="badge bg-secondary ms-auto mt-2">{{ tasksCompleted.length }}</span>
             </div>
 
-            <div *ngFor="let task of tasksCompleted" cdkDrag [cdkDragDisabled]="!canMoveTask(task)" class="mb-4">
+            <div *ngFor="let task of tasksCompleted" style="cursor: pointer;" cdkDrag [cdkDragDisabled]="!canMoveTask(task)" class="mb-4">
               <ng-container *ngTemplateOutlet="taskCard; context:{task: task}"></ng-container>
             </div>
           </div>
@@ -132,11 +132,10 @@
               <span class="badge bg-secondary ms-auto mt-2">{{ tasksOverdue.length }}</span>
             </div>
 
-            <div *ngFor="let task of tasksOverdue" cdkDrag [cdkDragDisabled]="!canMoveTask(task)" class="mb-4">
+            <div *ngFor="let task of tasksOverdue" style="cursor: pointer;" cdkDrag [cdkDragDisabled]="!canMoveTask(task)" class="mb-4">
               <ng-container *ngTemplateOutlet="taskCard; context:{task: task}"></ng-container>
             </div>
           </div>
-
         </div>
       </div>
     </div>
