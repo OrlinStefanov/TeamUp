@@ -586,6 +586,7 @@ namespace TeamUpBackEnd.Extensions
 						w.CreatedAt,
 						w.UpdatedAt,
 						w.OwnerId,
+						w.JoinCode,
 						MembersCount = w.Members.Count,
 						Members = w.Members.Select(m => new
 						{
