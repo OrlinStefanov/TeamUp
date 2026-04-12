@@ -175,9 +175,9 @@
           <div class="nav-footer justify-content-between">
             <div class="d-flex align-items-center">
               @if (user.profilePictureUrl) {
-                <img [src]="user.profilePictureUrl" style="width:30px;height:30px;object-fit:cover;" [routerLink]="['/profile']" alt="Profile" class="logo" />
+                <img [src]="user.profilePictureUrl" style="width:30px; height:30px; object-fit:cover; cursor: pointer;" [routerLink]="['/profile']" alt="Profile" class="logo"/>
                 } @else {
-                  <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" style="width:30px;height:30px;font-size:18px;">
+                  <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" style="width:30px; height:30px; font-size:18px; cursor: pointer;">
                     <a [routerLink]="['/profile']" style="text-decoration: none; color: inherit;">{{ user.userName.charAt(0) }}</a> 
                   </div>
                 }
