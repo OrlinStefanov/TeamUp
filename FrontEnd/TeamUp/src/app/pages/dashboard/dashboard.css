@@ -383,18 +383,25 @@
   background-color: #e2dfdf23;
 
   min-height: 50px;
-  max-height: 80px;
 }
 
-.badge-secondary
-{
-  border: 1px solid #636262;
-  border-radius: 15px;
-  background-color: #faf8f823;
-  text-align: center;
+.info-field label {
+  font-size: 14px;
+}
 
-  font-size: 12px;
-  font-weight: bold;
-  
-  padding: 5px 5px;
+.role-owner {
+  background-color: #facc154d;
+  border: 1px solid #facc15;
+  color: #1f2937;
+}
+
+.role-admin {
+  background-color: #9233ea2d;
+  border: 1px solid #9333ea;
+  color: #1f2937;
+}
+
+.role-member {
+  background-color: #6b7280;
+  color: #ffffff;
 }

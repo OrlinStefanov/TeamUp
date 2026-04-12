@@ -28,6 +28,7 @@ export class Dashboard implements OnInit, AfterViewInit {
   showSettingsDropdown = false;
   showCreateWorkspace = false;
   showJoinWorkspace = false;
+  copied = false;
   timeout: any;
 
   suggestions: any[] = [];
@@ -114,6 +115,19 @@ export class Dashboard implements OnInit, AfterViewInit {
     console.log('search user', value);
   }
 
+  copyJoinCode() {
+    const code = this.selectedWorkspace?.joinCode;
+    if (!code) return;
+  
+    navigator.clipboard.writeText(code).then(() => {
+      this.copied = true;
+  
+      setTimeout(() => {
+        this.copied = false;
+      }, 1500);
+    });
+  }
+
   addMember(user: any) {
     const exists = this.editMembers.some(m => m.id === user.id);
     if (!exists) {
@@ -156,6 +170,11 @@ export class Dashboard implements OnInit, AfterViewInit {
     this.showSettings = true;
     console.log(this.selectedWorkspace);
 
+    setTimeout(() => {
+      const modalEl = document.getElementById('settingsModal');
+      const modal = new (window as any).bootstrap.Modal(modalEl);
+      modal.show();
+    });
   }
 
   closeSettings()
