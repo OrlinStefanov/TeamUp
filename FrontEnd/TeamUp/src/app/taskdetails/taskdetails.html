@@ -66,7 +66,7 @@
               <span class="badge bg-secondary ms-auto mt-2">{{ tasksToDo.length }}</span>
             </div>
 
-            <div *ngFor="let task of tasksToDo" style="cursor: pointer;" cdkDrag [cdkDragDisabled]="!canMoveTask(task)" class="mb-4">
+            <div *ngFor="let task of tasksToDo" style="cursor: pointer;" cdkDrag [cdkDragDisabled]="!canMoveTask(task)" [ngClass]="{ 'disabled-task': !canMoveTask(task) }" class="mb-4">
               <ng-container *ngTemplateOutlet="taskCard; context:{task: task}"></ng-container>
             </div>
           </div>
@@ -88,7 +88,7 @@
               <span class="badge bg-secondary ms-auto mt-2">{{ tasksInProgress.length }}</span>
             </div>
 
-            <div *ngFor="let task of tasksInProgress" style="cursor: pointer;" cdkDrag [cdkDragDisabled]="!canMoveTask(task)" class="mb-4">
+            <div *ngFor="let task of tasksInProgress" style="cursor: pointer;" cdkDrag [cdkDragDisabled]="!canMoveTask(task)" [ngClass]="{ 'disabled-task': !canMoveTask(task) }" class="mb-4">
               <ng-container *ngTemplateOutlet="taskCard; context:{task: task}"></ng-container>
             </div>
           </div>
@@ -110,7 +110,7 @@
               <span class="badge bg-secondary ms-auto mt-2">{{ tasksCompleted.length }}</span>
             </div>
 
-            <div *ngFor="let task of tasksCompleted" style="cursor: pointer;" cdkDrag [cdkDragDisabled]="!canMoveTask(task)" class="mb-4">
+            <div *ngFor="let task of tasksCompleted" style="cursor: pointer;" cdkDrag [cdkDragDisabled]="!canMoveTask(task)" [ngClass]="{ 'disabled-task': !canMoveTask(task) }" class="mb-4">
               <ng-container *ngTemplateOutlet="taskCard; context:{task: task}"></ng-container>
             </div>
           </div>
@@ -120,8 +120,8 @@
                cdkDropList
                id="overdueList"
                [cdkDropListData]="tasksOverdue"
-               [cdkDropListConnectedTo]="['todoList','inProgressList','doneList']"
-               (cdkDropListDropped)="drop($event, 3)">
+               [cdkDropListConnectedTo]="[]"
+               cdkDropListDisabled="true">
 
             <div class="d-flex align-items-center mb-3" style="border-bottom: 2px solid rgb(255, 0, 0); height: 60px;">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" style="color: rgb(255, 0, 0);" fill="currentColor" class="bi bi-exclamation-circle mt-1" viewBox="0 0 16 16">
@@ -132,7 +132,7 @@
               <span class="badge bg-secondary ms-auto mt-2">{{ tasksOverdue.length }}</span>
             </div>
 
-            <div *ngFor="let task of tasksOverdue" style="cursor: pointer;" cdkDrag [cdkDragDisabled]="!canMoveTask(task)" class="mb-4">
+            <div *ngFor="let task of tasksOverdue" style="cursor: pointer;" cdkDrag [cdkDragDisabled]="!canMoveTask(task)" [ngClass]="{ 'disabled-task': !canMoveTask(task) }" class="mb-4">
               <ng-container *ngTemplateOutlet="taskCard; context:{task: task}"></ng-container>
             </div>
           </div>

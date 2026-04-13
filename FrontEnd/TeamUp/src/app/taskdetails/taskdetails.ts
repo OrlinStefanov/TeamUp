@@ -186,7 +186,12 @@ export class Taskdetails {
   // DRAG & DROP
   drop(event: CdkDragDrop<any[]>, newStatusIndex: number) {
     const movedTask = event.previousContainer.data[event.previousIndex];
-    if (!this.canMoveTask(movedTask)) {
+    if (!this.canMoveTask(movedTask) || this.isOverdue(movedTask)) {
+      return;
+    }
+
+    // Prevent moving tasks to Overdue column (it's auto-populated)
+    if (newStatusIndex === 3) {
       return;
     }
 
@@ -289,6 +294,7 @@ export class Taskdetails {
 
   canMoveTask(task: any): boolean {
     if (!task) return false;
+    if (this.isOverdue(task)) return false;
     if (this.isOwnerOrAdmin()) return true;
     return this.isTaskAssignedToCurrentUser(task);
   }

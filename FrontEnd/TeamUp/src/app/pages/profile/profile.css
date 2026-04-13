@@ -1,5 +1,8 @@
 .profile-container {
-  padding-left: 20%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
 }
 
 .profile-avatar {
