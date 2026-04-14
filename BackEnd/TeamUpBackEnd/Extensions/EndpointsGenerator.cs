@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection.Metadata.Ecma335;
 using System.Security.Claims;
@@ -1141,7 +1142,7 @@ namespace TeamUpBackEnd.Extensions
 		public static void TaskEndpoints(WebApplication app)
 		{
 			//creates a new task 
-			app.MapPost("/create/tasks", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, UserManager<ApplicationUser> userManager, taskDTO.CreateTaskItemDTO data) =>
+			app.MapPost("/create/tasks", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, UserManager<ApplicationUser> userManager, taskDTO.CreateTaskItemDTO data, IHubContext<TaskHub> hb) =>
 			{
 				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -1278,6 +1279,23 @@ namespace TeamUpBackEnd.Extensions
 					.Select(tt => tt.Tag.Name)
 					.ToListAsync();
 
+				Console.WriteLine("🔥 Sending taskCreated event");
+
+				await hb.Clients
+					.Group(task.WorkSpace!.PublicId.ToString())
+					.SendAsync("taskCreated", new
+					{
+						task.PublicId,
+						task.Title,
+						task.Description,
+						task.DueDate,
+						task.StartDate,
+						task.Points,
+						Status = task.Status.ToString(),
+						Difficulty = task.Difficulty.ToString(),
+						Tags = tags
+					});
+
 				return Results.Ok(new
 				{
 					task.PublicId,
@@ -1364,7 +1382,8 @@ namespace TeamUpBackEnd.Extensions
 				ClaimsPrincipal userClaims,
 				UserManager<ApplicationUser> userManager,
 				string taskid,
-				EditTaskDTO dto) =>
+				EditTaskDTO dto,
+				IHubContext<TaskHub> hub) =>
 			{
 				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
 				if (userId == null)
@@ -1437,6 +1456,16 @@ namespace TeamUpBackEnd.Extensions
 
 				await db.SaveChangesAsync();
 
+				await hub.Clients
+					.Group(task.WorkSpace.PublicId.ToString())
+					.SendAsync("taskUpdated", new
+					{
+						task.PublicId,
+						task.Title,
+						Status = task.Status.ToString(),
+						task.Points
+					});
+
 				return Results.Ok(new
 				{
 					message = "Task updated successfully",
@@ -1448,7 +1477,7 @@ namespace TeamUpBackEnd.Extensions
 				.WithSummary("Edit task by public Id").WithTags("Task Management");
 
 			//delete task
-			app.MapDelete("/delete/task/{taskId}", async (AppDbContext db, ClaimsPrincipal userClaims, string taskId) =>
+			app.MapDelete("/delete/task/{taskId}", async (AppDbContext db, ClaimsPrincipal userClaims, string taskId, IHubContext<TaskHub> hub) =>
 			{
 				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -1473,11 +1502,18 @@ namespace TeamUpBackEnd.Extensions
 
 				await db.SaveChangesAsync();
 
+				await hub.Clients
+					.Group(task.WorkSpace.PublicId.ToString())
+					.SendAsync("taskDeleted", new
+					{
+						task.PublicId
+					});
+
 				return Results.Ok();
 			}).RequireAuthorization().WithSummary("Soft delete a task by it's id").WithTags("Task Management");
 
 			//change task status
-			app.MapPut("/task/status/{taskId}", async (AppDbContext db, ClaimsPrincipal userClaims, string taskId, TaskStatusChangeAction data) =>
+			app.MapPut("/task/status/{taskId}", async (AppDbContext db, ClaimsPrincipal userClaims, string taskId, TaskStatusChangeAction data, IHubContext<TaskHub> hub) =>
 			{
 				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -1496,6 +1532,14 @@ namespace TeamUpBackEnd.Extensions
 					task.Status = (TasksStatus)data.status;
 
 					await db.SaveChangesAsync();
+
+					await hub.Clients
+						.Group(task.WorkSpace.PublicId.ToString())
+						.SendAsync("taskStatusChanged", new
+						{
+							task.PublicId,
+							Status = task.Status.ToString()
+						});
 
 					return Results.Ok("Successfully changed " + task.Status);
 				}
