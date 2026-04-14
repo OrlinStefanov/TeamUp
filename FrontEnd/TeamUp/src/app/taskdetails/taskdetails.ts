@@ -9,6 +9,7 @@ import {
   moveItemInArray,
   transferArrayItem
 } from '@angular/cdk/drag-drop';
+import { Taskhub } from '../services/taskhub';
 
 @Component({
   selector: 'app-taskdetails',
@@ -55,7 +56,7 @@ export class Taskdetails {
     workspaceId: 0
   };
 
-  constructor(private auth: Auth, private route: ActivatedRoute) {}
+  constructor(private auth: Auth, private route: ActivatedRoute, private realtime : Taskhub) {}
 
   ngOnInit() {
     this.route.parent?.paramMap.subscribe(params => {
@@ -67,10 +68,18 @@ export class Taskdetails {
       });
 
       this.auth.getWorkspaceTasks(workspaceId).subscribe((res: any) => {
-        this.tasks = res;
-
-        console.log('Fetched tasks:', this.tasks);
-
+        
+        this.realtime.setInitialTasks(workspaceId, res);
+      
+        //connect to hub
+        const token = this.auth.getToken()!;
+        this.realtime.connect(workspaceId, token);
+      });
+      
+      //listen for realtime updates
+      this.realtime.tasks$.subscribe(tasks => {
+        this.tasks = tasks;
+      
         this.availableTags = this.tasks.reduce((acc: any[], task) => {
           task.tags?.forEach((tag: any) => {
             if (!acc.find(t => t.name === tag.name)) {
@@ -79,7 +88,7 @@ export class Taskdetails {
           });
           return acc;
         }, []);
-
+      
         this.filterTasksStatus();
       });
     });
@@ -90,6 +99,10 @@ export class Taskdetails {
     }
 
     this.user_data = this.auth.getCurrentUser();
+  }
+
+  ngOnDestroy() {
+    this.realtime.disconnect();
   }
 
   // FILTER TASKS
@@ -186,51 +199,30 @@ export class Taskdetails {
   // DRAG & DROP
   drop(event: CdkDragDrop<any[]>, newStatusIndex: number) {
     const movedTask = event.previousContainer.data[event.previousIndex];
+  
+    if (!movedTask) return;
+  
     if (!this.canMoveTask(movedTask) || this.isOverdue(movedTask)) {
       return;
     }
-
-    // Prevent moving tasks to Overdue column (it's auto-populated)
-    if (newStatusIndex === 3) {
-      return;
-    }
-
-    if (event.previousContainer === event.container) {
-      moveItemInArray(
-        event.container.data,
-        event.previousIndex,
-        event.currentIndex
-      );
-      return;
-    }
-
-    transferArrayItem(
-      event.previousContainer.data,
-      event.container.data,
-      event.previousIndex,
-      event.currentIndex
-    );
-
-    const updatedTask = event.container.data[event.currentIndex];
-
-    updatedTask.status = newStatusIndex;
-
-    if (this.isOverdue(updatedTask)) {
-      updatedTask.status = 'Overdue';
-    }
-
-    const index = this.tasks.findIndex(t => t.id === updatedTask.id);
-    if (index !== -1) {
-      this.tasks[index] = updatedTask;
-    }
-
-    console.log('Moved task:', updatedTask.status);
-    
-    this.auth.updateTaskStatus(updatedTask.publicId, updatedTask.status)
+  
+    if (newStatusIndex === 3) return;
+  
+    const oldStatus = movedTask.status;
+  
+    movedTask.status = this.statusMap[newStatusIndex];
+  
+    this.filterTasksStatus();
+  
+    this.auth.updateTaskStatus(movedTask.publicId, newStatusIndex)
       .subscribe({
-        next: () => console.log('Status updated'),
+        next: () => {
+          console.log('Synced with backend');
+        },
         error: (err) => {
-          console.error('Update failed', err);
+          console.error('Failed, reverting...', err);
+  
+          movedTask.status = oldStatus;
           this.filterTasksStatus();
         }
       });
@@ -243,9 +235,8 @@ export class Taskdetails {
 
   // CREATE TASK 
   createTask() {
-
     this.newTask.workspaceId = this.worksapce_info.id;
-
+  
     const payload = {
       title: this.newTask.title,
       description: this.newTask.description,
@@ -259,28 +250,28 @@ export class Taskdetails {
       newTags: this.newTask.newTags,
       workspaceId: this.newTask.workspaceId
     };
-
-    this.auth.createTask(payload).subscribe((res: any) => {
-
-      this.tasks.push(res);
-      this.filterTasksStatus();
-
-      this.newTask = {
-        title: '',
-        description: '',
-        dueDate: '',
-        startDate: '',
-        status: 0,
-        difficulty: 0,
-        points: 0,
-        assignedUserIds: [],
-        tagIds: [],
-        newTags: [],
-        workspaceId: 0
-      };
-
-      this.selectedUsers = [];
+  
+    this.auth.createTask(payload).subscribe({
+      next: () => {
+      },
+      error: err => console.error(err)
     });
+  
+    this.newTask = {
+      title: '',
+      description: '',
+      dueDate: '',
+      startDate: '',
+      status: 0,
+      difficulty: 0,
+      points: 0,
+      assignedUserIds: [],
+      tagIds: [],
+      newTags: [],
+      workspaceId: 0
+    };
+  
+    this.selectedUsers = [];
   }
 
   // UI HELPERS
