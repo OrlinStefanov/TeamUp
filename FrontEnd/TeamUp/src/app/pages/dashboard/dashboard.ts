@@ -88,6 +88,8 @@ export class Dashboard implements OnInit, AfterViewInit {
 
     this.auth.getWorkspaces().subscribe();
 
+
+
     const savedMode = localStorage.getItem('darkMode');
     this.isDarkMode = savedMode === 'true';
 
