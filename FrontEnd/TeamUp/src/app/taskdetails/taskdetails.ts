@@ -9,6 +9,7 @@ import {
   moveItemInArray,
   transferArrayItem
 } from '@angular/cdk/drag-drop';
+import { Taskhub } from '../services/taskhub';
 
 @Component({
   selector: 'app-taskdetails',
@@ -55,7 +56,7 @@ export class Taskdetails {
     workspaceId: 0
   };
 
-  constructor(private auth: Auth, private route: ActivatedRoute) {}
+  constructor(private auth: Auth, private route: ActivatedRoute, private realtime : Taskhub) {}
 
   ngOnInit() {
     this.route.parent?.paramMap.subscribe(params => {
@@ -67,10 +68,18 @@ export class Taskdetails {
       });
 
       this.auth.getWorkspaceTasks(workspaceId).subscribe((res: any) => {
-        this.tasks = res;
-
-        console.log('Fetched tasks:', this.tasks);
-
+        
+        this.realtime.setInitialTasks(workspaceId, res);
+      
+        //connect to hub
+        const token = this.auth.getToken()!;
+        this.realtime.connect(workspaceId, token);
+      });
+      
+      //listen for realtime updates
+      this.realtime.tasks$.subscribe(tasks => {
+        this.tasks = tasks;
+      
         this.availableTags = this.tasks.reduce((acc: any[], task) => {
           task.tags?.forEach((tag: any) => {
             if (!acc.find(t => t.name === tag.name)) {
@@ -79,7 +88,7 @@ export class Taskdetails {
           });
           return acc;
         }, []);
-
+      
         this.filterTasksStatus();
       });
     });
@@ -90,6 +99,10 @@ export class Taskdetails {
     }
 
     this.user_data = this.auth.getCurrentUser();
+  }
+
+  ngOnDestroy() {
+    this.realtime.disconnect();
   }
 
   // FILTER TASKS
@@ -185,43 +198,31 @@ export class Taskdetails {
 
   // DRAG & DROP
   drop(event: CdkDragDrop<any[]>, newStatusIndex: number) {
-
-    if (event.previousContainer === event.container) {
-      moveItemInArray(
-        event.container.data,
-        event.previousIndex,
-        event.currentIndex
-      );
+    const movedTask = event.previousContainer.data[event.previousIndex];
+  
+    if (!movedTask) return;
+  
+    if (!this.canMoveTask(movedTask) || this.isOverdue(movedTask)) {
       return;
     }
-
-    transferArrayItem(
-      event.previousContainer.data,
-      event.container.data,
-      event.previousIndex,
-      event.currentIndex
-    );
-
-    const movedTask = event.container.data[event.currentIndex];
-
-    movedTask.status = newStatusIndex;
-
-    if (this.isOverdue(movedTask)) {
-      movedTask.status = 'Overdue';
-    }
-
-    const index = this.tasks.findIndex(t => t.id === movedTask.id);
-    if (index !== -1) {
-      this.tasks[index] = movedTask;
-    }
-
-    console.log('Moved task:', movedTask.status);
-    
-    this.auth.updateTaskStatus(movedTask.publicId, movedTask.status)
+  
+    if (newStatusIndex === 3) return;
+  
+    const oldStatus = movedTask.status;
+  
+    movedTask.status = this.statusMap[newStatusIndex];
+  
+    this.filterTasksStatus();
+  
+    this.auth.updateTaskStatus(movedTask.publicId, newStatusIndex)
       .subscribe({
-        next: () => console.log('Status updated'),
+        next: () => {
+          console.log('Synced with backend');
+        },
         error: (err) => {
-          console.error('Update failed', err);
+          console.error('Failed, reverting...', err);
+  
+          movedTask.status = oldStatus;
           this.filterTasksStatus();
         }
       });
@@ -234,9 +235,8 @@ export class Taskdetails {
 
   // CREATE TASK 
   createTask() {
-
     this.newTask.workspaceId = this.worksapce_info.id;
-
+  
     const payload = {
       title: this.newTask.title,
       description: this.newTask.description,
@@ -250,28 +250,28 @@ export class Taskdetails {
       newTags: this.newTask.newTags,
       workspaceId: this.newTask.workspaceId
     };
-
-    this.auth.createTask(payload).subscribe((res: any) => {
-
-      this.tasks.push(res);
-      this.filterTasksStatus();
-
-      this.newTask = {
-        title: '',
-        description: '',
-        dueDate: '',
-        startDate: '',
-        status: 0,
-        difficulty: 0,
-        points: 0,
-        assignedUserIds: [],
-        tagIds: [],
-        newTags: [],
-        workspaceId: 0
-      };
-
-      this.selectedUsers = [];
+  
+    this.auth.createTask(payload).subscribe({
+      next: () => {
+      },
+      error: err => console.error(err)
     });
+  
+    this.newTask = {
+      title: '',
+      description: '',
+      dueDate: '',
+      startDate: '',
+      status: 0,
+      difficulty: 0,
+      points: 0,
+      assignedUserIds: [],
+      tagIds: [],
+      newTags: [],
+      workspaceId: 0
+    };
+  
+    this.selectedUsers = [];
   }
 
   // UI HELPERS
@@ -281,6 +281,39 @@ export class Taskdetails {
 
   setDifficulty(level: number) {
     this.newTask.difficulty = level;
+  }
+
+  canMoveTask(task: any): boolean {
+    if (!task) return false;
+    if (this.isOverdue(task)) return false;
+    if (this.isOwnerOrAdmin()) return true;
+    return this.isTaskAssignedToCurrentUser(task);
+  }
+
+  private isOwnerOrAdmin(): boolean {
+    const currentUserId = this.getEntityId(this.user_data);
+    if (!currentUserId || !this.worksapce_info) {
+      return false;
+    }
+
+    const ownerId = this.getEntityId(this.worksapce_info.owner);
+    if (ownerId && ownerId === currentUserId) {
+      return true;
+    }
+
+    const matchedMember = this.worksapce_info.members?.find((m: any) => this.getEntityId(m) === currentUserId);
+    return matchedMember?.role === 1 || matchedMember?.role === 2;
+  }
+
+  private isTaskAssignedToCurrentUser(task: any): boolean {
+    const currentUserId = this.getEntityId(this.user_data);
+    if (!currentUserId) return false;
+
+    return task?.assignedUsers?.some((u: any) => this.getEntityId(u) === currentUserId) ?? false;
+  }
+
+  private getEntityId(entity: any): string {
+    return String(entity?.id ?? entity?.userId ?? entity?.publicId ?? '');
   }
 
   toggleUser(user: any) {

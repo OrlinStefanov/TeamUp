@@ -4,15 +4,16 @@ import { FormsModule } from '@angular/forms';
 import { Workspace, WorkspaceMember } from '../../services/auth/auth-types';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
+import { CdkDragPlaceholder } from "@angular/cdk/drag-drop";
 
 @Component({
   selector: 'app-dashboard',
-  standalone: true, // Assuming standalone based on your imports
+  standalone: true,
   imports: [
     FormsModule,
     CommonModule,
-    RouterModule
+    RouterModule,
 ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
@@ -26,7 +27,8 @@ export class Dashboard implements OnInit, AfterViewInit {
   showDropdown = false;
   showSettingsDropdown = false;
   showCreateWorkspace = false;
-  showJoinWorkspace = false; // Added for Join Modal
+  showJoinWorkspace = false;
+  copied = false;
   timeout: any;
 
   suggestions: any[] = [];
@@ -54,6 +56,7 @@ export class Dashboard implements OnInit, AfterViewInit {
 
   showEditWorkspace = false;
   showDeleteWorkspace = false;
+  showSettings = false;
 
   selectedWorkspace: any = null;
 
@@ -63,17 +66,36 @@ export class Dashboard implements OnInit, AfterViewInit {
 
   constructor(private renderer: Renderer2, private auth: Auth) {}
 
+  myWorkspaces$!: Observable<any[]>;
+  otherWorkspaces$!: Observable<any[]>;
+
+  currentUserId!: string;
+
   ngOnInit() {
+
     this.user$ = this.auth.user$;
     this.workspaces$ = this.auth.workspaces$;
 
+    this.currentUserId = this.auth.getUserId();
+
+    this.myWorkspaces$ = this.workspaces$.pipe(
+      map(workspaces => (workspaces || []).filter(w => w.ownerId === this.currentUserId))
+    );
+
+    this.otherWorkspaces$ = this.workspaces$.pipe(
+      map(workspaces => (workspaces || []).filter(w => w.ownerId !== this.currentUserId))
+    );
+
     this.auth.getWorkspaces().subscribe();
+
+
+
     const savedMode = localStorage.getItem('darkMode');
     this.isDarkMode = savedMode === 'true';
+
   }
 
   updateWorkspace() {
-
     this.selectedWorkspace.members = this.editMembers.filter(m => m.id !== this.selectedWorkspace.ownerId);
     console.log('update', this.selectedWorkspace);
     this.auth.editWorkspace(this.selectedWorkspace).subscribe();
@@ -82,7 +104,6 @@ export class Dashboard implements OnInit, AfterViewInit {
   }
 
   deleteWorkspace() {
-    // call API
     this.auth.deleteWorkspace(this.selectedWorkspace.publicId).subscribe(() => {
       this.auth.getWorkspaces(true).subscribe();
     });
@@ -94,6 +115,19 @@ export class Dashboard implements OnInit, AfterViewInit {
   onEditInputChange(value: string) {
     // call your API (same as create modal)
     console.log('search user', value);
+  }
+
+  copyJoinCode() {
+    const code = this.selectedWorkspace?.joinCode;
+    if (!code) return;
+  
+    navigator.clipboard.writeText(code).then(() => {
+      this.copied = true;
+  
+      setTimeout(() => {
+        this.copied = false;
+      }, 1500);
+    });
   }
 
   addMember(user: any) {
@@ -129,6 +163,38 @@ export class Dashboard implements OnInit, AfterViewInit {
 
   closeDeleteWorkspace() {
     this.showDeleteWorkspace = false;
+  }
+
+  openSettings(workspace: any)
+  {
+    this.selectedWorkspace = { ...workspace};
+
+    this.showSettings = true;
+    console.log(this.selectedWorkspace);
+
+    setTimeout(() => {
+      const modalEl = document.getElementById('settingsModal');
+      const modal = new (window as any).bootstrap.Modal(modalEl);
+      modal.show();
+    });
+  }
+
+  closeSettings()
+  {
+    this.showSettings = false;
+  }
+
+  get UserRoleFromSelectedWorkspace(): string {
+    if (!this.selectedWorkspace) return '';
+  
+    if (this.selectedWorkspace.ownerId === this.currentUserId) {
+      return 'Owner';
+    }
+  
+    const member = this.selectedWorkspace.members
+      ?.find((u: { userId: string; }) => u.userId === this.currentUserId);
+  
+    return member?.role === 1 ? 'Admin' : 'Member';
   }
 
   ngAfterViewInit() {

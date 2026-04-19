@@ -29,24 +29,14 @@
   color: #ffffff;
 }
 
-.container-fluid.dark-mode .profileIcon, .container-fluid.dark-mode .badge, .container-fluid.dark-mode .usName {
-  color: rgb(222, 222, 222);
-}
-
 .member-row {
   width: 100%;
   height: 45px;
   transition: background-color 0.15s ease-in-out;
-  background: transparent;
-  border:none;
 }
 
-.container-fluid.light-mode .member-row:hover {
-  background-color: #fff;
-}
-
-.container-fluid.dark-mode .member-row:hover {
-  background-color: rgba(255, 255, 255, 0.05);
+.member-row:hover {
+  background-color: #d2d5d8;
 }
 
 .member-actions-menu {
@@ -83,10 +73,6 @@
   align-items: center;
 }
 
-.container-fluid.dark-mode .member-actions-dropdown, .container-fluid.dark-mode .role-filter-dropdown {
-  background: #1a1a22;
-}
-
 .member-actions-dropdown .dropdown-item {
   width: 100%;
   text-align: left;
@@ -98,10 +84,6 @@
 
 .member-actions-dropdown .dropdown-item:hover {
   background: #f3f4f6;
-}
-
-.container-fluid.dark-mode .member-actions-dropdown .dropdown-item:hover, .container-fluid.dark-mode .role-filter-dropdown .dropdown-item:hover {
-  background: #2a2a34;
 }
 
 .role-filter-menu {
@@ -146,10 +128,6 @@
   justify-content: space-between;
 }
 
-.container-fluid.dark-mode .dropdown-item {
-  color: #fff;
-}
-
 .bg-blue
 {
     background-color: #00ffff2c !important;
@@ -158,39 +136,4 @@
     color: #00eeff !important;
 
     font-weight: 900 !important;
-}
-
-.container-fluid.dark-mode .form-control, .modal.dark-mode .form-control {
-    background-color: #0f0f14 !important;
-    border-color: #333 !important;
-    color: white;
-}
-
-.container-fluid .form-control:focus, .modal .form-control:focus {
-    outline: 1.5px solid #a64bfb;
-    border-color: #a64bfb;
-    box-shadow: 0 0 0 4px rgba(168, 85, 247, 0.2);
-}
-
-
-.form-control::placeholder {
-  color: #666;
-}
-
-
-.modal.dark-mode .modal-content {
-    background-color: #1a1a22;
-    color: white;
-}
-
-.modal .btn-close {
-  background: transparent;
-  border: none;
-  color: #666;
-  font-size: 20px;
-  cursor: pointer;
-}
-
-.modal .btn-close:hover {
-  color: red;
 }

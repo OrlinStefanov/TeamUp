@@ -210,6 +210,15 @@
 .tm-input::placeholder,
 .tm-textarea::placeholder { color: #777; opacity: 1; }
 
+.disabled-task {
+  opacity: 0.6;
+  cursor: not-allowed !important;
+}
+
+.disabled-task .card {
+  pointer-events: none;
+}
+
 .tm-input:focus,
 .tm-textarea:focus {
   border-color: #a64bfb;
@@ -441,4 +450,8 @@
 
 .cdk-drop-list-dragging .card {
   transition: transform 0.2s ease;
+}
+
+.card{
+  box-shadow: 0 10px 20px rgba(26, 25, 25, 0.2);
 }

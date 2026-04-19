@@ -90,7 +90,7 @@
   <div class="container-fluid px-0">
     <div class="row g-0 min-vh-100 flex-nowrap">
 
-      <nav class="col-auto d-none d-md-flex side-navbar" [class.collapsed]="isDesktopSidebarCollapsed">
+      <nav class="col-2 d-none d-md-flex side-navbar" [class.collapsed]="isDesktopSidebarCollapsed">
         <div class="sidebar-top w-100">
           <div class="logo-row">
             <div class="logo-appName mb-0">
@@ -134,13 +134,13 @@
           @if (!isDesktopSidebarCollapsed) {
             <p class="workspace-title">Workspaces</p>
           }
-
+ 
           <ul class="workspace-list list-unstyled">
             @for (workspace of (workspaces$ | async); track workspace) {
               <li>
                 <a class="workspace-item"
                   [routerLink]="['/workspace', workspace.publicId, 'tasks']">
-                  <span class="workspace-icon">
+                  <span class="align-items-center justify-content-center text-center workspace-icon">
                     {{ workspace.title.charAt(0) }}
                   </span>
                   @if (!isDesktopSidebarCollapsed) {
@@ -151,15 +151,41 @@
                 </a>
               </li>
             }
+
+            <li>
+              <button type="button" class="workspace-item workspace-action-btn" (click)="openCreateWorkspace()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-plus" viewBox="0 0 16 16">
+                  <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
+                </svg>
+                Create
+              </button>
+            </li>
+            <li>
+              <button type="button" class="workspace-item workspace-action-btn" (click)="openJoinWorkspace()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-arrow-bar-right" viewBox="0 0 16 16">
+                  <path fill-rule="evenodd" d="M6 8a.5.5 0 0 0 .5.5h5.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L12.293 7.5H6.5A.5.5 0 0 0 6 8m-2.5 7a.5.5 0 0 1-.5-.5v-13a.5.5 0 0 1 1 0v13a.5.5 0 0 1-.5.5"/>
+                </svg>
+                Join
+              </button>
+            </li>
           </ul>
         </div>
 
         @if ((user$ | async); as user) {
-          <div class="nav-footer">
-            <img [src]="user.profilePictureUrl" alt="Profile" class="logo" />
-            @if (!isDesktopSidebarCollapsed) {
-              <p class="userName">{{user.userName}}</p>
-            }
+          <div class="nav-footer justify-content-between">
+            <div class="d-flex align-items-center">
+              @if (user.profilePictureUrl) {
+                <img [src]="user.profilePictureUrl" style="width:30px; height:30px; object-fit:cover; cursor: pointer;" [routerLink]="['/profile']" alt="Profile" class="logo"/>
+                } @else {
+                  <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" style="width:30px; height:30px; font-size:18px; cursor: pointer;">
+                    <a [routerLink]="['/profile']" style="text-decoration: none; color: inherit;">{{ user.userName.charAt(0) }}</a> 
+                  </div>
+                }
+                @if (!isDesktopSidebarCollapsed) {
+                  <p class="userName ms-3">{{user.userName}}</p>
+                }
+            </div>
+
             @if (!isDesktopSidebarCollapsed) {
               <div class="settings-wrapper">
                   <button class="settingsBtn" type="button" (click)="toggleSettings()">
@@ -201,4 +227,187 @@
 
     </div>
   </div>
+
+  @if (showCreateWorkspace) {
+  <div class="createWorkspace-overlay" [ngClass]="{'light-mode': !isDarkMode, 'dark-mode': isDarkMode}">
+
+    <form #createWorkspaceForm="ngForm" (ngSubmit)="createWorkspace()">
+
+      <div class="createWorkspace-box">
+
+        <div class="header-row tm-header">
+          <div class="header-text tm-header-left">
+              <div class="tm-icon">
+                <svg width="18" height="18" fill="none" viewBox="0 0 24 24">
+                  <path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <div>
+                <h4 class="tm-title">Create <span class="accent">workspace</span></h4>
+                <p class="tm-subtitle" style="font-size: 0.85rem;">Set up a new workspace and invite your team.</p>
+              </div>
+          </div>
+
+          <button type="button" class="btn-cancel tm-close" (click)="closeCreateWorkspace()">✕</button>
+        </div>
+
+        <div class="tm-body">
+
+          <div class="form-group tm-field">
+            <label class="form-label tm-label">Workspace name</label>
+            <input
+              type="text"
+              class="form-control"
+              name="layoutWsTitle"
+              required
+              placeholder="Enter workspace name"
+              [(ngModel)]="workspace.title">
+          </div>
+
+          <div class="form-group tm-field">
+            <label class="form-label tm-label">Workspace description</label>
+            <textarea
+              class="form-control tm-textarea"
+              name="layoutWsDescription"
+              placeholder="Enter workspace description"
+              [(ngModel)]="workspace.description">
+            </textarea>
+          </div>
+
+          <div class="form-group tm-field" style="position: relative;">
+            <label class="form-label tm-label">Invite people</label>
+
+            <input
+              type="text"
+              class="form-control tm-input"
+              name="layoutInvitePeople"
+              placeholder="Enter email or username"
+              [(ngModel)]="inviteInput"
+              (ngModelChange)="onInviteInputChange($event)">
+
+            @if (suggestions.length > 0) {
+            <ul class="suggestions-dropdown">
+              @for (user of suggestions; track user) {
+                <li class="suggestion-item" (click)="selectUser(user)">
+                  @if (user.profilePictureUrl) {
+                    <img [src]="user.profilePictureUrl" width="24" height="24" alt="" />
+                  } @else {
+                    <span class="badge">
+                      {{ user.userName.charAt(0) }}
+                    </span>
+                  }
+                  <span>{{ user.userName }} ({{ user.email }})</span>
+                </li>
+              }
+            </ul>
+            }
+          </div>
+
+          @if (invitedMembers.length > 0) {
+          <div class="selected-members tm-field">
+            @for (member of invitedMembers; track member.emailOrUsername) {
+              <div class="member-row">
+                <span>{{ member.emailOrUsername }}</span>
+
+                <div class="actions">
+                  <div class="dropdown">
+                    <button type="button" class="btn btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                      {{ member.role === 1 ? 'Admin' : 'Member' }}
+                    </button>
+
+                    <ul class="dropdown-menu">
+                      <li><a (click)="member.role = 0">Member</a></li>
+                      <li><a (click)="member.role = 1">Admin</a></li>
+                    </ul>
+                  </div>
+
+                  <button type="button" (click)="removeMember(member)">✕</button>
+                </div>
+              </div>
+            }
+          </div>
+          }
+
+        </div>
+
+        <div class="createWorkspace-actions tm-footer">
+          <button
+            class="btn-primary"
+            type="submit"
+            [disabled]="createWorkspaceForm.invalid">
+            Create workspace
+          </button>
+        </div>
+
+      </div>
+    </form>
+  </div>
+  }
+
+  @if (showJoinWorkspace) {
+  <div class="joinWorkspace-overlay" [ngClass]="{'light-mode': !isDarkMode, 'dark-mode': isDarkMode}">
+
+    <form #joinForm="ngForm" (ngSubmit)="joinWorkspace()">
+
+      <div class="joinWorkspace-box">
+
+        <div class="header-row tm-header">
+          <div class="tm-header-left">
+              <div class="tm-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-box-arrow-in-right" viewBox="0 0 16 14">
+                  <path fill-rule="evenodd" d="M6 3.5a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 0-1 0v2A1.5 1.5 0 0 0 6.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-8A1.5 1.5 0 0 0 5 3.5v2a.5.5 0 0 0 1 0z"/>
+                  <path fill-rule="evenodd" d="M11.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 1 0-.708.708L10.293 7.5H1.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708z"/>
+                </svg>
+              </div>
+              <div>
+                <h4 class="tm-title">Join <span class="accent">Workspace</span></h4>
+                <p class="tm-subtitle" style=" font-size: 0.85rem;">Enter an invite code or workspace link to join.</p>
+              </div>
+          </div>
+          <button type="button" class="btn-cancel tm-close" (click)="closeJoinWorkspace()">✕</button>
+        </div>
+
+        <div class="tm-body">
+
+          <div class="form-group tm-field">
+            <label class="form-label tm-label">Invite Code</label>
+            <input
+              type="text"
+              class="form-control tm-input"
+              name="layoutInviteCode"
+              placeholder="e.g. ACME-2024-XXYZ"
+              [(ngModel)]="joinInput.inviteCode">
+          </div>
+
+          <div class="separator-row tm-field d-flex align-items-center gap-3" >
+            <div class="separator-line" style="color: #666;"></div>
+            <div class="separator-text">OR PASTE LINK</div>
+            <div class="separator-line" style="color: #666;"></div>
+          </div>
+
+          <div class="form-group tm-field">
+            <label class="form-label tm-label">Workspace Link</label>
+            <input
+              type="text"
+              class="form-control tm-input"
+              name="layoutWorkspaceLink"
+              placeholder="https://teamup.io/join/..."
+              [(ngModel)]="joinInput.workspaceLink">
+          </div>
+
+        </div>
+
+        <div class="joinWorkspace-actions tm-footer">
+          <button
+            class="btn-primary"
+            type="submit"
+            [disabled]="!joinInput.inviteCode && !joinInput.workspaceLink">
+            Join Workspace →
+          </button>
+        </div>
+
+      </div>
+    </form>
+  </div>
+  }
 </div>

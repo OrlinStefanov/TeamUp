@@ -14,7 +14,6 @@ import { FormsModule } from '@angular/forms';
 
 export class Members implements OnInit {
   constructor(private auth: Auth, private route: ActivatedRoute) {}
-  isDarkMode = false;
 
   members: any[] = [];
   invitations: any[] = [];
@@ -64,9 +63,6 @@ export class Members implements OnInit {
         }
       }
     });
-
-    const savedMode = localStorage.getItem('darkMode');
-    this.isDarkMode = savedMode === 'true';
   }
 
   returnRoleName(role: number): string {

@@ -216,11 +216,11 @@
 
 .workspaces-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(400px, 450px));
+  grid-template-columns: repeat(auto-fill, minmax(200px, 400px));
   justify-content: start;
   gap: 20px;
   align-items: stretch;
-  grid-auto-rows: 220px;
+  grid-auto-rows: 200px;
 }
 
 .workspace-card {
@@ -373,4 +373,35 @@
   .steps-grid { grid-template-columns: 1fr; }
   .workspaces-grid { grid-template-columns: 1fr; }
   .empty-actions { flex-direction: column; }
+}
+
+/*orcho e pipal*/
+.info-field 
+{
+  border: 1px solid #9333ea;
+  border-radius: 15px;
+  background-color: #e2dfdf23;
+
+  min-height: 50px;
+}
+
+.info-field label {
+  font-size: 14px;
+}
+
+.role-owner {
+  background-color: #facc154d;
+  border: 1px solid #facc15;
+  color: #1f2937;
+}
+
+.role-admin {
+  background-color: #9233ea2d;
+  border: 1px solid #9333ea;
+  color: #1f2937;
+}
+
+.role-member {
+  background-color: #6b7280;
+  color: #ffffff;
 }

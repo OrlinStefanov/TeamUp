@@ -121,6 +121,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapHub<ChatHub>("/chathub");
+app.MapHub<TaskHub>("/taskhub");
 
 EndpointsGenerator.MapEndpoints(app);
 

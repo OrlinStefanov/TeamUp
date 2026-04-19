@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection.Metadata.Ecma335;
 using System.Security.Claims;
@@ -11,7 +12,9 @@ using TeamUpBackEnd.Models.Chat;
 using TeamUpBackEnd.Models.Tasks;
 using TeamUpBackEnd.Models.WorkspaceRelated;
 using TeamUpBackEnd.Services;
+
 using static TeamUpBackEnd.DTO.TaskItemsDTO;
+
 using chatDto = TeamUpBackEnd.DTO.ChatsDTO;
 using taskDTO = TeamUpBackEnd.DTO.TaskItemsDTO;
 using user_data = TeamUpBackEnd.DTO.UserDataDTO;
@@ -301,6 +304,71 @@ namespace TeamUpBackEnd.Extensions
 
 			}).RequireAuthorization().Accepts<IFormFile>("multipart/form-data").DisableAntiforgery()
 				.WithSummary("Uploading user profile picture").WithTags("User Management");
+
+			//change user info 
+			app.MapPost("/profile/update", [Authorize] async (
+				ClaimsPrincipal userClaims,
+				AppDbContext db,
+				UserManager<ApplicationUser> userManager,
+				user_data.UpdateUser model) =>
+			{
+				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
+
+				if (userId is null)
+					return Results.BadRequest("User id not found");
+
+				var user = await userManager.FindByIdAsync(userId);
+
+				if (user is null)
+					return Results.BadRequest("User not found");
+
+				if (!string.IsNullOrWhiteSpace(model.UserName) && model.UserName != user.UserName)
+				{
+					var usernameResult = await userManager.SetUserNameAsync(user, model.UserName);
+					if (!usernameResult.Succeeded)
+						return Results.BadRequest(usernameResult.Errors);
+				}
+
+				if (!string.IsNullOrWhiteSpace(model.Email) && model.Email != user.Email)
+				{
+					var emailResult = await userManager.SetEmailAsync(user, model.Email);
+					if (!emailResult.Succeeded)
+						return Results.BadRequest(emailResult.Errors);
+				}
+
+				if (!string.IsNullOrWhiteSpace(model.PhoneNumber))
+					user.PhoneNumber = model.PhoneNumber;
+
+				if (!string.IsNullOrWhiteSpace(model.FirstName))
+					user.FirstName = model.FirstName;
+
+				if (!string.IsNullOrWhiteSpace(model.LastName))
+					user.LastName = model.LastName;
+
+				if (model.BirthDate.HasValue)
+					user.BirthDate = model.BirthDate;
+
+				var result = await userManager.UpdateAsync(user);
+
+				if (!result.Succeeded)
+					return Results.BadRequest(result.Errors);
+
+				return Results.Ok(new
+				{
+					user.Id,
+					user.UserName,
+					user.Email,
+					user.FirstName,
+					user.LastName,
+					user.PhoneNumber,
+					user.BirthDate,
+					user.ProfilePictureUrl
+				});
+
+			})
+			.RequireAuthorization()
+			.WithSummary("Updates user's personal info")
+			.WithTags("User Management");
 		}
 
 		public static void WorkspaceEndpoints(WebApplication app)
@@ -406,7 +474,7 @@ namespace TeamUpBackEnd.Extensions
 					.Include(w => w.Members)
 					.FirstOrDefaultAsync(w => w.PublicId.ToString() == data.PublicId && w.IsDeleted == false);
 
-				if (workspace is null)	return Results.NotFound("Workspace not found");
+				if (workspace is null) return Results.NotFound("Workspace not found");
 
 				if (workspace.OwnerId != userId) return Results.Forbid();
 
@@ -519,6 +587,7 @@ namespace TeamUpBackEnd.Extensions
 						w.CreatedAt,
 						w.UpdatedAt,
 						w.OwnerId,
+						w.JoinCode,
 						MembersCount = w.Members.Count,
 						Members = w.Members.Select(m => new
 						{
@@ -554,8 +623,8 @@ namespace TeamUpBackEnd.Extensions
 				var workspace = await db.Workspaces
 					.Include(w => w.Members)
 						.ThenInclude(m => m.User)
-					.Include(w => w.Invitations) 
-						.ThenInclude(i => i.User) 
+					.Include(w => w.Invitations)
+						.ThenInclude(i => i.User)
 					.FirstOrDefaultAsync(w => w.PublicId.ToString() == publicId && w.IsDeleted == false);
 
 				if (workspace == null)
@@ -608,7 +677,7 @@ namespace TeamUpBackEnd.Extensions
 							ProfilePictureUrl = m.User!.ProfilePictureUrl!
 						}).ToList(),
 						Invitations = invitations.Select(m => new workspaceDto.FullWorkspaceInvitations
-						{ 
+						{
 							Id = m.Id,
 							UserName = m.User?.UserName!,
 							Emial = m.User?.Email,
@@ -670,7 +739,7 @@ namespace TeamUpBackEnd.Extensions
 				var possibleUsers = await userManager.Users
 					.Where(u =>
 						(EF.Functions.Like(u.Email!, $"%{query}%") || EF.Functions.Like(u.UserName!, $"%{query}%"))
-						&& u.Id != currentUserId 
+						&& u.Id != currentUserId
 					)
 					.Select(u => new
 					{
@@ -764,7 +833,7 @@ namespace TeamUpBackEnd.Extensions
 				return Results.Ok("User removed from workspace");
 
 			}).RequireAuthorization().WithSummary("Removes member from the workspace").WithTags("Workspace Management");
-			
+
 			//--------------------------------------------------JoinCode-----------------------------------------------------//
 			//user joins into workspace using a special code
 			app.MapPost("/join/workspace", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, UserManager<ApplicationUser> userManager, JoinCodeDTO model) =>
@@ -893,6 +962,7 @@ namespace TeamUpBackEnd.Extensions
 
 			}).RequireAuthorization().WithSummary("Regenerates the join code in the workspace").WithTags("Workspace Management");
 
+			//-----------------------------------------------Invitations--------------------------------------------------//
 			//returns the invitations in a workspace based on the publicid
 			app.MapGet("/workspaces/{publicId}/invitations", [Authorize] async (AppDbContext db, string publicId, ClaimsPrincipal userClaims, UserManager<ApplicationUser> userManager) =>
 			{
@@ -927,6 +997,7 @@ namespace TeamUpBackEnd.Extensions
 
 			}).RequireAuthorization().WithSummary("Returns all pending invitations for the owner").WithTags("Workspace Management");
 
+			//accepts or rejects the invitation to the workspace based on the action provided in the request body. If the action is accept, it adds the user to the workspace members and removes the invitation. If the action is reject, it just removes the invitation. Only the owner of the workspace can accept or reject invitations.
 			app.MapPost("/workspace/invitations/{invitationId}", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, int invitationId, InvitationActionDto model) =>
 			{
 				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -980,12 +1051,98 @@ namespace TeamUpBackEnd.Extensions
 			}).RequireAuthorization()
 			.WithSummary("Accepts or rejects a workspace invitation")
 			.WithTags("Workspace Management");
+
+
+			//----------------------------------------------Members management------------------------------------------------//
+			//changing the role of a user in the workspace
+			app.MapPost("/workspace/change-role", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, UserManager<ApplicationUser> userManager, ChangeRoleDto model) =>
+			{
+				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
+
+				if (userId is null) return Results.BadRequest("User id not found");
+
+				var user = await userManager.FindByIdAsync(userId);
+
+				if (user == null) return Results.BadRequest("User not found");
+
+				var workspace = await db.Workspaces
+					.Include(w => w.Members)
+					.FirstOrDefaultAsync(w => w.PublicId.ToString() == model.PublicId);
+
+				if (workspace == null) return Results.BadRequest("Workspace not found");
+
+				if (workspace.OwnerId != userId) return Results.Forbid();
+
+				var member = workspace.Members.FirstOrDefault(m => m.UserId == model.UserId);
+
+				if (member == null) return Results.BadRequest("User is not a member of the workspace");
+
+				if (member.UserId == workspace.OwnerId) return Results.BadRequest("Can't change role of the owner");
+
+				member.Role = model.Role switch
+				{
+					0 => WorkSpaceRole.Member,
+					1 => WorkSpaceRole.Admin,
+					_ => WorkSpaceRole.Member
+				};
+
+				await db.SaveChangesAsync();
+
+				return Results.Ok("User role updated");
+			}).RequireAuthorization().WithSummary("Changes the role of a user in the workspace").WithTags("Workspace Management");
+
+			//add new member to the workspace by the owner
+			app.MapPost("/workspace/add-member", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, UserManager<ApplicationUser> userManager, AddMemberDto model) =>
+			{
+				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
+
+				if (userId is null) return Results.BadRequest("User id not found");
+
+				var user = await userManager.FindByIdAsync(userId);
+
+				if (user == null) return Results.BadRequest("User not found");
+
+				var workspace = await db.Workspaces
+					.Include(w => w.Members)
+					.FirstOrDefaultAsync(w => w.PublicId.ToString() == model.PublicId);
+
+				if (workspace == null) return Results.BadRequest("Workspace not found");
+
+				if (workspace.OwnerId != userId) return Results.Forbid();
+
+				var memberUser = await userManager.FindByEmailAsync(model.EmailOrUsername)
+								?? await userManager.FindByNameAsync(model.EmailOrUsername);
+
+				if (memberUser == null) return Results.BadRequest("User not found");
+
+				if (memberUser.Id == userId) return Results.BadRequest("Can't add yourself");
+
+				var isMember = workspace.Members.Any(m => m.UserId == memberUser.Id);
+
+				if (isMember) return Results.BadRequest("User is already a member");
+
+				workspace.Members.Add(new WorkSpaceMember
+				{
+					UserId = memberUser.Id,
+					Role = model.Role switch
+					{
+						0 => WorkSpaceRole.Member,
+						1 => WorkSpaceRole.Admin,
+						_ => WorkSpaceRole.Member
+					}
+				});
+
+				await db.SaveChangesAsync();
+
+				return Results.Ok("User added to workspace");
+
+			}).RequireAuthorization().WithSummary("Adds a new member to the workspace by the owner").WithTags("Workspace Management");
 		}
 
 		public static void TaskEndpoints(WebApplication app)
 		{
 			//creates a new task 
-			app.MapPost("/create/tasks", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, UserManager<ApplicationUser> userManager, taskDTO.CreateTaskItemDTO data) =>
+			app.MapPost("/create/tasks", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, UserManager<ApplicationUser> userManager, taskDTO.CreateTaskItemDTO data, IHubContext<TaskHub> hb) =>
 			{
 				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -1041,7 +1198,7 @@ namespace TeamUpBackEnd.Extensions
 
 				db.Tasks.Add(task);
 				await db.SaveChangesAsync();
-				
+
 				if (data.AssignedUserIds != null && data.AssignedUserIds.Count > 0)
 				{
 					foreach (var assignedUserId in data.AssignedUserIds)
@@ -1065,7 +1222,7 @@ namespace TeamUpBackEnd.Extensions
 
 				if (data.TagIds != null && data.TagIds.Count > 0)
 				{
-					foreach(var tagId in data.TagIds)
+					foreach (var tagId in data.TagIds)
 					{
 						var tagExists = await db.Tags
 							.AnyAsync(t => t.Id == tagId && t.WorkSpaceId == data.WorkspaceId);
@@ -1077,7 +1234,7 @@ namespace TeamUpBackEnd.Extensions
 								TaskItemId = task.Id,
 								TagId = tagId
 							});
-						}	
+						}
 					}
 				}
 
@@ -1121,6 +1278,23 @@ namespace TeamUpBackEnd.Extensions
 					.Include(tt => tt.Tag)
 					.Select(tt => tt.Tag.Name)
 					.ToListAsync();
+
+				Console.WriteLine("🔥 Sending taskCreated event");
+
+				await hb.Clients
+					.Group(task.WorkSpace!.PublicId.ToString())
+					.SendAsync("taskCreated", new
+					{
+						task.PublicId,
+						task.Title,
+						task.Description,
+						task.DueDate,
+						task.StartDate,
+						task.Points,
+						Status = task.Status.ToString(),
+						Difficulty = task.Difficulty.ToString(),
+						Tags = tags
+					});
 
 				return Results.Ok(new
 				{
@@ -1208,7 +1382,8 @@ namespace TeamUpBackEnd.Extensions
 				ClaimsPrincipal userClaims,
 				UserManager<ApplicationUser> userManager,
 				string taskid,
-				EditTaskDTO dto) =>
+				EditTaskDTO dto,
+				IHubContext<TaskHub> hub) =>
 			{
 				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
 				if (userId == null)
@@ -1237,8 +1412,8 @@ namespace TeamUpBackEnd.Extensions
 				if (dto.Description != null)
 					task.Description = dto.Description;
 
-					task.StartDate = dto.StartDate;
-					task.Points = dto.Points;
+				task.StartDate = dto.StartDate;
+				task.Points = dto.Points;
 
 				if (task.Points == 0)
 				{
@@ -1281,6 +1456,16 @@ namespace TeamUpBackEnd.Extensions
 
 				await db.SaveChangesAsync();
 
+				await hub.Clients
+					.Group(task.WorkSpace.PublicId.ToString())
+					.SendAsync("taskUpdated", new
+					{
+						task.PublicId,
+						task.Title,
+						Status = task.Status.ToString(),
+						task.Points
+					});
+
 				return Results.Ok(new
 				{
 					message = "Task updated successfully",
@@ -1292,7 +1477,7 @@ namespace TeamUpBackEnd.Extensions
 				.WithSummary("Edit task by public Id").WithTags("Task Management");
 
 			//delete task
-			app.MapDelete("/delete/task/{taskId}", async (AppDbContext db, ClaimsPrincipal userClaims, string taskId) =>
+			app.MapDelete("/delete/task/{taskId}", async (AppDbContext db, ClaimsPrincipal userClaims, string taskId, IHubContext<TaskHub> hub) =>
 			{
 				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -1317,11 +1502,18 @@ namespace TeamUpBackEnd.Extensions
 
 				await db.SaveChangesAsync();
 
+				await hub.Clients
+					.Group(task.WorkSpace.PublicId.ToString())
+					.SendAsync("taskDeleted", new
+					{
+						task.PublicId
+					});
+
 				return Results.Ok();
 			}).RequireAuthorization().WithSummary("Soft delete a task by it's id").WithTags("Task Management");
 
 			//change task status
-			app.MapPut("/task/status/{taskId}", async (AppDbContext db, ClaimsPrincipal userClaims, string taskId, TaskStatusChangeAction data) =>
+			app.MapPut("/task/status/{taskId}", async (AppDbContext db, ClaimsPrincipal userClaims, string taskId, TaskStatusChangeAction data, IHubContext<TaskHub> hub) =>
 			{
 				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -1341,15 +1533,24 @@ namespace TeamUpBackEnd.Extensions
 
 					await db.SaveChangesAsync();
 
+					await hub.Clients
+						.Group(task.WorkSpace.PublicId.ToString())
+						.SendAsync("taskStatusChanged", new
+						{
+							task.PublicId,
+							Status = task.Status.ToString()
+						});
+
 					return Results.Ok("Successfully changed " + task.Status);
-				} else
+				}
+				else
 				{
 					return Results.Forbid();
 				}
 
 			}).RequireAuthorization().WithSummary("Change task status").WithTags("Task Management");
 		}
-	
+
 		public static void ChatEndpoints(WebApplication app)
 		{
 			//---------------Channels-----------------------//
@@ -1397,7 +1598,8 @@ namespace TeamUpBackEnd.Extensions
 
 				var channels = await db.Channels
 					.Where(c => c.WorkspaceId == workspaceId)
-					.Select(c => new {
+					.Select(c => new
+					{
 						c.PublicId,
 						c.Name,
 						c.Description,
@@ -1485,8 +1687,8 @@ namespace TeamUpBackEnd.Extensions
 					.Where(m => m.ChannelId == channel.Id)
 					.Include(m => m.Sender)
 					.OrderBy(m => m.SentAt)
-					.Select(m => new 
-					{ 
+					.Select(m => new
+					{
 						m.PublicId,
 						m.Content,
 						m.SentAt,
@@ -1504,7 +1706,7 @@ namespace TeamUpBackEnd.Extensions
 
 			}).RequireAuthorization().WithSummary("Returns all messages that are stored in the database").WithTags("Chat Management");
 		}
-	
+
 		public static void LeaderBoard(WebApplication app)
 		{
 			app.MapGet("/leaderboard/{workspaceId}", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, string workspaceId) =>
@@ -1524,7 +1726,15 @@ namespace TeamUpBackEnd.Extensions
 
 				if (!workspace.Members.Any(m => m.UserId == userId))
 					return Results.BadRequest("You are not a member of this workspace");
-				
+
+				var totalTasks = workspace.Tasks.Count;
+
+				var totalPoints = workspace.Tasks
+					.Where(t => t.Status == TasksStatus.Done)
+					.Sum(t => t.Points);
+
+				var completedTasks = workspace.Tasks.Count(t => t.Status == TasksStatus.Done);
+
 				var leaderboard = workspace.Members
 					.Select(m => new
 					{
@@ -1537,7 +1747,13 @@ namespace TeamUpBackEnd.Extensions
 					.OrderByDescending(m => m.Points)
 					.ToList();
 
-				return Results.Ok(leaderboard);
+				return Results.Ok(new
+				{
+					totalTasks,
+					totalPoints,
+					completedTasks,
+					leaderboard
+				});
 
 			}).RequireAuthorization().WithSummary("Returns the leaderboard for the workspace").WithTags("LeaderBoard");
 		}
@@ -1553,5 +1769,19 @@ namespace TeamUpBackEnd.Extensions
 	public record TaskStatusChangeAction
 	{
 		public int status { get; set; } // 0 - To Do 1 - In Progress 2 - Done 
+	}
+
+	public record ChangeRoleDto
+	{
+		public string PublicId { get; set; } = "";
+		public string UserId { get; set; } = "";
+		public int Role { get; set; } // 0 - Member, 1 - Admin
+	}
+
+	public record AddMemberDto
+	{
+		public string PublicId { get; set; } = "";
+		public string EmailOrUsername { get; set; } = "";
+		public int Role { get; set; } // 0 - Member, 1 - Admin
 	}
 }

@@ -1,0 +1,85 @@
+<div class="container-fluid" style="margin-top: 20px;">
+  <div class="row">
+    <div class="col-md-12 justify-content-between d-flex align-items-center mb-4">
+        <div class="d-flex align-items-center" style="font-weight: 500;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" style="color: #9938fa; margin-right: 10px;" fill="currentColor" class="bi bi-trophy" viewBox="0 0 16 16">
+                <path d="M2.5.5A.5.5 0 0 1 3 0h10a.5.5 0 0 1 .5.5q0 .807-.034 1.536a3 3 0 1 1-1.133 5.89c-.79 1.865-1.878 2.777-2.833 3.011v2.173l1.425.356c.194.048.377.135.537.255L13.3 15.1a.5.5 0 0 1-.3.9H3a.5.5 0 0 1-.3-.9l1.838-1.379c.16-.12.343-.207.537-.255L6.5 13.11v-2.173c-.955-.234-2.043-1.146-2.833-3.012a3 3 0 1 1-1.132-5.89A33 33 0 0 1 2.5.5m.099 2.54a2 2 0 0 0 .72 3.935c-.333-1.05-.588-2.346-.72-3.935m10.083 3.935a2 2 0 0 0 .72-3.935c-.133 1.59-.388 2.885-.72 3.935M3.504 1q.01.775.056 1.469c.13 2.028.457 3.546.87 4.667C5.294 9.48 6.484 10 7 10a.5.5 0 0 1 .5.5v2.61a1 1 0 0 1-.757.97l-1.426.356a.5.5 0 0 0-.179.085L4.5 15h7l-.638-.479a.5.5 0 0 0-.18-.085l-1.425-.356a1 1 0 0 1-.757-.97V10.5A.5.5 0 0 1 9 10c.516 0 1.706-.52 2.57-2.864.413-1.12.74-2.64.87-4.667q.045-.694.056-1.469z"/>
+            </svg>
+             LEADERBOARD
+        </div>
+        <span class="badge bg-blue" style="font-size: 14px; font-weight: 500;">This Sprint</span>
+    </div>
+    <div class="col-md-12 justify-content-center d-flex align-items-center gap-4 mb-4" style="padding: 0px 30px;">
+        <div class="col-md-4">
+            <div class="d-flex flex-column item align-items-center justify-content-center p-2 mb-3" style="border: 1px solid #9938fa; border-radius: 20px;">
+                <svg xmlns="http://www.w3.org/2000/svg" style="color: #9938fa;" width="20" height="20" fill="currentColor" class="bi bi-lightning-charge" viewBox="0 0 16 16">
+                    <path d="M11.251.068a.5.5 0 0 1 .227.58L9.677 6.5H13a.5.5 0 0 1 .364.843l-8 8.5a.5.5 0 0 1-.842-.49L6.323 9.5H3a.5.5 0 0 1-.364-.843l8-8.5a.5.5 0 0 1 .615-.09zM4.157 8.5H7a.5.5 0 0 1 .478.647L6.11 13.59l5.732-6.09H9a.5.5 0 0 1-.478-.647L9.89 2.41z"/>
+                </svg>
+                <p class="mb-0 mt-1"><b>{{ leaderboardData?.totalTasks || 0 }}</b></p>
+                <p class="text-muted mt-0">TOTAL TASKS</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="d-flex flex-column item align-items-center justify-content-center p-2 mb-3" style="border: 1px solid #9938fa; border-radius: 20px;">
+                <svg xmlns="http://www.w3.org/2000/svg" style="color: lawngreen;" width="20" height="20" fill="currentColor" class="bi bi-check2-all" viewBox="0 0 16 16">
+                    <path d="M12.354 4.354a.5.5 0 0 0-.708-.708L5 10.293 1.854 7.146a.5.5 0 1 0-.708.708l3.5 3.5a.5.5 0 0 0 .708 0zm-4.208 7-.896-.897.707-.707.543.543 6.646-6.647a.5.5 0 0 1 .708.708l-7 7a.5.5 0 0 1-.708 0"/>
+                    <path d="m5.354 7.146.896.897-.707.707-.897-.896a.5.5 0 1 1 .708-.708"/>
+                </svg>
+                <p class="mb-0 mt-1"><b>{{ leaderboardData?.completedTasks || 0 }}</b></p>
+                <p class="text-muted mt-0">COMPLETED TASKS</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="d-flex flex-column item align-items-center justify-content-center p-2 mb-3" style="border: 1px solid #9938fa; border-radius: 20px;">
+                <svg xmlns="http://www.w3.org/2000/svg" style="color:#00eeff;" width="20" height="20" fill="currentColor" class="bi bi-star" viewBox="0 0 16 16">
+                    <path d="M2.866 14.85c-.078.444.36.791.746.593l4.39-2.256 4.389 2.256c.386.198.824-.149.746-.592l-.83-4.73 3.522-3.356c.33-.314.16-.888-.282-.95l-4.898-.696L8.465.792a.513.513 0 0 0-.927 0L5.354 5.12l-4.898.696c-.441.062-.612.636-.283.95l3.523 3.356-.83 4.73zm4.905-2.767-3.686 1.894.694-3.957a.56.56 0 0 0-.163-.505L1.71 6.745l4.052-.576a.53.53 0 0 0 .393-.288L8 2.223l1.847 3.658a.53.53 0 0 0 .393.288l4.052.575-2.906 2.77a.56.56 0 0 0-.163.506l.694 3.957-3.686-1.894a.5.5 0 0 0-.461 0z"/>
+                </svg>
+                <p class="mb-0 mt-1"><b>{{ leaderboardData?.totalPoints || 0 }}</b></p>
+                <p class="text-muted mt-0">TOTAL PTS</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-12 justify-content-center d-flex align-items-center gap-4 mb-4 flex-wrap">
+      @for (user of leaderboardData.leaderboard; track user; let i = $index) {
+        <div class="col-md-12">
+          <div class="d-flex p-3 align-items-center gap-3"
+              style="border: 1px solid #9938fa; border-radius: 20px;">
+
+            <div>
+              <span *ngIf="i === 0">🥇</span>
+                <span *ngIf="i === 1">🥈</span>
+                <span *ngIf="i === 2">🥉</span>
+                <span *ngIf="i > 2">{{ i + 1 }}</span>
+            </div>
+
+            @if (user.profilePictureUrl) {
+              <img src="{{ user.profilePictureUrl }}"
+                  alt="Profile Picture"
+                  style="width: 30px; height: 30px; border-radius: 50%; object-fit: cover;">
+            } @else {
+              <div style="width: 30px; height: 30px; border-radius: 50%; background-color: #33333350; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
+                {{ user.userName.charAt(0).toUpperCase() }}
+              </div>
+            }
+
+            <p class="mb-0 mt-1" [ngClass]="{
+              'gold': i === 0,
+              'silver': i === 1,
+              'bronze': i === 2,
+              'default': i > 2
+            }" ><b>{{ user.userName }}</b></p>
+
+            <div class="ms-auto d-flex flex-column">
+                <span class="fw-bold text-center">{{ user.points }}</span>
+                <div style="color: #00eeff;">
+                  <svg xmlns="http://www.w3.org/2000/svg" style="color: #00eeff;" width="16" height="16" fill="currentColor" class="bi bi-arrow-up-right" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M14 2.5a.5.5 0 0 0-.5-.5h-6a.5.5 0 0 0 0 1h4.793L2.146 13.146a.5.5 0 0 0 .708.708L13 3.707V8.5a.5.5 0 0 0 1 0z"/>
+                  </svg>pts
+                </div>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</div>
