@@ -55,7 +55,7 @@
                cdkDropList
                id="todoList"
                [cdkDropListData]="tasksToDo"
-               [cdkDropListConnectedTo]="['inProgressList','doneList','overdueList']"
+               [cdkDropListConnectedTo]="['inProgressList','doneList']"
                (cdkDropListDropped)="drop($event, 0)">
 
             <div class="d-flex align-items-center mb-3" style="border-bottom: 2px solid rgb(209, 209, 209); height: 60px;">
@@ -66,7 +66,7 @@
               <span class="badge bg-secondary ms-auto mt-2">{{ tasksToDo.length }}</span>
             </div>
 
-            <div *ngFor="let task of tasksToDo" style="cursor: pointer;" cdkDrag [cdkDragDisabled]="!canMoveTask(task)" [ngClass]="{ 'disabled-task': !canMoveTask(task) }" class="mb-4">
+            <div *ngFor="let task of tasksToDo" cdkDrag class="mb-4">
               <ng-container *ngTemplateOutlet="taskCard; context:{task: task}"></ng-container>
             </div>
           </div>
@@ -76,7 +76,7 @@
                cdkDropList
                id="inProgressList"
                [cdkDropListData]="tasksInProgress"
-               [cdkDropListConnectedTo]="['todoList','doneList','overdueList']"
+               [cdkDropListConnectedTo]="['todoList','doneList']"
                (cdkDropListDropped)="drop($event, 1)">
 
             <div class="d-flex align-items-center mb-3" style="border-bottom: 2px solid rgb(3, 255, 255); height: 60px;">
@@ -88,7 +88,7 @@
               <span class="badge bg-secondary ms-auto mt-2">{{ tasksInProgress.length }}</span>
             </div>
 
-            <div *ngFor="let task of tasksInProgress" style="cursor: pointer;" cdkDrag [cdkDragDisabled]="!canMoveTask(task)" [ngClass]="{ 'disabled-task': !canMoveTask(task) }" class="mb-4">
+            <div *ngFor="let task of tasksInProgress" cdkDrag class="mb-4">
               <ng-container *ngTemplateOutlet="taskCard; context:{task: task}"></ng-container>
             </div>
           </div>
@@ -98,7 +98,7 @@
                cdkDropList
                id="doneList"
                [cdkDropListData]="tasksCompleted"
-               [cdkDropListConnectedTo]="['todoList','inProgressList','overdueList']"
+               [cdkDropListConnectedTo]="['todoList','inProgressList']"
                (cdkDropListDropped)="drop($event, 2)">
 
             <div class="d-flex align-items-center mb-3" style="border-bottom: 2px solid rgb(0, 255, 0); height: 60px;">
@@ -110,18 +110,13 @@
               <span class="badge bg-secondary ms-auto mt-2">{{ tasksCompleted.length }}</span>
             </div>
 
-            <div *ngFor="let task of tasksCompleted" style="cursor: pointer;" cdkDrag [cdkDragDisabled]="!canMoveTask(task)" [ngClass]="{ 'disabled-task': !canMoveTask(task) }" class="mb-4">
+            <div *ngFor="let task of tasksCompleted" cdkDrag class="mb-4">
               <ng-container *ngTemplateOutlet="taskCard; context:{task: task}"></ng-container>
             </div>
           </div>
 
           <!-- 🔴 OVERDUE -->
-          <div class="flex-fill"
-               cdkDropList
-               id="overdueList"
-               [cdkDropListData]="tasksOverdue"
-               [cdkDropListConnectedTo]="[]"
-               cdkDropListDisabled="true">
+          <div class="flex-fill">
 
             <div class="d-flex align-items-center mb-3" style="border-bottom: 2px solid rgb(255, 0, 0); height: 60px;">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" style="color: rgb(255, 0, 0);" fill="currentColor" class="bi bi-exclamation-circle mt-1" viewBox="0 0 16 16">
@@ -132,19 +127,19 @@
               <span class="badge bg-secondary ms-auto mt-2">{{ tasksOverdue.length }}</span>
             </div>
 
-            <div *ngFor="let task of tasksOverdue" style="cursor: pointer;" cdkDrag [cdkDragDisabled]="!canMoveTask(task)" [ngClass]="{ 'disabled-task': !canMoveTask(task) }" class="mb-4">
+            <div *ngFor="let task of tasksOverdue" cdkDrag class="mb-4">
               <ng-container *ngTemplateOutlet="taskCard; context:{task: task}"></ng-container>
             </div>
           </div>
+
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ✅ REUSABLE CARD (UNCHANGED DESIGN) -->
 <ng-template #taskCard let-task="task">
-  <div class="card h-100">
+  <div class="card h-100" [ngClass]="{'dark-mode': isDarkMode, 'light-mode': !isDarkMode}">
 
     <div class="card-body">
       <h5 class="card-title mb-0">{{ task.title }}</h5>

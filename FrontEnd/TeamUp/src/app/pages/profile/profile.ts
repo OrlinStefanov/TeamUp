@@ -15,6 +15,8 @@ import { error } from 'node:console';
 export class Profile {
   constructor(private auth: Auth) {}
 
+  isDarkMode: boolean = false;
+  isEditMode: boolean = false;
   user_data: any = null;
   previewProfilePictureUrl: string = '';
   selectedProfileFile: File | null = null;
@@ -42,6 +44,9 @@ export class Profile {
       this.populateEditableData();
       console.log(this.user_data);
     });
+
+    const savedMode = localStorage.getItem('darkMode');
+    this.isDarkMode = savedMode === 'true';
   }
 
   get displayProfilePictureUrl(): string {
@@ -133,5 +138,21 @@ export class Profile {
       phone: this.user_data?.phoneNumber || this.mockUserData.phone,
       birthDate: this.user_data?.birthDate || this.mockUserData.birthDate
     };
+  }
+
+  handleEditClick() {
+    if (this.isEditMode) {
+      this.cancelEdit(); // като closeJoinWorkspace()
+    } else {
+      this.toggleEdit();
+    }
+  }
+
+  cancelEdit() {
+    this.isEditMode = false;
+  }
+
+  toggleEdit() {
+    this.isEditMode = !this.isEditMode;
   }
 }
