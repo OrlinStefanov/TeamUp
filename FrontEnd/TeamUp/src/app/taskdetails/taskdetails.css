@@ -210,15 +210,6 @@
 .tm-input::placeholder,
 .tm-textarea::placeholder { color: #777; opacity: 1; }
 
-.disabled-task {
-  opacity: 0.6;
-  cursor: not-allowed !important;
-}
-
-.disabled-task .card {
-  pointer-events: none;
-}
-
 .tm-input:focus,
 .tm-textarea:focus {
   border-color: #a64bfb;
@@ -427,16 +418,25 @@
 .btn-create:active { transform: scale(0.98); }
 
 /* Searhch input */
-.container.dark-mode .form-control {
+.container-fluid.dark-mode .form-control, .container-fluid.dark-mode .input-group-text {
     background-color: #0f0f14 !important;
     border-color: #333 !important;
     color: white;
 }
 
-.form-control:focus {
-  outline: 1.5px solid #a64bfb;
-  border-color: #a64bfb;
-  box-shadow: 0 0 0 4px rgba(168, 85, 247, 0.2);
+.container-fluid .input-group-text:hover {
+    cursor: pointer;
+}
+
+.container-fluid .form-control:focus {
+    outline: 1.5px solid #a64bfb;
+    border-color: #a64bfb;
+    box-shadow: 0 0 0 4px rgba(168, 85, 247, 0.2);
+}
+
+
+.form-control::placeholder {
+  color: #666;
 }
 
 .cdk-drag-preview {
@@ -450,8 +450,4 @@
 
 .cdk-drop-list-dragging .card {
   transition: transform 0.2s ease;
-}
-
-.card{
-  box-shadow: 0 10px 20px rgba(26, 25, 25, 0.2);
 }

@@ -1,4 +1,4 @@
-<div class="container-fluid">
+<div class="container-fluid" [ngClass]="{'light-mode': !isDarkMode, 'dark-mode': isDarkMode}">
   <div class="row">
     <div class="col-md-12 align-items-center d-flex mb-4 justify-content-between" style="padding: 0px 20px;">
         <div class="align-items-center d-flex justify-content-center">
@@ -44,7 +44,7 @@
             </button>
         </div>
     </div>  
-    <div class="col-md-12" *ngIf="activeTab === 'members'">
+    <div class="col-md-12 border-bottom pb-3" *ngIf="activeTab === 'members'">
         <form class="d-flex gap-4">
             <input
                 type="search"
@@ -81,10 +81,7 @@
                     </button>
                     <button class="dropdown-item" (click)="setRoleFilter('owner', $event)">
                         <span class="d-inline-flex align-items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" style="color: #facc15;" width="16" height="16" fill="currentColor" class="bi bi-crown-fill" viewBox="0 0 16 16">
-                                <path d="m3 14 1-9 4 6 4-6 1 9H3z"/>
-                                <path d="M14 13H2v-1h12v1z"/>
-                            </svg>
+                            <svg _ngcontent-ng-c263775740="" style="fill: #f59e0b;" width="20" height="20" viewBox="-4 0 32 32" xmlns="http://www.w3.org/2000/svg" class="owner-icon"><path _ngcontent-ng-c263775740="" d="M12 10.938c-1.375 0-2.5-1.125-2.5-2.5 0-1.406 1.125-2.5 2.5-2.5s2.5 1.094 2.5 2.5c0 1.375-1.125 2.5-2.5 2.5zM2.031 9.906c1.094 0 1.969 0.906 1.969 2 0 1.125-0.875 2-1.969 2-1.125 0-2.031-0.875-2.031-2 0-1.094 0.906-2 2.031-2zM22.031 9.906c1.094 0 1.969 0.906 1.969 2 0 1.125-0.875 2-1.969 2-1.125 0-2.031-0.875-2.031-2 0-1.094 0.906-2 2.031-2zM4.219 23.719l-1.656-9.063c0.5-0.094 0.969-0.375 1.344-0.688 1.031 0.938 2.344 1.844 3.594 1.844 1.5 0 2.719-2.313 3.563-4.25 0.281 0.094 0.625 0.188 0.938 0.188s0.656-0.094 0.938-0.188c0.844 1.938 2.063 4.25 3.563 4.25 1.25 0 2.563-0.906 3.594-1.844 0.375 0.313 0.844 0.594 1.344 0.688l-1.656 9.063h-15.563zM3.875 24.5h16.25v1.531h-16.25v-1.531z"></path></svg>
                             Owner
                         </span>
                     </button>
@@ -125,7 +122,7 @@
                                     'role-admin': member.role === 1,
                                     'role-member': member.role === 0
                                 }"
-                                    class="rounded-circle d-flex align-items-center justify-content-center text-black fw-bold"
+                                    class="rounded-circle d-flex align-items-center justify-content-center fw-bold profileIcon"
                                     style="width: 30px; height: 30px;">
                                     {{getUserInitial(member.userName)}}
                                 </div>
@@ -139,7 +136,7 @@
                                 }">
                                 {{returnRoleName(member.role)}}
                             </span>
-                            <span>{{member.userName}}</span>
+                            <span class="fw-bold usName">{{member.userName}}</span>
                         </div>
                         <div class="member-actions-menu" *ngIf="canOpenActionsMenu(member)" (click)="$event.stopPropagation()">
                             <button
@@ -238,12 +235,12 @@
 </div>
 
 <!-- Add Member Modal -->
-<div class="modal fade" id="addMemberModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="addMemberModal" tabindex="-1" aria-hidden="true" [ngClass]="{'light-mode': !isDarkMode, 'dark-mode': isDarkMode}">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">Add member</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">✕</button>
       </div>
       <div class="modal-body">
         <input
