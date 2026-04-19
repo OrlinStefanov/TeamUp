@@ -1,4 +1,4 @@
-.task-board.light-mode .card {
+.card.light-mode {
   border: 1px solid #ccc;
   background: #f5f5f5;
   color: #1a1a2e;
@@ -6,7 +6,7 @@
   padding: 15px;
 }
 
-.task-board.dark-mode .card {
+.card.dark-mode {
   border: 1px solid #666;
   background: #111;
   color: #f0eeff;
@@ -14,7 +14,7 @@
   padding: 15px;
 }
 
-.task-board .card:hover {
+.card:hover {
   transform: translateY(-2px);
   border: #a64bfb 1px solid;
 }

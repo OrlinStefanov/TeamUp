@@ -10,11 +10,287 @@
               <h2>Welcome to your dashboard,<a style="color: #a64bfb; text-shadow: #9333ea 0 0 3px;"> {{ (user$ | async)?.userName }}</a></h2>              
               <h6 style=" color: #999; padding-bottom: 20px;">Pick a workspace to continue where you left off.</h6>
             </div>
+<<<<<<< Updated upstream
             <div class="workspaces-grid">
               @for (workspace of workspaces; track workspace) {
                 <div class="workspace-card" [routerLink]="['/workspace', workspace.publicId, 'tasks']">
                   <span class="workspace-icon">
                     {{ workspace.title.charAt(0) }}
+=======
+
+            <div *ngFor="let task of tasksToDo" style="cursor: pointer;" cdkDrag [cdkDragDisabled]="!canMoveTask(task)" [ngClass]="{ 'disabled-task': !canMoveTask(task) }" class="mb-4">
+              <ng-container *ngTemplateOutlet="taskCard; context:{task: task}"></ng-container>
+            </div>
+          </div>
+
+          <!-- 🔵 IN PROGRESS -->
+          <div class="flex-fill"
+               cdkDropList
+               id="inProgressList"
+               [cdkDropListData]="tasksInProgress"
+               [cdkDropListConnectedTo]="['todoList','doneList','overdueList']"
+               (cdkDropListDropped)="drop($event, 1)">
+
+            <div class="d-flex align-items-center mb-3" style="border-bottom: 2px solid rgb(3, 255, 255); height: 60px;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" style="color: rgb(3, 255, 255);" fill="currentColor" class="bi bi-clock mt-1" viewBox="0 0 16 16">
+                <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71z"/>
+                <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0"/>
+              </svg>
+              <h4 style="margin-left: 10px;" class="mb-0">In Progress</h4>
+              <span class="badge bg-secondary ms-auto mt-2">{{ tasksInProgress.length }}</span>
+            </div>
+
+            <div *ngFor="let task of tasksInProgress" style="cursor: pointer;" cdkDrag [cdkDragDisabled]="!canMoveTask(task)" [ngClass]="{ 'disabled-task': !canMoveTask(task) }" class="mb-4">
+              <ng-container *ngTemplateOutlet="taskCard; context:{task: task}"></ng-container>
+            </div>
+          </div>
+
+          <!-- 🟢 DONE -->
+          <div class="flex-fill"
+               cdkDropList
+               id="doneList"
+               [cdkDropListData]="tasksCompleted"
+               [cdkDropListConnectedTo]="['todoList','inProgressList','overdueList']"
+               (cdkDropListDropped)="drop($event, 2)">
+
+            <div class="d-flex align-items-center mb-3" style="border-bottom: 2px solid rgb(0, 255, 0); height: 60px;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" style="color: rgb(0, 255, 0);" fill="currentColor" class="bi bi-check-circle mt-1" viewBox="0 0 16 16">
+                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                <path d="M10.97 6.97a.75.75 0 0 0-1.08-1.04L7.477 8.417l-1.384-1.384a.75.75 0 1 0-1.06 1.06l2 2a.75.75 0 0 0 1.08 0l3-3z"/>
+              </svg>
+              <h4 style="margin-left: 10px;" class="mb-0">Done</h4>
+              <span class="badge bg-secondary ms-auto mt-2">{{ tasksCompleted.length }}</span>
+            </div>
+
+            <div *ngFor="let task of tasksCompleted" style="cursor: pointer;" cdkDrag [cdkDragDisabled]="!canMoveTask(task)" [ngClass]="{ 'disabled-task': !canMoveTask(task) }" class="mb-4">
+              <ng-container *ngTemplateOutlet="taskCard; context:{task: task}"></ng-container>
+            </div>
+          </div>
+
+          <!-- 🔴 OVERDUE -->
+          <div class="flex-fill"
+               cdkDropList
+               id="overdueList"
+               [cdkDropListData]="tasksOverdue"
+               [cdkDropListConnectedTo]="[]"
+               cdkDropListDisabled="true">
+
+            <div class="d-flex align-items-center mb-3" style="border-bottom: 2px solid rgb(255, 0, 0); height: 60px;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" style="color: rgb(255, 0, 0);" fill="currentColor" class="bi bi-exclamation-circle mt-1" viewBox="0 0 16 16">
+                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0M7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0z"/>
+              </svg>
+              <h4 style="margin-left: 10px;" class="mb-0">Overdue</h4>
+              <span class="badge bg-secondary ms-auto mt-2">{{ tasksOverdue.length }}</span>
+            </div>
+
+            <div *ngFor="let task of tasksOverdue" style="cursor: pointer;" cdkDrag [cdkDragDisabled]="!canMoveTask(task)" [ngClass]="{ 'disabled-task': !canMoveTask(task) }" class="mb-4">
+              <ng-container *ngTemplateOutlet="taskCard; context:{task: task}"></ng-container>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ✅ REUSABLE CARD (UNCHANGED DESIGN) -->
+<ng-template #taskCard let-task="task">
+  <div class="card h-100" [ngClass]="{'dark-mode': isDarkMode, 'light-mode': !isDarkMode}">
+
+    <div class="card-body">
+      <h5 class="card-title mb-0">{{ task.title }}</h5>
+      <p class="card-text" style="color: #999;">{{ task.description }}</p>
+
+      <div *ngIf="task.tags?.length">
+        <span *ngFor="let tag of task.tags"
+              class="badge bg-secondary mb-2 me-1">
+          {{ tag.name }}
+        </span>
+      </div>
+
+      <div class="d-flex align-items-center justify-content-between">
+
+        <span class="difficulty-badge"
+              [ngClass]="{
+                'easy': task.difficulty === 0,
+                'medium': task.difficulty === 1,
+                'hard': task.difficulty === 2,
+                'vhard': task.difficulty === 3
+              }">
+          {{ ['EASY','MEDIUM','HARD','VERY HARD'][task.difficulty] }}
+        </span>
+
+        <div class="d-flex align-items-center gap-2 ms-auto">
+
+          <span class="points" style="color: rgb(3, 255, 255);">
+            +{{ task.points }} pts
+          </span>
+
+          <ng-container *ngIf="task.assignedUsers?.length; else noUser">
+            <ng-container *ngFor="let user of task.assignedUsers">
+
+              <img *ngIf="user.profilePictureUrl"
+                   [src]="user.profilePictureUrl"
+                   class="rounded-circle"
+                   width="28" height="28">
+
+              <div *ngIf="!user.profilePictureUrl"
+                   class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center"
+                   style="width:28px;height:28px;font-size:12px;">
+                {{ user.userName.charAt(0) }}
+              </div>
+
+            </ng-container>
+          </ng-container>
+
+          <ng-template #noUser>
+            <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center"
+                 style="width:28px;height:28px;font-size:12px;">
+              ?
+            </div>
+          </ng-template>
+
+        </div>
+      </div>
+    </div>
+
+    <div class="card-footer">
+      Due: {{ task.dueDate | date:'mediumDate' }}
+    </div>
+
+  </div>
+</ng-template>
+
+<!-- CREATE TASK MODAL -->
+<div class="modal fade" id="createTaskModal">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="tm-box" [ngClass]="{'dark-mode': isDarkMode, 'light-mode': !isDarkMode}">
+      <div class="tm-header">
+        <div class="tm-header-left">
+          <div class="tm-icon">
+            <svg width="18" height="18" fill="none" viewBox="0 0 24 24">
+              <path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div>
+            <p class="tm-title">New Task</p>
+            <p class="tm-subtitle">workspace / board</p>
+          </div>
+        </div>
+        <button class="tm-close" data-bs-dismiss="modal">✕</button>
+      </div>
+      <div class="tm-body">
+        <div class="tm-field">
+          <label class="tm-label">Title</label>
+          <input class="tm-input" type="text" name="taskTitle" [(ngModel)]="newTask.title" placeholder="What needs to be done?" required />
+        </div>
+        <div class="tm-field">
+          <label class="tm-label">Description</label>
+          <textarea class="tm-textarea" name="taskDescription" rows="3" [(ngModel)]="newTask.description" placeholder="Add context, links, or notes..."></textarea>
+        </div>
+        <div class="tm-row">
+          <div class="tm-field">
+            <label class="tm-label">Start Date</label>
+            <input class="tm-input" type="date" name="taskStartDate" [(ngModel)]="newTask.startDate" required />
+          </div>
+          <div class="tm-field">
+            <label class="tm-label">Due Date</label>
+            <input class="tm-input" type="date" name="taskDueDate" [(ngModel)]="newTask.dueDate" required />
+          </div>
+        </div>
+        <hr class="tm-divider" />
+        <div class="tm-field">
+          <label class="tm-label">Status</label>
+          <div class="tm-pills">
+            <button class="tm-pill pill-todo" [class.active]="newTask.status === 0" (click)="setStatus(0)">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-circle" viewBox="0 0 16 16">
+                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+              </svg>
+              To Do
+            </button>
+            <button class="tm-pill pill-progress" [class.active]="newTask.status === 1" (click)="setStatus(1)">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" style="color: rgb(3, 255, 255);" fill="currentColor" class="bi bi-clock" viewBox="0 0 16 16">
+                <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71z"/>
+                <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0"/>
+              </svg>
+              In Progress
+            </button>
+            <button class="tm-pill pill-done" [class.active]="newTask.status === 2" (click)="setStatus(2)">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" style="color: rgb(0, 255, 0);" fill="currentColor" class="bi bi-check-circle" viewBox="0 0 16 16">
+                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                <path d="M10.97 6.97a.75.75 0 0 0-1.08-1.04L7.477 8.417l-1.384-1.384a.75.75 0 1 0-1.06 1.06l2 2a.75.75 0 0 0 1.08 0l3-3z"/>
+              </svg>
+              Done
+            </button>
+          </div>
+        </div>
+        <div class="tm-field">
+          <label class="tm-label">Difficulty</label>
+          <div class="tm-pills">
+            <button class="tm-pill pill-easy" [class.active]="newTask.difficulty === 0" (click)="setDifficulty(0)">Easy</button>
+            <button class="tm-pill pill-med" [class.active]="newTask.difficulty === 1" (click)="setDifficulty(1)">Medium</button>
+            <button class="tm-pill pill-hard" [class.active]="newTask.difficulty === 2" (click)="setDifficulty(2)">Hard</button>
+            <button class="tm-pill pill-vhard" [class.active]="newTask.difficulty === 3" (click)="setDifficulty(3)">Very Hard</button>
+          </div>
+        </div>
+        <hr class="tm-divider" />
+        <div class="tm-field">
+          <label class="tm-label">Points</label>
+          <div class="tm-points-row">
+            <input class="tm-input tm-points-input" type="number" name="taskPoints" [(ngModel)]="newTask.points" placeholder="0" />
+            <span class="tm-points-hint">Leave blank — the system will<br>auto-evaluate based on difficulty.</span>
+          </div>
+        </div>
+        <div class="tm-field">
+          <label class="tm-label">Assign To</label>
+          <div class="dropdown w-100">
+            <!-- BUTTON -->
+            <button class="btn btn-outline-secondary w-100 text-start" type="button" data-bs-toggle="dropdown">
+              <span *ngIf="selectedUsers.length === 0">Select users</span>
+              <span *ngIf="selectedUsers.length > 0">{{ selectedUsers.length }} selected</span>
+            </button>
+            <!-- MENU -->
+            <ul class="dropdown-menu w-100">
+              <!-- OWNER -->
+              <li *ngIf="worksapce_info?.owner">
+                <a class="dropdown-item owner d-flex align-items-center justify-content-between" (click)="toggleUser(worksapce_info.owner)">
+                  <div class="d-flex align-items-center">
+                    <img *ngIf="worksapce_info.owner.profilePictureUrl" [src]="worksapce_info.owner.profilePictureUrl" class="rounded-circle me-2" width="28" height="28">
+                    <div *ngIf="!worksapce_info.owner.profilePictureUrl" class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-2" style="width:28px;height:28px;font-size:12px;">
+                      {{ worksapce_info.owner.userName.charAt(0) }}
+                    </div>
+                    {{ worksapce_info.owner.userName }}
+                  </div>
+                  <!-- CHECK -->
+                  <div class="d-flex align-items-center gap-2">
+                    <span *ngIf="selectedUsers.some(u => u.id === worksapce_info.owner.id)" class="check-icon" (click)="toggleUser(worksapce_info.owner.id)">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-lg" viewBox="0 0 16 16">
+                        <path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425z"/>
+                      </svg>
+                    </span>
+                    <svg width="20" height="20" class="owner-icon" viewBox="-4 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 10.938c-1.375 0-2.5-1.125-2.5-2.5 0-1.406 1.125-2.5 2.5-2.5s2.5 1.094 2.5 2.5c0 1.375-1.125 2.5-2.5 2.5zM2.031 9.906c1.094 0 1.969 0.906 1.969 2 0 1.125-0.875 2-1.969 2-1.125 0-2.031-0.875-2.031-2 0-1.094 0.906-2 2.031-2zM22.031 9.906c1.094 0 1.969 0.906 1.969 2 0 1.125-0.875 2-1.969 2-1.125 0-2.031-0.875-2.031-2 0-1.094 0.906-2 2.031-2zM4.219 23.719l-1.656-9.063c0.5-0.094 0.969-0.375 1.344-0.688 1.031 0.938 2.344 1.844 3.594 1.844 1.5 0 2.719-2.313 3.563-4.25 0.281 0.094 0.625 0.188 0.938 0.188s0.656-0.094 0.938-0.188c0.844 1.938 2.063 4.25 3.563 4.25 1.25 0 2.563-0.906 3.594-1.844 0.375 0.313 0.844 0.594 1.344 0.688l-1.656 9.063h-15.563zM3.875 24.5h16.25v1.531h-16.25v-1.531z"/>
+                    </svg>
+                  </div>
+                </a>
+              </li>
+              <!-- MEMBERS -->
+              <li *ngFor="let user of worksapce_info?.members">
+                <a class="dropdown-item d-flex align-items-center justify-content-between" (click)="toggleUser(user)">
+                  <div class="d-flex align-items-center">
+                    <img *ngIf="user.profilePictureUrl" [src]="user.profilePictureUrl" class="rounded-circle me-2" width="28" height="28">
+                    <div *ngIf="!user.profilePictureUrl" class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-2" style="width:28px;height:28px;font-size:12px;">
+                      {{ user.userName.charAt(0) }}
+                    </div>
+                    {{ user.userName }}
+                  </div>
+                  <!-- CHECK -->
+                  <span *ngIf="selectedUsers.some(u => u.id === user.id)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-lg" viewBox="0 0 16 16">
+                      <path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425z"/>
+                    </svg>
+>>>>>>> Stashed changes
                   </span>
                   <h3>{{ workspace.title }}</h3>
  

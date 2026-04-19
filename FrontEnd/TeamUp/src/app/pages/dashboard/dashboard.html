@@ -10,6 +10,7 @@
               <h2>Welcome to your dashboard,<a style="color: #a64bfb; text-shadow: #9333ea 0 0 3px;"> {{ (user$ | async)?.userName }}</a></h2>              
               <h6 style=" color: #999; padding-bottom: 20px;">Pick a workspace to continue where you left off.</h6>
             </div>
+<<<<<<< Updated upstream
             <div class="workspaces-grid">
               @for (workspace of workspaces; track workspace) {
                 <div class="workspace-card" [routerLink]="['/workspace', workspace.publicId, 'tasks']">
@@ -35,6 +36,30 @@
                             {{ member.userName.charAt(0) }}
                           </span>
                         }
+=======
+            
+            <!-- ================= MY WORKSPACES ================= -->
+            @if (myWorkspaces$ | async; as myWorkspaces) {
+              @if (myWorkspaces.length > 0) {
+            
+                <h4>My Workspaces</h4>
+                <p class="text-muted">Workspace's you have created</p>
+                <div class="workspaces-grid">
+                  @for (workspace of myWorkspaces; track workspace) {
+                    <ng-container 
+                      [ngTemplateOutlet]="workspacecard" 
+                      [ngTemplateOutletContext]="{ workspace: workspace }">
+                    </ng-container>
+                  }
+                  <button class="workspaces-grid-add" style="display: flex;" (click)="openCreateWorkspace()" style="color: #9333ea;">
+                    <a>+</a> Add New Workspace
+                    <p style="color: #999; font-size: x-small; padding: 20px;">Create or Join a new workspace to get started.</p> 
+                 </button>
+                </div>
+            
+              }
+            }
+>>>>>>> Stashed changes
 
                       }
 
