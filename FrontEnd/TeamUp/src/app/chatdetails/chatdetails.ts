@@ -7,6 +7,7 @@ import { RouterLink, RouterOutlet, ActivatedRoute, RouterModule } from '@angular
 import { Observable } from 'rxjs';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { ɵɵDir } from "@angular/cdk/scrolling";
 
 @Component({
   selector: 'app-chatdetails',
@@ -15,8 +16,9 @@ import { takeUntil } from 'rxjs/operators';
     FormsModule,
     RouterLink,
     RouterModule,
-    RouterOutlet
-  ],
+    RouterOutlet,
+    ɵɵDir
+],
   templateUrl: './chatdetails.html',
   styleUrl: './chatdetails.css',
 })

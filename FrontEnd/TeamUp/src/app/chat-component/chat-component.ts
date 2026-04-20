@@ -71,6 +71,7 @@ export class ChatComponent {
         }
 
         this.messages.push(msg);
+        console.log('New message:', msg);
         this.scrollToBottom();
       });
 
