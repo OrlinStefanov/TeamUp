@@ -48,19 +48,8 @@
     border-color: #333 !important;
     color: white;
 }
-
-.profile-container.dark-mode .card .form-control:focus {
+.card .form-control:focus {
     outline: 1.5px solid #a64bfb;
     border-color: #a64bfb;
     box-shadow: 0 0 0 4px rgba(168, 85, 247, 0.2);
 }
-
-.btn-cancel {
-  background: transparent;
-  border: none;
-  color: #666;
-  font-size: 20px;
-  cursor: pointer;
-}
-
-.btn-cancel:hover { color: red; }

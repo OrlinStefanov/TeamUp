@@ -57,18 +57,18 @@
 </div>
 
 <!-- CREATE CHANNEL MODAL -->
-<div class="modal fade" id="createChannelModal" tabindex="-1">
+<div class="modal fade border-none" id="createChannelModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered" role="document" >
     <div class="modal-content">
 
       <!-- Header -->
-      <div class="modal-header">
+      <div class="modal-header d-flex justify-content-between" [style]="isDarkMode ? 'background-color: #1a1a22; color: #fff' : null">
         <h5 class="modal-title">Create Channel</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <span class="btn-cancel tm-close">✕</span>
       </div>
 
       <!-- Body -->
-      <div class="modal-body">
+      <div class="modal-body" [ngClass]="{'dark-mode': isDarkMode, 'light-mode': !isDarkMode}" [style]="isDarkMode ? 'background-color: #1a1a22; color: #fff' : null">
         <form>
 
           <!-- Name -->
@@ -78,7 +78,8 @@
               type="text" 
               class="form-control"
               [(ngModel)]="newChannel.name"
-              name="name">
+              name="name"
+              placeholder="Enter channel name">
           </div>
 
           <!-- Description -->
@@ -87,7 +88,8 @@
             <textarea 
               class="form-control"
               [(ngModel)]="newChannel.description"
-              name="description">
+              name="description"
+              placeholder="Enter channel description">
             </textarea>
           </div>
 
@@ -105,11 +107,11 @@
       </div>
 
       <!-- Footer -->
-      <div class="modal-footer">
+      <div class="modal-footer" [style]="isDarkMode ? 'background-color: #1a1a22; color: #fff' : null">
         <button class="btn btn-secondary" data-bs-dismiss="modal">
           Cancel
         </button>
-        <button class="btn btn-primary" (click)="createChannel()">
+        <button class="btn btn-primary" style="background-color: #a64bfb; border: none;" (click)="createChannel()">
           Create
         </button>
       </div>

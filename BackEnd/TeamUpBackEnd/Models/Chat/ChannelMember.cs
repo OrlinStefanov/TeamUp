@@ -8,6 +8,6 @@
 		public string? UserId { get; set; }
 		public ApplicationUser? User { get; set; }
 
-		public DateTime LastSeen { get; set; } = DateTime.UtcNow;
+        public DateTime LastSeen { get; set; } = DateTime.UtcNow;
 	}
 }
