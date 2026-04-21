@@ -7,6 +7,7 @@
   flex-direction: column;
   align-items: center;
   gap: 20px;
+  padding: 0px 10% 3% 10%;
 }
 
 .profile-container.dark-mode .card {
@@ -52,4 +53,11 @@
     outline: 1.5px solid #a64bfb;
     border-color: #a64bfb;
     box-shadow: 0 0 0 4px rgba(168, 85, 247, 0.2);
+}
+
+.danger-card {
+  background: #f425470d !important;
+  border: 1px solid #f425474d !important;
+  border-radius: 9px;
+  color: #ff6969;
 }

@@ -1,4 +1,4 @@
-<div class="container profile-container" [ngClass]="{'dark-mode': isDarkMode, 'light-mode': !isDarkMode}">
+<div class="container-fluid profile-container" [ngClass]="{'dark-mode': isDarkMode, 'light-mode': !isDarkMode}">
   <div class="row">
     <div class="col-md-12 d-flex flex-wrap mt-5">
       <button class="btn btn-outline-secondary back-btn px-3" style="border: 0px solid !important;" [routerLink]="['/dashboard']">
@@ -99,6 +99,35 @@
             <small class="text-success" *ngIf="saveInfoMessage">{{saveInfoMessage}}</small>
           </div>
         </div>
+      </div>
+    </div>
+
+    <div class="col-md-12">
+      <div class="card p-4 mt-4">
+        <h5 class="fw-bold mb-3">Change Password</h5>
+        <div class="mb-3">
+          <label class="form-label text-muted mb-1">Current Password</label>
+          <input type="password" class="form-control" [(ngModel)]="currentPassword" name="currentPassword" placeholder="Enter current password">
+        </div>
+        <div class="mb-3">
+          <label class="form-label text-muted mb-1">New Password</label>
+          <input type="password" class="form-control" [(ngModel)]="newPassword" name="newPassword" placeholder="Enter new password">
+        </div>
+        <div class="mb-3">
+          <label class="form-label text-muted mb-1">Confirm New Password</label>
+          <input type="password" class="form-control" [(ngModel)]="confirmNewPassword" name="confirmNewPassword" placeholder="Confirm new password">
+        </div>
+
+        <div class="d-inline align-items-center justify-content-between">
+          <small class=" mt-3" [ngClass]="{'text-success': successfulPasswordChange, 'text-danger': !successfulPasswordChange}">{{passwordMessage}}</small>
+          
+          <div class="d-flex justify-content-end mt-3">
+            <button class="btn btn-primary btn-sm"
+                    (click)="changePassword()">
+              Update Password
+            </button>
+          </div>
+        </div> 
       </div>
     </div>
   </div>

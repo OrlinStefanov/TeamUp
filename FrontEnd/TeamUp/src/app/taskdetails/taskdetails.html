@@ -2,46 +2,79 @@
   
   <!-- HEADER (UNCHANGED) -->
   <div class="row border-bottom px-3" style="margin-bottom: 10px;">
-  <div class="col-12 d-flex align-items-center justify-content-between flex-wrap gap-2 py-2">
-    
-    <div class="align-items-center gap-3">
-      <h4 style="font-weight: bold; margin: 0;">Task Board</h4>
-      <span style="color: #999; font-size: 14px;">
-        {{tasks.length}} {{ tasks.length === 1 ? 'task' : 'tasks' }}
-      </span>
-    </div>
-
-    <div class="d-flex align-items-center gap-2">
-
-      <!-- ✅ ORIGINAL SEARCH -->
-      <div class="input-group" style="max-width: 300px;">
-        <input class="form-control" type="search" placeholder="Search" aria-label="Search" id="search-input">
-        <span class="input-group-text bg-white" id="search-btn">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search text-muted" viewBox="0 0 16 16">
-            <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
-          </svg>
+    <div class="col-12 d-flex align-items-center justify-content-between flex-wrap gap-2 py-2">
+      
+      <div class="align-items-center gap-3">
+        <h4 style="font-weight: bold; margin: 0;">Task Board</h4>
+        <span style="color: #999; font-size: 14px;">
+          {{tasks.length}} {{ tasks.length === 1 ? 'task' : 'tasks' }}
         </span>
       </div>
 
-      <!-- ✅ ORIGINAL FILTER BUTTON -->
-      <button class="btn btn-m btn-outline-secondary" style="white-space: nowrap;">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-funnel" viewBox="0 0 16 16">
-          <path d="M1.5 1.5A.5.5 0 0 1 2 1h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.128.334L10 8.692V13.5a.5.5 0 0 1-.342.474l-3 1A.5.5 0 0 1 6 14.5V8.692L1.628 3.834A.5.5 0 0 1 1.5 3.5zm1 .5v1.308l4.372 4.858A.5.5 0 0 1 7 8.5v5.306l2-.666V8.5a.5.5 0 0 1 .128-.334L13.5 3.308V2z"/>
-        </svg>
-        Filter
-      </button>
+      <div class="d-flex align-items-center gap-2">
 
-      <!-- ✅ ORIGINAL ADD TASK BUTTON -->
-      <button class="btn btn-m btn-primary" (click)="openTaskModal()" style="white-space: nowrap;">
-        <svg width="14" height="14" fill="none" viewBox="0 0 24 24">
-          <path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
-        </svg>
-        Add Task
-      </button>
+        <!-- ✅ ORIGINAL SEARCH -->
+        <div class="input-group" style="max-width: 300px;">
+          <input class="form-control" type="search" placeholder="Search" aria-label="Search" id="search-input">
+          <span class="input-group-text bg-white" id="search-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search text-muted" viewBox="0 0 16 16">
+              <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
+            </svg>
+          </span>
+        </div>
 
+        <!-- ✅ ORIGINAL FILTER BUTTON -->
+        <button class="btn btn-m btn-outline-secondary" style="white-space: nowrap;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-funnel" viewBox="0 0 16 16">
+            <path d="M1.5 1.5A.5.5 0 0 1 2 1h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.128.334L10 8.692V13.5a.5.5 0 0 1-.342.474l-3 1A.5.5 0 0 1 6 14.5V8.692L1.628 3.834A.5.5 0 0 1 1.5 3.5zm1 .5v1.308l4.372 4.858A.5.5 0 0 1 7 8.5v5.306l2-.666V8.5a.5.5 0 0 1 .128-.334L13.5 3.308V2z"/>
+          </svg>
+          Filter
+        </button>
+
+        <!-- ✅ ORIGINAL ADD TASK BUTTON -->
+        <button class="btn btn-m btn-primary" (click)="openTaskModal()" style="white-space: nowrap;">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24">
+            <path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+          Add Task
+        </button>
+      </div>
     </div>
-
   </div>
+
+  <!-- ROLE FILTER (NEW) -->
+   
+  <div class="row pb-2 border-bottom">
+    <div class="d-flex align-items-center gap-3">
+      <label class="form-label pt-2">FILTERS:</label>
+
+    <div class="dropdown">
+      <!-- BUTTON -->
+      <button class="btn btn-outline-secondary w-100 text-start d-flex align-items-center justify-content-between" type="button" data-bs-toggle="dropdown" (click)="toggleRoleMenu($event)">
+        <span class="mx-2"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person" viewBox="0 0 16 16">
+  <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0m4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4m-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10s-3.516.68-4.168 1.332c-.678.678-.83 1.418-.832 1.664z"/>
+</svg></span>
+        <span *ngIf="selectedUsers.length === 0">All...</span>
+        <span class="mx-2"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-down" viewBox="0 0 16 16">
+  <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708"/>
+</svg></span>
+        <span *ngIf="selectedUsers.length > 0">{{ selectedUsers.length }} selected</span>
+      </button>
+      <!-- MENU -->
+      <div class="role-filter-dropdown" *ngIf="roleMenuOpen">
+        <button class="dropdown-item" (click)="setRoleFilter('all', $event)">
+          <span class="d-inline-flex align-items-center gap-2">
+            All Members
+          </span>
+        </button>
+        <button class="dropdown-item" (click)="setRoleFilter('member', $event)">
+          <span class="d-inline-flex align-items-center gap-2">
+            Member
+          </span>
+        </button>
+      </div>
+    </div>
+    </div>
 </div>
 
   <!-- BOARD -->
@@ -136,13 +169,32 @@
       </div>
     </div>
   </div>
-</div>
 
 <ng-template #taskCard let-task="task">
   <div class="card h-100" [ngClass]="{'dark-mode': isDarkMode, 'light-mode': !isDarkMode}">
 
     <div class="card-body">
-      <h5 class="card-title mb-0">{{ task.title }}</h5>
+      <div class="d-flex align-items-center justify-content-between gap-2 mb-0">
+        <h5 class="card-title mb-0">{{ task.title }}</h5>
+        <span class="menu-trigger" (click)="toggleMenu($event, task.publicId)">...</span>
+
+        <div *ngIf="activeMenuTaskId === task.publicId" class="task-menu" (click)="$event.stopPropagation()">
+          <div class="menu-title mb-2 border-bottom p-2">Move to:</div>
+
+          <div class="menu-item d-flex gap-2" (click)="moveTask(task, 'ToDo')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-circle mt-1" viewBox="0 0 16 16">
+                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+              </svg> To Do</div>
+          <div class="menu-item d-flex gap-2" (click)="moveTask(task, 'InProgress')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" style="color: rgb(3, 255, 255);" fill="currentColor" class="bi bi-clock mt-1" viewBox="0 0 16 16">
+                <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71z"/>
+                <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0"/>
+              </svg> In Progress</div>
+          <div class="menu-item d-flex gap-2" (click)="moveTask(task, 'Done')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" style="color: rgb(0, 255, 0);" fill="currentColor" class="bi bi-check-circle mt-1" viewBox="0 0 16 16">
+                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                <path d="M10.97 6.97a.75.75 0 0 0-1.08-1.04L7.477 8.417l-1.384-1.384a.75.75 0 1 0-1.06 1.06l2 2a.75.75 0 0 0 1.08 0l3-3z"/>
+              </svg> Done</div>
+
+        </div>
+      </div>
       <p class="card-text" style="color: #999;">{{ task.description }}</p>
 
       <div *ngIf="task.tags?.length">

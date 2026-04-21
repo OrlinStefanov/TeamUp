@@ -68,6 +68,14 @@ export class Auth {
     return this.http.post(`${this.apiUrl}/register`, user, { withCredentials: true, headers: { 'Content-Type': 'application/json' } });
   }
 
+  changePassword(data: { currentPassword: string; newPassword: string }) {
+    return this.http.post(`${this.apiUrl}/change-password`, data, { withCredentials: true, headers: { 'Content-Type': 'application/json' } });
+  }
+
+  deleteAccount() {
+    return this.http.delete(`${this.apiUrl}/delete-account`, { withCredentials: true });
+  }
+
   //returns the user information based on the token
   me()
   {
