@@ -3,6 +3,7 @@ import { Auth } from '../../services/auth/auth';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { error } from 'node:console';
 
 @Component({
@@ -13,7 +14,7 @@ import { error } from 'node:console';
 })
 
 export class Profile {
-  constructor(private auth: Auth) {}
+  constructor(private auth: Auth, private router: Router) {}
 
   isDarkMode: boolean = false;
   isEditMode: boolean = false;
@@ -21,6 +22,13 @@ export class Profile {
   previewProfilePictureUrl: string = '';
   selectedProfileFile: File | null = null;
   isUploadingProfilePicture: boolean = false;
+
+  currentPassword: string = '';
+  newPassword: string = '';
+  confirmNewPassword: string = '';
+  passwordMessage: string = '';
+  successfulPasswordChange: boolean = false;
+
   mockUserData = {
     fullName: 'John Doe',
     userName: 'john.doe',
@@ -154,5 +162,35 @@ export class Profile {
 
   toggleEdit() {
     this.isEditMode = !this.isEditMode;
+  }
+
+  changePassword(): void {
+    if (!this.currentPassword || !this.newPassword || !this.confirmNewPassword) {
+      this.passwordMessage = 'All fields are required.';
+      return;
+    }
+
+    if (this.newPassword !== this.confirmNewPassword) {
+      this.passwordMessage = 'New passwords do not match.';
+      return;
+    }
+
+    this.auth.changePassword({
+      currentPassword: this.currentPassword,
+      newPassword: this.newPassword
+    }).subscribe({
+      next: () => {
+        this.passwordMessage = 'Password updated successfully.';
+        this.successfulPasswordChange = true;
+        this.currentPassword = '';
+        this.newPassword = '';
+        this.confirmNewPassword = '';
+      },
+      error: (err) => {
+        console.log(err.error); // THIS is the important part
+        this.passwordMessage = err.error;
+        this.successfulPasswordChange = false;
+      }
+    });
   }
 }

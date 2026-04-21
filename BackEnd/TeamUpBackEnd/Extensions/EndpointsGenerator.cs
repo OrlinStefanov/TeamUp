@@ -369,7 +369,46 @@ namespace TeamUpBackEnd.Extensions
 			.RequireAuthorization()
 			.WithSummary("Updates user's personal info")
 			.WithTags("User Management");
-		}
+
+            app.MapPost("/change-password", [Authorize] async (ClaimsPrincipal userClaims, UserManager<ApplicationUser> userManager, user_data.ChangePasswordDTO dto) =>
+            {
+                var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                if (userId is null)
+                    return Results.BadRequest("User not found");
+
+                var user = await userManager.FindByIdAsync(userId);
+
+                if (user is null)
+                    return Results.BadRequest("User not found");
+
+                if (string.IsNullOrWhiteSpace(dto.CurrentPassword))
+                    return Results.BadRequest("Current password is required");
+
+                if (string.IsNullOrWhiteSpace(dto.NewPassword))
+                    return Results.BadRequest("New password is required");
+
+                var result = await userManager.ChangePasswordAsync(
+                    user,
+                    dto.CurrentPassword,
+                    dto.NewPassword
+                );
+
+                if (!result.Succeeded)
+                {
+                    var errors = result.Errors.Select(e => e.Description);
+                    return Results.BadRequest(errors);
+                }
+
+                // invalidate old tokens (important)
+                await userManager.UpdateSecurityStampAsync(user);
+
+                return Results.Ok("Password changed successfully");
+            })
+.RequireAuthorization()
+.WithSummary("Change password for authenticated user")
+.WithTags("User Management");
+        }
 
 		public static void WorkspaceEndpoints(WebApplication app)
 		{

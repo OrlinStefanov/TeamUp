@@ -20,10 +20,14 @@ import {
 
 export class Taskdetails {
 
+  selectedRole: string = 'all';
+  roleMenuOpen: boolean = false;
+
   worksapce_info: any = null;
   tasks: any[] = [];
   user_data: any = null;
   isDarkMode = false;
+  activeMenuTaskId: string | null = null;
 
   tasksToDo: any[] = [];
   tasksInProgress: any[] = [];
@@ -39,6 +43,13 @@ export class Taskdetails {
     1: 'InProgress',
     2: 'Done',
     3: 'Overdue'
+  };
+
+  statusReverseMap: any = {
+    ToDo: 0,
+    InProgress: 1,
+    Done: 2,
+    Overdue: 3
   };
 
   newTask: any = {
@@ -298,5 +309,39 @@ export class Taskdetails {
       document.getElementById('createTaskModal')
     );
     modal.show();
+  }
+
+  moveTask(task: any, status: string) {
+    task.status = this.statusReverseMap[status];
+
+    this.filterTasksStatus();
+
+    this.auth.updateTaskStatus(task.publicId, task.status)
+      .subscribe({
+        next: () => console.log('Task moved'),
+        error: (err) => {
+          console.error(err);
+          this.filterTasksStatus();
+        }
+      });
+
+    this.activeMenuTaskId = null;
+  }
+  toggleMenu(event: MouseEvent, taskId: string) {
+    event.stopPropagation();
+
+    this.activeMenuTaskId =
+      this.activeMenuTaskId === taskId ? null : taskId;
+  }
+
+  toggleRoleMenu(event: Event): void {
+    event.stopPropagation();
+    this.roleMenuOpen = !this.roleMenuOpen;
+  }
+
+  setRoleFilter(role: string, event?: Event): void {
+    event?.stopPropagation();
+    this.selectedRole = role;
+    this.roleMenuOpen = false;
   }
 }
