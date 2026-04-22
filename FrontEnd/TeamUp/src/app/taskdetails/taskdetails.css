@@ -37,15 +37,19 @@
   background: rgba(0,0,0,0.05);
 }
 
-.card.dark-mode .task-menu {
+.card.dark-mode .task-menu, .container-fluid.dark-mode .role-filter-dropdown {
   background-color: #16161f;
 }
 
-.card.dark-mode .menu-item:hover {
+.container-fluid.dark-mode .dropdown-item {
+  color: white;
+}
+
+.card.dark-mode .menu-item:hover, .container-fluid.dark-mode .dropdown-item:hover {
   background-color: #1e1e2e;
 }
 
-.task-menu {
+.task-menu, .role-filter-dropdown {
   position: absolute;
   top: 25px;
   right: 0;
@@ -57,14 +61,14 @@
   overflow: hidden;
 }
 
-.menu-item {
+.menu-item, .dropdown-item {
   padding: 10px;
   font-size: 14px;
   cursor: pointer;
   transition: 0.2s;
 }
 
-.menu-item:hover {
+.menu-item:hover, .dropdown-item:hover {
   background: #f5f5f5;
 }
 
@@ -542,4 +546,12 @@
   display: inline-flex;
   align-items: center;
   justify-content: space-between;
+}
+
+.filtersRow.hidden {
+  display: none;
+}
+
+.filtersRow.visible {
+  display: block;
 }
