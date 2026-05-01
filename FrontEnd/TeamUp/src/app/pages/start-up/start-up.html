@@ -1,4 +1,4 @@
-<div #pageDiv class="page" [ngClass]="{'light-mode': !isDarkMode, 'dark-mode': isDarkMode}">
+<div #pageDiv class="page" [ngClass]="{'light-mode': !(isDarkMode$ | async), 'dark-mode': isDarkMode$ | async}">
   <div class="text-center">
     <div class="mb-4">
         <img src="teamUpLogo.png" width="150" height="150" />

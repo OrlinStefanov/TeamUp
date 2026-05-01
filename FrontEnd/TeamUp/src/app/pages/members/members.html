@@ -1,4 +1,4 @@
-<div class="container-fluid" [ngClass]="{'light-mode': !isDarkMode, 'dark-mode': isDarkMode}">
+<div class="container-fluid" [ngClass]="{'light-mode': !(isDarkMode$ | async), 'dark-mode': isDarkMode$ | async}">
   <div class="row">
     <div class="col-md-12 align-items-center d-flex mb-4 justify-content-between" style="padding: 0px 20px;">
         <div class="align-items-center d-flex justify-content-center">
@@ -235,7 +235,7 @@
 </div>
 
 <!-- Add Member Modal -->
-<div class="modal fade" id="addMemberModal" tabindex="-1" aria-hidden="true" [ngClass]="{'light-mode': !isDarkMode, 'dark-mode': isDarkMode}">
+<div class="modal fade" id="addMemberModal" tabindex="-1" aria-hidden="true" [ngClass]="{'light-mode': !(isDarkMode$ | async), 'dark-mode': isDarkMode$ | async}">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">

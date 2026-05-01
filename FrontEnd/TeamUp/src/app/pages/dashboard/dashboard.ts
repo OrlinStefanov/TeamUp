@@ -1,4 +1,4 @@
-import { Component, ElementRef, Renderer2, ViewChild, AfterViewInit, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Auth } from '../../services/auth/auth';
 import { FormsModule } from '@angular/forms';
 import { Workspace, WorkspaceMember } from '../../services/auth/auth-types';
@@ -18,12 +18,7 @@ import { CdkDragPlaceholder } from "@angular/cdk/drag-drop";
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
-export class Dashboard implements OnInit, AfterViewInit {
-  @ViewChild('pageDiv') pageDiv?: ElementRef;
-  @ViewChild('joinWorkspaceModal') joinWorkspaceModal?: ElementRef;
-  @ViewChild('createWorkspaceModal') createWorkspaceModal?: ElementRef;
-
-  isDarkMode = false;
+export class Dashboard implements OnInit {
   showDropdown = false;
   showSettingsDropdown = false;
   showCreateWorkspace = false;
@@ -64,15 +59,17 @@ export class Dashboard implements OnInit, AfterViewInit {
   editInviteInput = '';
   editMembers: any[] = [];
 
-  constructor(private renderer: Renderer2, private auth: Auth) {}
+  constructor(private auth: Auth) {}
 
   myWorkspaces$!: Observable<any[]>;
   otherWorkspaces$!: Observable<any[]>;
 
   currentUserId!: string;
+  isDarkMode$!: Observable<boolean>;
 
   ngOnInit() {
 
+    this.isDarkMode$ = this.auth.darkMode$;
     this.user$ = this.auth.user$;
     this.workspaces$ = this.auth.workspaces$;
 
@@ -87,11 +84,6 @@ export class Dashboard implements OnInit, AfterViewInit {
     );
 
     this.auth.getWorkspaces().subscribe();
-
-
-
-    const savedMode = localStorage.getItem('darkMode');
-    this.isDarkMode = savedMode === 'true';
 
   }
 
@@ -197,35 +189,8 @@ export class Dashboard implements OnInit, AfterViewInit {
     return member?.role === 1 ? 'Admin' : 'Member';
   }
 
-  ngAfterViewInit() {
-    this.applyTheme();
-  }
-
   toggleDarkMode() {
-    this.isDarkMode = !this.isDarkMode;
-    localStorage.setItem('darkMode', String(this.isDarkMode));
-    this.applyTheme();
-  }
-
-  applyTheme() {
-    if (!this.pageDiv) return;
-    if (!this.joinWorkspaceModal) return;
-    if (!this.createWorkspaceModal) return;
-    if (this.isDarkMode) {
-      this.renderer.removeClass(this.pageDiv.nativeElement, 'light-mode');
-      this.renderer.removeClass(this.joinWorkspaceModal.nativeElement, 'light-mode');
-      this.renderer.removeClass(this.createWorkspaceModal.nativeElement, 'light-mode');
-      this.renderer.addClass(this.pageDiv.nativeElement, 'dark-mode');
-      this.renderer.addClass(this.joinWorkspaceModal.nativeElement, 'dark-mode');
-      this.renderer.addClass(this.createWorkspaceModal.nativeElement, 'dark-mode');
-    } else {
-      this.renderer.removeClass(this.pageDiv.nativeElement, 'dark-mode');
-      this.renderer.removeClass(this.joinWorkspaceModal.nativeElement, 'dark-mode');
-      this.renderer.removeClass(this.createWorkspaceModal.nativeElement, 'dark-mode');
-      this.renderer.addClass(this.pageDiv.nativeElement, 'light-mode');
-      this.renderer.addClass(this.joinWorkspaceModal.nativeElement, 'light-mode');
-      this.renderer.addClass(this.createWorkspaceModal.nativeElement, 'light-mode');
-    }
+    this.auth.toggleDarkMode();
   }
 
   openCreateWorkspace() {

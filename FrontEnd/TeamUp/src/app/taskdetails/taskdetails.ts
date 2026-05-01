@@ -3,6 +3,7 @@ import { CommonModule, DatePipe } from '@angular/common';
 import { Auth } from '../services/auth/auth';
 import { ActivatedRoute, RouterLink } from "@angular/router";
 import { FormsModule } from '@angular/forms';
+import { Observable } from 'rxjs';
 import {
   DragDropModule,
   CdkDragDrop,
@@ -27,7 +28,7 @@ export class Taskdetails {
   worksapce_info: any = null;
   tasks: any[] = [];
   user_data: any = null;
-  isDarkMode = false;
+  isDarkMode$!: Observable<boolean>;
   activeMenuTaskId: string | null = null;
 
   tasksToDo: any[] = [];
@@ -60,7 +61,7 @@ export class Taskdetails {
     startDate: '',
     status: 0,
     difficulty: 0,
-    points: 0,
+    points: null,
     assignedUserIds: [] as string[],
     tagIds: [] as number[],
     newTags: [] as string[],
@@ -92,28 +93,17 @@ export class Taskdetails {
       });
 
       this.auth.getWorkspaceTasks(workspaceId).subscribe((res: any) => {
-        this.tasks = res;
+        this.tasks = res.map((task: any) => this.normalizeTask(task));
 
         console.log('Fetched tasks:', this.tasks);
 
-        this.availableTags = this.tasks.reduce((acc: any[], task) => {
-          task.tags?.forEach((tag: any) => {
-            if (!acc.find(t => t.name === tag.name)) {
-              acc.push(tag);
-            }
-          });
-          return acc;
-        }, []);
+        this.refreshAvailableTags();
 
         this.filterTasksStatus();
       });
     });
 
-    const savedMode = localStorage.getItem('darkMode');
-    if (savedMode !== null) {
-      this.isDarkMode = savedMode === 'true';
-    }
-
+    this.isDarkMode$ = this.auth.darkMode$;
     this.user_data = this.auth.getCurrentUser();
 
     // Close dropdowns and menus when clicking outside
@@ -266,6 +256,10 @@ export class Taskdetails {
   // CREATE TASK
   createTask() {
     this.newTask.workspaceId = this.worksapce_info.id;
+    const points =
+      this.newTask.points === null || this.newTask.points === ''
+        ? null
+        : Number(this.newTask.points);
 
     const payload = {
       title: this.newTask.title,
@@ -274,7 +268,7 @@ export class Taskdetails {
       startDate: this.newTask.startDate,
       status: this.newTask.status,
       difficulty: this.newTask.difficulty,
-      points: this.newTask.points,
+      points,
       assignedUserIds: this.selectedUsers.map(u => String(u.id)),
       tagIds: this.newTask.tagIds,
       newTags: this.newTask.newTags,
@@ -282,7 +276,8 @@ export class Taskdetails {
     };
 
     this.auth.createTask(payload).subscribe((res: any) => {
-      this.tasks.push(res);
+      this.tasks.push(this.normalizeTask(res));
+      this.refreshAvailableTags();
       this.filterTasksStatus();
 
       this.newTask = {
@@ -292,7 +287,7 @@ export class Taskdetails {
         startDate: '',
         status: 0,
         difficulty: 0,
-        points: 0,
+        points: null,
         assignedUserIds: [],
         tagIds: [],
         newTags: [],
@@ -301,6 +296,48 @@ export class Taskdetails {
 
       this.selectedUsers = [];
     });
+  }
+
+  private normalizeTask(task: any) {
+    const rawDifficulty = task.difficulty ?? task.Difficulty;
+    const difficultyMap: any = {
+      Easy: 0,
+      Medium: 1,
+      Hard: 2,
+      VeryHard: 3,
+      'Very Hard': 3
+    };
+
+    return {
+      ...task,
+      publicId: task.publicId ?? task.PublicId,
+      title: task.title ?? task.Title,
+      description: task.description ?? task.Description,
+      dueDate: task.dueDate ?? task.DueDate,
+      startDate: task.startDate ?? task.StartDate,
+      points: task.points ?? task.Points,
+      status: task.status ?? task.Status,
+      difficulty: typeof rawDifficulty === 'number'
+        ? rawDifficulty
+        : difficultyMap[task.difficulty ?? task.Difficulty] ?? 0,
+      tags: (task.tags ?? task.Tags ?? []).map((tag: any) =>
+        typeof tag === 'string' ? { name: tag } : {
+          id: tag.id ?? tag.Id,
+          name: tag.name ?? tag.Name
+        }
+      )
+    };
+  }
+
+  private refreshAvailableTags() {
+    this.availableTags = this.tasks.reduce((acc: any[], task) => {
+      task.tags?.forEach((tag: any) => {
+        if (!acc.find(t => t.name === tag.name)) {
+          acc.push(tag);
+        }
+      });
+      return acc;
+    }, []);
   }
 
   // UI HELPERS
@@ -348,6 +385,30 @@ export class Taskdetails {
       });
 
     this.activeMenuTaskId = null;
+  }
+
+  deleteTask(task: any) {
+    if (!task.publicId) {
+      console.error('Delete task failed: missing task public id', task);
+      return;
+    }
+
+    this.auth.deleteTask(task.publicId)
+      .subscribe({
+        next: () => {
+          this.tasks = this.tasks.filter(t => t.publicId !== task.publicId);
+          this.filterTasksStatus();
+          this.activeMenuTaskId = null;
+        },
+        error: (err) => {
+          console.error('Delete task failed', err);
+          if (err.status === 400) {
+            this.tasks = this.tasks.filter(t => t.publicId !== task.publicId);
+            this.filterTasksStatus();
+            this.activeMenuTaskId = null;
+          }
+        }
+      });
   }
 
   toggleMenu(event: MouseEvent, taskId: string) {

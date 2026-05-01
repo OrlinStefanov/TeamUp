@@ -15,7 +15,6 @@ import { Workspace, WorkspaceMember } from '../services/auth/auth-types';
 export class Layout implements OnInit {
   isSidebarOpen = false;
   isDesktopSidebarCollapsed = false;
-  isDarkMode = false;
   isSettingsOpen = false;
   activeLink: string = '';
 
@@ -45,17 +44,14 @@ export class Layout implements OnInit {
 
   user$!: Observable<any>;
   workspaces$!: Observable<any[]>;
+  isDarkMode$!: Observable<boolean>;
 
   ngOnInit() {
     this.user$ = this.auth.user$;
     this.workspaces$ = this.auth.workspaces$;
+    this.isDarkMode$ = this.auth.darkMode$;
 
     this.auth.getWorkspaces().subscribe();
-
-    const savedMode = localStorage.getItem('darkMode');
-    if (savedMode !== null) {
-      this.isDarkMode = savedMode === 'true';
-    }
   }
 
   toggleSidebar() {
@@ -91,10 +87,7 @@ export class Layout implements OnInit {
   }
 
   toggleTheme() {
-    this.isDarkMode = !this.isDarkMode;
-    localStorage.setItem('darkMode', this.isDarkMode.toString());
-
-    console.log('Dark mode set to:', this.isDarkMode);
+    this.auth.toggleDarkMode();
   }
 
   logout() {

@@ -1,4 +1,4 @@
-<nav class="navbar sticky-top border-bottom" [ngClass]="{'light-mode': !isDarkMode, 'dark-mode': isDarkMode}">
+<nav class="navbar sticky-top border-bottom" [ngClass]="{'light-mode': !(isDarkMode$ | async), 'dark-mode': isDarkMode$ | async}">
   <div class="container-fluid">
     <span class="navbar-brand px-3 pt-2"> <b>{{ workspace_info?.title }}</b></span>
     <div class="d-flex align-items-center ms-auto">
@@ -13,7 +13,7 @@
   </div>
 </nav>
 
-<nav class="nav mb-3 nav-3items border-bottom px-3" [ngClass]="{'light-mode': !isDarkMode, 'dark-mode': isDarkMode}">
+<nav class="nav mb-3 nav-3items border-bottom px-3" [ngClass]="{'light-mode': !(isDarkMode$ | async), 'dark-mode': isDarkMode$ | async}">
     <a class="nav-link" [routerLink]="['tasks']" [class.active]="isActive('/tasks')"
           (click)="setActive('tasks');">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-list-task" viewBox="0 0 16 16" style="margin-left: 5px;">
@@ -45,6 +45,6 @@
         Members
     </a>
 </nav>
-<div class="workspace-content" [ngClass]="{'light-mode': !isDarkMode, 'dark-mode': isDarkMode}">
+<div class="workspace-content" [ngClass]="{'light-mode': !(isDarkMode$ | async), 'dark-mode': isDarkMode$ | async}">
   <router-outlet></router-outlet>
 </div>

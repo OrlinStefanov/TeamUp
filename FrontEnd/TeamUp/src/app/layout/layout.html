@@ -1,4 +1,4 @@
-<div class="page" [ngClass]="{'light-mode': !isDarkMode, 'dark-mode': isDarkMode}">
+<div class="page" [ngClass]="{'light-mode': !(isDarkMode$ | async), 'dark-mode': isDarkMode$ | async}">
 
   <div
     class="mobile-overlay"
@@ -76,7 +76,7 @@
         </div>
         <div class="settings-dropdown" *ngIf="isSettingsOpen">
             <button class="dropdown-item" (click)="toggleTheme()">
-              {{ isDarkMode ? 'Light Mode' : 'Dark Mode' }}
+              {{ (isDarkMode$ | async) ? 'Light Mode' : 'Dark Mode' }}
             </button>
 
             <button class="dropdown-item danger" (click)="logout()">
@@ -198,7 +198,7 @@
                 </button>
                   <div class="settings-dropdown" *ngIf="isSettingsOpen">
                     <button class="dropdown-item" (click)="toggleTheme()">
-                      {{ isDarkMode ? 'Light Mode' : 'Dark Mode' }}
+                      {{ (isDarkMode$ | async) ? 'Light Mode' : 'Dark Mode' }}
                     </button>
 
                     <button class="dropdown-item danger" (click)="logout()">
@@ -224,7 +224,7 @@
             <h5>Team Up</h5>
           </div>
         </div>
-        <main class="content" [ngClass]="{'light-mode': !isDarkMode, 'dark-mode': isDarkMode}">
+        <main class="content" [ngClass]="{'light-mode': !(isDarkMode$ | async), 'dark-mode': isDarkMode$ | async}">
             <router-outlet></router-outlet>
         </main>
       </div>
@@ -233,7 +233,7 @@
   </div>
 
   @if (showCreateWorkspace) {
-  <div class="createWorkspace-overlay" [ngClass]="{'light-mode': !isDarkMode, 'dark-mode': isDarkMode}">
+  <div class="createWorkspace-overlay" [ngClass]="{'light-mode': !(isDarkMode$ | async), 'dark-mode': isDarkMode$ | async}">
 
     <form #createWorkspaceForm="ngForm" (ngSubmit)="createWorkspace()">
 
@@ -349,7 +349,7 @@
   }
 
   @if (showJoinWorkspace) {
-  <div class="joinWorkspace-overlay" [ngClass]="{'light-mode': !isDarkMode, 'dark-mode': isDarkMode}">
+  <div class="joinWorkspace-overlay" [ngClass]="{'light-mode': !(isDarkMode$ | async), 'dark-mode': isDarkMode$ | async}">
 
     <form #joinForm="ngForm" (ngSubmit)="joinWorkspace()">
 

@@ -15,13 +15,16 @@ export class Auth {
     this.loadUserFromStorage();
   };
 
-  private apiUrl = 'https://localhost:7094';
+  private apiUrl = 'http://localhost:5231';
   private tokenKey = 'token';
   private userSubject = new BehaviorSubject<any | null>(null);
   user$ = this.userSubject.asObservable();
 
   private workspaceSubject = new BehaviorSubject<any[]>([]);
   workspaces$ = this.workspaceSubject.asObservable();
+
+  private darkModeSubject = new BehaviorSubject<boolean>(this.isDarkModeInitial());
+  darkMode$ = this.darkModeSubject.asObservable();
 
   private workspaceCache = new Map<string, any>();
   private tasksCache = new Map<string, any[]>();
@@ -256,6 +259,13 @@ export class Auth {
     })
   };
 
+  deleteTask(taskId : string)
+  {
+    return this.http.delete(`${this.apiUrl}/delete/task/${taskId}`, {
+      withCredentials: true
+    })
+  }
+
   getLeaderboard(workspaceId : string)
   {
     return this.http.get(`${this.apiUrl}/leaderboard/${workspaceId}`, {
@@ -376,7 +386,27 @@ export class Auth {
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
   }
 
+  private isDarkModeInitial(): boolean {
+    const saved = localStorage.getItem('darkMode');
+
+    if (saved !== null) {
+      return saved === 'true';
+    }
+
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+
   setDarkMode(value: boolean) {
     localStorage.setItem('darkMode', String(value));
+    this.darkModeSubject.next(value);
+  }
+
+  toggleDarkMode() {
+    const newValue = !this.darkModeSubject.value;
+    this.setDarkMode(newValue);
+  }
+
+  getCurrentDarkMode(): boolean {
+    return this.darkModeSubject.value;
   }
 }

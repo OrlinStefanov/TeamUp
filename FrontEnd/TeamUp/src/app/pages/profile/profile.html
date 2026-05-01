@@ -1,4 +1,4 @@
-<div class="container-fluid profile-container" [ngClass]="{'dark-mode': isDarkMode, 'light-mode': !isDarkMode}">
+<div class="container-fluid profile-container" [ngClass]="{'dark-mode': isDarkMode$ | async, 'light-mode': !(isDarkMode$ | async)}">
   <div class="row">
     <div class="col-md-12 d-flex flex-wrap mt-5">
       <button class="btn btn-outline-secondary back-btn px-3" style="border: 0px solid !important;" [routerLink]="['/dashboard']">
@@ -7,7 +7,7 @@
         </svg>
       </button>
       <div class="align-items-center justify-content-center gap-2 ms-4">
-        <h2 class="mb-0 fw-bold" [style.color]="isDarkMode ? '#fff' : '#000'">Profile Settings</h2>
+        <h2 class="mb-0 fw-bold" [style.color]="(isDarkMode$ | async) ? '#fff' : '#000'">Profile Settings</h2>
         <p class="text-muted mt-0">Manage your profile information and settings.</p>
       </div>
     </div>
