@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule, NgIf, NgFor, DatePipe } from '@angular/common';
 import { ChatService } from '../services/chat-services/chat-service';
 import { Auth } from '../services/auth/auth';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-chat-component',
@@ -27,7 +28,7 @@ export class ChatComponent {
   typingUsers: any[] = [];
   typingTimeout: any;
 
-  isDarkMode: boolean = false;
+  isDarkMode$!: Observable<boolean>;
   
   constructor(
     private chat: ChatService,
@@ -37,6 +38,8 @@ export class ChatComponent {
 
   ngOnInit() {
     this.currentUserId = this.auth.getUserId();
+    this.isDarkMode$ = this.auth.darkMode$;
+
     this.chat.startConnection().then(() => {
 
       // CHANNELS
@@ -82,11 +85,6 @@ export class ChatComponent {
       });
 
     });
-
-    const savedMode = localStorage.getItem('darkMode');
-    if (savedMode !== null) {
-      this.isDarkMode = savedMode === 'true';
-    }
   }
 
   onTyping() {

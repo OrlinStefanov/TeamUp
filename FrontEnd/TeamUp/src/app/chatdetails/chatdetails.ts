@@ -24,7 +24,7 @@ import { ɵɵDir } from "@angular/cdk/scrolling";
 })
 export class Chatdetails {
   channels$!: Observable<any[]>;
-  isDarkMode: boolean = false;
+  isDarkMode$!: Observable<boolean>;
 
   workspacePublicId: string = '';
   workspaceId : number = 0;
@@ -47,6 +47,8 @@ export class Chatdetails {
   ) {}
 
   ngOnInit() {
+    this.isDarkMode$ = this.auth.darkMode$;
+
     this.route.parent?.params.subscribe(params => {
         const publicId = params['id'];
         if (!publicId) return;
@@ -71,11 +73,6 @@ export class Chatdetails {
             this.unreadMap = map;
           });
       });
-
-    const savedMode = localStorage.getItem('darkMode');
-    if (savedMode !== null) {
-      this.isDarkMode = savedMode === 'true';
-    }
   }
 
   ngOnDestroy() {

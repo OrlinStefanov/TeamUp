@@ -1,4 +1,4 @@
-<div class="chat-container d-flex flex-column h-100 border" [ngClass]="{'dark-mode': isDarkMode, 'light-mode': !isDarkMode}">
+<div class="chat-container d-flex flex-column h-100 border" [ngClass]="{'dark-mode': isDarkMode$ | async, 'light-mode': !(isDarkMode$ | async)}">
 
   <!-- HEADER -->
   <div *ngIf="channel != null" class="chat-header border-bottom p-2">

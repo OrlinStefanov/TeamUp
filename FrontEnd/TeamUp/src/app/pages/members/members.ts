@@ -4,6 +4,7 @@ import { RouterOutlet, RouterLink } from '@angular/router';
 import { Auth } from '../../services/auth/auth';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-members',
@@ -14,7 +15,7 @@ import { FormsModule } from '@angular/forms';
 
 export class Members implements OnInit {
   constructor(private auth: Auth, private route: ActivatedRoute) {}
-  isDarkMode = false;
+  isDarkMode$!: Observable<boolean>;
 
   members: any[] = [];
   invitations: any[] = [];
@@ -34,6 +35,7 @@ export class Members implements OnInit {
   activeTab: string = 'members';
 
   ngOnInit() {
+    this.isDarkMode$ = this.auth.darkMode$;
     this.currentUserId = this.auth.getUserId();
 
     this.route.parent?.paramMap.subscribe(params => {
@@ -64,9 +66,6 @@ export class Members implements OnInit {
         }
       }
     });
-
-    const savedMode = localStorage.getItem('darkMode');
-    this.isDarkMode = savedMode === 'true';
   }
 
   returnRoleName(role: number): string {

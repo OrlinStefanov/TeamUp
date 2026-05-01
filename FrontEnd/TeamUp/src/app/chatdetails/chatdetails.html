@@ -1,4 +1,4 @@
-<div class="container-fluid" [ngClass]="{'dark-mode': isDarkMode, 'light-mode': !isDarkMode}">
+<div class="container-fluid" [ngClass]="{'dark-mode': isDarkMode$ | async, 'light-mode': !(isDarkMode$ | async)}">
   <div class="d-flex" style="height: 83vh;">
 
     <!-- SIDEBAR -->
@@ -49,7 +49,7 @@
     </div>
 
     <!-- MAIN CHAT CONTENT -->
-    <div class="content flex-grow-1 bg-light" [ngClass]="{'dark-mode': isDarkMode, 'light-mode': !isDarkMode}">
+    <div class="content flex-grow-1 bg-light" [ngClass]="{'dark-mode': isDarkMode$ | async, 'light-mode': !(isDarkMode$ | async)}">
       <router-outlet></router-outlet>
     </div>
 
@@ -62,13 +62,13 @@
     <div class="modal-content">
 
       <!-- Header -->
-      <div class="modal-header d-flex justify-content-between" [style]="isDarkMode ? 'background-color: #1a1a22; color: #fff' : null">
+      <div class="modal-header d-flex justify-content-between" [style]="(isDarkMode$ | async) ? 'background-color: #1a1a22; color: #fff' : null">
         <h5 class="modal-title">Create Channel</h5>
         <span class="btn-cancel tm-close">✕</span>
       </div>
 
       <!-- Body -->
-      <div class="modal-body" [ngClass]="{'dark-mode': isDarkMode, 'light-mode': !isDarkMode}" [style]="isDarkMode ? 'background-color: #1a1a22; color: #fff' : null">
+      <div class="modal-body" [ngClass]="{'dark-mode': isDarkMode$ | async, 'light-mode': !(isDarkMode$ | async)}" [style]="(isDarkMode$ | async) ? 'background-color: #1a1a22; color: #fff' : null">
         <form>
 
           <!-- Name -->
@@ -107,7 +107,7 @@
       </div>
 
       <!-- Footer -->
-      <div class="modal-footer" [style]="isDarkMode ? 'background-color: #1a1a22; color: #fff' : null">
+      <div class="modal-footer" [style]="(isDarkMode$ | async) ? 'background-color: #1a1a22; color: #fff' : null">
         <button class="btn btn-secondary" data-bs-dismiss="modal">
           Cancel
         </button>

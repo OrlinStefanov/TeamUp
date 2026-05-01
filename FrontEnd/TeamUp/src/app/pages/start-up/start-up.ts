@@ -2,6 +2,8 @@ import { Component, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { Renderer2 } from '@angular/core';
+import { Auth } from '../../services/auth/auth';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-start-up',
@@ -12,11 +14,13 @@ import { Renderer2 } from '@angular/core';
 export class StartUp {
   @ViewChild('pageDiv') pageDiv!: any;
   showStartup = true;
-  isDarkMode: boolean = false;
+  isDarkMode$!: Observable<boolean>;
 
-  constructor(private router: Router, private renderer: Renderer2) { }
+  constructor(private router: Router, private renderer: Renderer2, private auth: Auth) { }
 
   ngOnInit(): void {
+    this.isDarkMode$ = this.auth.darkMode$;
+
     setTimeout(() => {
       this.showStartup = false; 
       this.router.navigate(['/dashboard']);
@@ -25,16 +29,22 @@ export class StartUp {
   }
 
   ngAfterViewInit() {
-    const savedMode = localStorage.getItem('darkMode');
+    const savedMode = this.auth.getCurrentDarkMode();
 
-    if (savedMode !== null) {
-      this.isDarkMode = savedMode === 'true';
-    }
-
-    if (this.isDarkMode) {
+    if (savedMode) {
       this.renderer.addClass(this.pageDiv.nativeElement, 'dark-mode');
     } else {
       this.renderer.addClass(this.pageDiv.nativeElement, 'light-mode');
     }
+
+    this.isDarkMode$.subscribe(isDark => {
+      if (isDark) {
+        this.renderer.removeClass(this.pageDiv.nativeElement, 'light-mode');
+        this.renderer.addClass(this.pageDiv.nativeElement, 'dark-mode');
+      } else {
+        this.renderer.removeClass(this.pageDiv.nativeElement, 'dark-mode');
+        this.renderer.addClass(this.pageDiv.nativeElement, 'light-mode');
+      }
+    });
   }
 }

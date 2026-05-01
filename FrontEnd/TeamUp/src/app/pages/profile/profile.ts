@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Router } from '@angular/router';
 import { error } from 'node:console';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-profile',
@@ -16,7 +17,7 @@ import { error } from 'node:console';
 export class Profile {
   constructor(private auth: Auth, private router: Router) {}
 
-  isDarkMode: boolean = false;
+  isDarkMode$!: Observable<boolean>;
   isEditMode: boolean = false;
   user_data: any = null;
   previewProfilePictureUrl: string = '';
@@ -46,15 +47,14 @@ export class Profile {
   saveInfoMessage: string = '';
 
   ngOnInit() {
+    this.isDarkMode$ = this.auth.darkMode$;
+
     this.auth.me().subscribe((res) => {
       this.user_data = res;
       this.previewProfilePictureUrl = this.user_data?.profilePictureUrl ?? '';
       this.populateEditableData();
       console.log(this.user_data);
     });
-
-    const savedMode = localStorage.getItem('darkMode');
-    this.isDarkMode = savedMode === 'true';
   }
 
   get displayProfilePictureUrl(): string {

@@ -3,6 +3,7 @@ import { RouterModule, Router, ActivatedRoute } from '@angular/router';
 import { RouterOutlet, RouterLink } from '@angular/router';
 import { Auth } from '../services/auth/auth';
 import { CommonModule } from '@angular/common';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-workspace-detail',
@@ -15,7 +16,7 @@ export class WorkspaceDetail implements OnInit {
   workspace_info: any = null;
   user_data: any = null;
   workspaceId: string = '';
-  isDarkMode = false;
+  isDarkMode$!: Observable<boolean>;
   activeLink: string = '';
 
   constructor(
@@ -44,11 +45,7 @@ export class WorkspaceDetail implements OnInit {
       }
     });
 
-    const savedMode = localStorage.getItem('darkMode');
-    if (savedMode !== null) {
-      this.isDarkMode = savedMode === 'true';
-    }
-
+    this.isDarkMode$ = this.auth.darkMode$;
     this.user_data = this.auth.getCurrentUser();
   }
 
