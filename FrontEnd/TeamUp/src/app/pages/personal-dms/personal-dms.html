@@ -1,0 +1,113 @@
+<section class="dm-shell" [ngClass]="{ 'dark-mode': isDarkMode$ | async, 'light-mode': !(isDarkMode$ | async) }">
+  <aside class="dm-list-panel" [class.mobile-hidden]="isMobileChatOpen">
+    <div class="dm-list-header">
+      <p>Direct messages</p>
+      <button class="icon-btn add-dm-btn" type="button" aria-label="New direct message" (click)="openNewMessage()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+          <path d="M8 3.5a.5.5 0 0 1 .5.5v3.5H12a.5.5 0 0 1 0 1H8.5V12a.5.5 0 0 1-1 0V8.5H4a.5.5 0 0 1 0-1h3.5V4a.5.5 0 0 1 .5-.5z"/>
+        </svg>
+      </button>
+    </div>
+
+    <label class="chat-filter">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+        <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
+      </svg>
+      <input type="text" placeholder="Filter chats..." [(ngModel)]="filterText">
+    </label>
+
+    <div class="chat-list">
+      @for (chat of filteredChats; track chat.id) {
+        <button class="chat-row" type="button" [class.active]="chat.id === selectedChatId" (click)="selectChat(chat.id)">
+          <span class="avatar" [style.--avatar-color]="chat.accent">
+            {{ chat.initials }}
+            @if (chat.status === 'online') {
+              <span class="status-dot"></span>
+            }
+          </span>
+
+          <span class="chat-copy">
+            <strong>{{ chat.handle }}</strong>
+            <small>{{ chat.preview }}</small>
+          </span>
+
+          <time>{{ chat.time }}</time>
+        </button>
+      }
+    </div>
+  </aside>
+
+  <main class="dm-conversation" [class.mobile-open]="isMobileChatOpen">
+    <header class="conversation-header">
+      <button class="mobile-back-btn" type="button" aria-label="Back to direct messages" (click)="closeMobileChat()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+          <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0"/>
+        </svg>
+      </button>
+      <span class="avatar large" [style.--avatar-color]="selectedChat.accent">
+        {{ selectedChat.initials }}
+        @if (selectedChat.status === 'online') {
+          <span class="status-dot"></span>
+        }
+      </span>
+      <div>
+        <h1>{{ selectedChat.name }}</h1>
+        <p>{{ selectedChat.handle }} · {{ selectedChat.status }}</p>
+      </div>
+    </header>
+
+    <div class="message-area">
+      @for (message of selectedChat.messages; track message.id) {
+        <article class="message-bubble" [class.mine]="message.mine">
+          <p>{{ message.text }}</p>
+          <time>{{ message.time }}</time>
+        </article>
+      }
+    </div>
+
+    <form class="message-composer" (ngSubmit)="sendMessage()">
+      <input type="text" name="dmMessage" [(ngModel)]="messageText" [placeholder]="'Message ' + selectedChat.handle">
+      <button class="send-btn" type="submit" aria-label="Send message">
+        <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" fill="currentColor" viewBox="0 0 16 16">
+          <path d="M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124L6.12 10.923 1.685 8.227a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11ZM6.636 10.07l2.761 4.338L14.13 2.576zm6.787-8.201L1.591 6.602l4.339 2.76z"/>
+        </svg>
+      </button>
+    </form>
+  </main>
+
+  @if (isNewMessageOpen) {
+    <div class="dm-modal-backdrop" (click)="closeNewMessage()">
+      <section class="dm-modal" (click)="$event.stopPropagation()">
+        <button class="modal-close" type="button" aria-label="Close" (click)="closeNewMessage()">×</button>
+        <h2>New direct message</h2>
+        <p>Search by username, email, or phone number.</p>
+
+        <label class="person-search">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
+          </svg>
+          <input
+            #personSearchInput
+            type="text"
+            name="personSearch"
+            placeholder="@username, name@email.com, +1 555..."
+            [(ngModel)]="searchText">
+        </label>
+
+        <div class="search-hints">
+          <span>@ username</span>
+          <span>✉ email</span>
+          <span>⌕ phone</span>
+        </div>
+
+        <div class="empty-results">
+          @if (searchText.trim()) {
+            <span>No frontend results yet</span>
+          } @else {
+            <span>Start typing to find people</span>
+          }
+        </div>
+      </section>
+    </div>
+  }
+</section>

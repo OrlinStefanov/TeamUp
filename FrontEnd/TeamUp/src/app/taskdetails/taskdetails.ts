@@ -60,7 +60,7 @@ export class Taskdetails {
     dueDate: '',
     startDate: '',
     status: 0,
-    difficulty: 0,
+    difficulty: null,
     points: null,
     assignedUserIds: [] as string[],
     tagIds: [] as number[],
@@ -261,13 +261,12 @@ export class Taskdetails {
         ? null
         : Number(this.newTask.points);
 
-    const payload = {
+    const payload: any = {
       title: this.newTask.title,
       description: this.newTask.description,
       dueDate: this.newTask.dueDate,
       startDate: this.newTask.startDate,
       status: this.newTask.status,
-      difficulty: this.newTask.difficulty,
       points,
       assignedUserIds: this.selectedUsers.map(u => String(u.id)),
       tagIds: this.newTask.tagIds,
@@ -275,26 +274,37 @@ export class Taskdetails {
       workspaceId: this.newTask.workspaceId
     };
 
-    this.auth.createTask(payload).subscribe((res: any) => {
-      this.tasks.push(this.normalizeTask(res));
-      this.refreshAvailableTags();
-      this.filterTasksStatus();
+    if (this.newTask.difficulty !== null && this.newTask.difficulty !== undefined) {
+      payload.difficulty = this.newTask.difficulty;
+    }
 
-      this.newTask = {
-        title: '',
-        description: '',
-        dueDate: '',
-        startDate: '',
-        status: 0,
-        difficulty: 0,
-        points: null,
-        assignedUserIds: [],
-        tagIds: [],
-        newTags: [],
-        workspaceId: 0
-      };
+    console.log('Creating task payload:', payload);
 
-      this.selectedUsers = [];
+    this.auth.createTask(payload).subscribe({
+      next: (res: any) => {
+        this.tasks.push(this.normalizeTask(res));
+        this.refreshAvailableTags();
+        this.filterTasksStatus();
+
+        this.newTask = {
+          title: '',
+          description: '',
+          dueDate: '',
+          startDate: '',
+          status: 0,
+          difficulty: null,
+          points: null,
+          assignedUserIds: [],
+          tagIds: [],
+          newTags: [],
+          workspaceId: 0
+        };
+
+        this.selectedUsers = [];
+      },
+      error: (err) => {
+        console.error('Create task failed:', err?.error ?? err);
+      }
     });
   }
 

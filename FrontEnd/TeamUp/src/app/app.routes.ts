@@ -13,6 +13,7 @@ import { ChatComponent } from './chat-component/chat-component';
 import { Leaderboard } from './pages/leaderboard/leaderboard';
 import { Members } from './pages/members/members';
 import { Profile } from './pages/profile/profile';
+import { PersonalDms } from './pages/personal-dms/personal-dms';
 export const routes: Routes = [
   { path: '', component: StartUp },
   { path: 'signup', component: SignUp },
@@ -26,6 +27,7 @@ export const routes: Routes = [
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'dashboard', component: Dashboard },
+      { path: 'personal', component: PersonalDms },
 
       {
         path: 'workspace/:id',
