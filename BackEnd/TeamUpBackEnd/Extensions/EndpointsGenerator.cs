@@ -3,8 +3,10 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using System.Net.Http.Json;
 using System.Reflection.Metadata.Ecma335;
 using System.Security.Claims;
+using System.Text.Json;
 using TeamUpBackEnd.DbContext;
 using TeamUpBackEnd.Helpers;
 using TeamUpBackEnd.Models;
@@ -368,9 +370,6 @@ namespace TeamUpBackEnd.Extensions
 			.RequireAuthorization()
 			.WithSummary("Updates user's personal info")
 			.WithTags("User Management");
-<<<<<<< Updated upstream
-		}
-=======
 
             app.MapPost("/change-password", [Authorize] async (ClaimsPrincipal userClaims, UserManager<ApplicationUser> userManager, user_data.ChangePasswordDTO dto) =>
             {
@@ -407,11 +406,11 @@ namespace TeamUpBackEnd.Extensions
 
                 return Results.Ok("Password changed successfully");
             })
-			.RequireAuthorization()
-			.WithSummary("Change password for authenticated user")
-			.WithTags("User Management");
+
+.RequireAuthorization()
+.WithSummary("Change password for authenticated user")
+.WithTags("User Management");
         }
->>>>>>> Stashed changes
 
 		public static void WorkspaceEndpoints(WebApplication app)
 		{
@@ -1184,7 +1183,7 @@ namespace TeamUpBackEnd.Extensions
 		public static void TaskEndpoints(WebApplication app)
 		{
 			//creates a new task 
-			app.MapPost("/create/tasks", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, UserManager<ApplicationUser> userManager, taskDTO.CreateTaskItemDTO data, IHubContext<TaskHub> hb) =>
+			app.MapPost("/create/tasks", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, UserManager<ApplicationUser> userManager, taskDTO.CreateTaskItemDTO data, IHubContext<TaskHub> hb, IHttpClientFactory httpClientFactory, IConfiguration config) =>
 			{
 				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -1214,6 +1213,36 @@ namespace TeamUpBackEnd.Extensions
 					return Results.BadRequest("You are not a member of this workspace");
 				}
 
+				var automationTagNames = await GetAutomationTagNamesAsync(db, data);
+				var selectedTagIds = data.TagIds ?? new List<int>();
+				var newTagNames = data.NewTags ?? new List<string>();
+				var isDifficultyMissing = !data.Difficulty.HasValue;
+				var areTagsMissing = selectedTagIds.Count == 0 && newTagNames.Count == 0;
+				var arePointsMissing = !data.Points.HasValue || data.Points <= 0;
+				TaskAutomationResult? automationResult = null;
+
+				if (isDifficultyMissing || areTagsMissing || arePointsMissing)
+				{
+					Console.WriteLine("Calling task automation because task metadata was not fully provided.");
+					automationResult = await GetTaskAutomationAsync(httpClientFactory, config, data, automationTagNames);
+				}
+
+				var taskDifficulty = data.Difficulty
+					?? automationResult?.Difficulty
+					?? TaskDifficulty.Easy;
+
+				var taskPoints = data.Points ?? 0;
+
+				if (arePointsMissing && automationResult?.Points is > 0)
+				{
+					taskPoints = automationResult.Points.Value;
+				}
+
+				if (areTagsMissing && automationResult?.Tags?.Count > 0)
+				{
+					newTagNames = automationResult.Tags;
+				}
+
 				var task = new TaskItem
 				{
 					Title = data.Title,
@@ -1221,21 +1250,15 @@ namespace TeamUpBackEnd.Extensions
 					DueDate = data.DueDate,
 					StartDate = data.StartDate,
 					Status = data.Status,
-					Difficulty = data.Difficulty == default ? TaskDifficulty.Easy : data.Difficulty,
-					Points = data.Points,
+					Difficulty = taskDifficulty,
+					Points = taskPoints,
 					WorkSpaceId = data.WorkspaceId
 				};
 
 				if (task.Points == 0)
 				{
-					task.Points = task.Difficulty switch
-					{
-						TaskDifficulty.Easy => 50,
-						TaskDifficulty.Medium => 75,
-						TaskDifficulty.Hard => 100,
-						TaskDifficulty.VeryHard => 150,
-						_ => 50
-					};
+					Console.WriteLine("Task automation did not return usable points. Falling back to default difficulty points.");
+					task.Points = GetDefaultPoints(task.Difficulty);
 				}
 
 				db.Tasks.Add(task);
@@ -1262,9 +1285,9 @@ namespace TeamUpBackEnd.Extensions
 				//tags logic
 				var taskTags = new List<TaskItemTag>();
 
-				if (data.TagIds != null && data.TagIds.Count > 0)
+				if (selectedTagIds.Count > 0)
 				{
-					foreach (var tagId in data.TagIds)
+					foreach (var tagId in selectedTagIds)
 					{
 						var tagExists = await db.Tags
 							.AnyAsync(t => t.Id == tagId && t.WorkSpaceId == data.WorkspaceId);
@@ -1280,9 +1303,12 @@ namespace TeamUpBackEnd.Extensions
 					}
 				}
 
-				if (data.NewTags != null && data.NewTags.Count > 0)
+				if (newTagNames.Count > 0)
 				{
-					foreach (var tagName in data.NewTags)
+					foreach (var tagName in newTagNames
+						.Where(tag => !string.IsNullOrWhiteSpace(tag))
+						.Select(tag => tag.Trim())
+						.Distinct(StringComparer.OrdinalIgnoreCase))
 					{
 						var existingTag = await db.Tags
 							.FirstOrDefaultAsync(t =>
@@ -1318,7 +1344,11 @@ namespace TeamUpBackEnd.Extensions
 				var tags = await db.TaskItemTags
 					.Where(tt => tt.TaskItemId == task.Id)
 					.Include(tt => tt.Tag)
-					.Select(tt => tt.Tag.Name)
+					.Select(tt => new
+					{
+						tt.Tag!.Id,
+						tt.Tag.Name
+					})
 					.ToListAsync();
 
 				Console.WriteLine("🔥 Sending taskCreated event");
@@ -1334,7 +1364,7 @@ namespace TeamUpBackEnd.Extensions
 						task.StartDate,
 						task.Points,
 						Status = task.Status.ToString(),
-						Difficulty = task.Difficulty.ToString(),
+						Difficulty = task.Difficulty,
 						Tags = tags
 					});
 
@@ -1347,7 +1377,7 @@ namespace TeamUpBackEnd.Extensions
 					task.StartDate,
 					task.Points,
 					Status = task.Status.ToString(),
-					Difficulty = task.Difficulty.ToString(),
+					Difficulty = task.Difficulty,
 					Tags = tags
 				});
 			}).RequireAuthorization()
@@ -1377,7 +1407,7 @@ namespace TeamUpBackEnd.Extensions
 					return Results.BadRequest("You are not a member of this workspace");
 
 				var tasks = await db.Tasks
-					.Where(t => t.WorkSpaceId == workspace.Id)
+					.Where(t => t.WorkSpaceId == workspace.Id && t.IsDeleted == false)
 					.Include(t => t.Assignments!)
 						.ThenInclude(a => a.User)
 					.Include(t => t.TaskItemTags!)
@@ -1529,11 +1559,16 @@ namespace TeamUpBackEnd.Extensions
 					.Include(t => t.Assignments!)
 						.ThenInclude(t => t.User)
 					.Include(w => w.WorkSpace)
-					.FirstOrDefaultAsync(t => t.PublicId.ToString() == taskId && t.IsDeleted == false);
+					.FirstOrDefaultAsync(t => t.PublicId.ToString() == taskId);
 
 				if (task is null) return Results.BadRequest("Task not found");
 
 				if (task.WorkSpace!.OwnerId != userId) return Results.Forbid();
+
+				if (task.IsDeleted)
+				{
+					return Results.Ok();
+				}
 
 				task.IsDeleted = true;
 
@@ -1591,6 +1626,395 @@ namespace TeamUpBackEnd.Extensions
 				}
 
 			}).RequireAuthorization().WithSummary("Change task status").WithTags("Task Management");
+		}
+
+		private const string DefaultPointsWebhookUrl = "http://localhost:5678/webhook/e5d4d98f-879e-474d-9a7b-0d4ccf91d728";
+
+		private static async Task<List<string>> GetAutomationTagNamesAsync(AppDbContext db, taskDTO.CreateTaskItemDTO data)
+		{
+			var tagNames = new List<string>();
+
+			if (data.TagIds?.Count > 0)
+			{
+				var existingTagNames = await db.Tags
+					.Where(t => data.TagIds.Contains(t.Id) && t.WorkSpaceId == data.WorkspaceId)
+					.Select(t => t.Name)
+					.ToListAsync();
+
+				tagNames.AddRange(existingTagNames);
+			}
+
+			if (data.NewTags?.Count > 0)
+			{
+				tagNames.AddRange(data.NewTags);
+			}
+
+			return tagNames
+				.Where(tag => !string.IsNullOrWhiteSpace(tag))
+				.Select(tag => tag.Trim())
+				.Distinct(StringComparer.OrdinalIgnoreCase)
+				.ToList();
+		}
+
+		private static async Task<TaskAutomationResult?> GetTaskAutomationAsync(
+			IHttpClientFactory httpClientFactory,
+			IConfiguration config,
+			taskDTO.CreateTaskItemDTO data,
+			List<string> tagNames)
+		{
+			var webhookUrl = config["Automations:PointsWebhookUrl"] ?? DefaultPointsWebhookUrl;
+
+			if (string.IsNullOrWhiteSpace(webhookUrl))
+			{
+				return null;
+			}
+
+			var payload = new
+			{
+				title = data.Title,
+				description = data.Description,
+				tags = tagNames,
+				difficulty = ToAutomationDifficulty(data.Difficulty),
+				numberOfDevs = data.AssignedUserIds?.Distinct().Count() ?? 0
+			};
+
+			try
+			{
+				var client = httpClientFactory.CreateClient();
+				client.Timeout = TimeSpan.FromSeconds(10);
+
+				Console.WriteLine($"Sending points automation webhook to {webhookUrl}");
+				using var response = await client.PostAsJsonAsync(webhookUrl, payload);
+				var content = await response.Content.ReadAsStringAsync();
+
+				Console.WriteLine($"Points automation response: {(int)response.StatusCode} {response.ReasonPhrase}. Body: {content}");
+
+				if (!response.IsSuccessStatusCode)
+				{
+					return null;
+				}
+
+				return TryReadAutomationResult(content);
+			}
+			catch (HttpRequestException ex)
+			{
+				Console.WriteLine($"Points automation request failed: {ex.Message}");
+				return null;
+			}
+			catch (TaskCanceledException ex)
+			{
+				Console.WriteLine($"Points automation request timed out: {ex.Message}");
+				return null;
+			}
+			catch (JsonException ex)
+			{
+				Console.WriteLine($"Points automation returned an unsupported response body: {ex.Message}");
+				return null;
+			}
+		}
+
+		private static string? ToAutomationDifficulty(TaskDifficulty? difficulty)
+		{
+			return difficulty switch
+			{
+				TaskDifficulty.Easy => "easy",
+				TaskDifficulty.Medium => "medium",
+				TaskDifficulty.Hard => "high",
+				TaskDifficulty.VeryHard => "very high",
+				_ => null
+			};
+		}
+
+		private static int GetDefaultPoints(TaskDifficulty difficulty)
+		{
+			return difficulty switch
+			{
+				TaskDifficulty.Easy => 50,
+				TaskDifficulty.Medium => 75,
+				TaskDifficulty.Hard => 100,
+				TaskDifficulty.VeryHard => 150,
+				_ => 50
+			};
+		}
+
+		private static TaskAutomationResult? TryReadAutomationResult(string content)
+		{
+			if (int.TryParse(content, out var rawPoints))
+			{
+				return new TaskAutomationResult { Points = rawPoints };
+			}
+
+			using var document = JsonDocument.Parse(content);
+			return TryReadAutomationResult(document.RootElement);
+		}
+
+		private static TaskAutomationResult? TryReadAutomationResult(JsonElement element)
+		{
+			if (element.ValueKind == JsonValueKind.Array)
+			{
+				foreach (var item in element.EnumerateArray())
+				{
+					var itemResult = TryReadAutomationResult(item);
+					if (itemResult is not null)
+					{
+						return itemResult;
+					}
+				}
+
+				return null;
+			}
+
+			if (element.ValueKind != JsonValueKind.Object)
+			{
+				var points = TryReadPoints(element);
+				return points > 0 ? new TaskAutomationResult { Points = points } : null;
+			}
+
+			var result = new TaskAutomationResult
+			{
+				Points = TryReadPoints(element),
+				Difficulty = TryReadDifficulty(element),
+				Tags = TryReadTags(element)
+			};
+
+			return result.Points.HasValue || result.Difficulty.HasValue || result.Tags.Count > 0
+				? result
+				: null;
+		}
+
+		private static int TryReadPoints(JsonElement element)
+		{
+			if (element.ValueKind == JsonValueKind.Number && element.TryGetInt32(out var numberPoints))
+			{
+				return numberPoints;
+			}
+
+			if (element.ValueKind == JsonValueKind.String && int.TryParse(element.GetString(), out var stringPoints))
+			{
+				return stringPoints;
+			}
+
+			if (element.ValueKind == JsonValueKind.Array)
+			{
+				foreach (var item in element.EnumerateArray())
+				{
+					var itemPoints = TryReadPoints(item);
+					if (itemPoints > 0)
+					{
+						return itemPoints;
+					}
+				}
+			}
+
+			if (element.ValueKind == JsonValueKind.Object)
+			{
+				foreach (var propertyName in new[] { "points", "Points", "score", "Score", "output", "Output" })
+				{
+					if (!element.TryGetProperty(propertyName, out var property))
+					{
+						continue;
+					}
+
+					var propertyPoints = TryReadPoints(property);
+					if (propertyPoints > 0)
+					{
+						return propertyPoints;
+					}
+				}
+			}
+
+			return 0;
+		}
+
+		private static TaskDifficulty? TryReadDifficulty(JsonElement element)
+		{
+			foreach (var propertyName in new[] { "difficulty", "Difficulty" })
+			{
+				if (!element.TryGetProperty(propertyName, out var property))
+				{
+					continue;
+				}
+
+				if (property.ValueKind == JsonValueKind.String)
+				{
+					return ParseAutomationDifficulty(property.GetString());
+				}
+			}
+
+			foreach (var propertyName in new[] { "output", "Output" })
+			{
+				if (!element.TryGetProperty(propertyName, out var property))
+				{
+					continue;
+				}
+
+				var nestedDifficulty = TryReadDifficultyFromNestedValue(property);
+				if (nestedDifficulty.HasValue)
+				{
+					return nestedDifficulty;
+				}
+			}
+
+			return null;
+		}
+
+		private static TaskDifficulty? TryReadDifficultyFromNestedValue(JsonElement element)
+		{
+			if (element.ValueKind == JsonValueKind.String)
+			{
+				var rawValue = element.GetString();
+				if (string.IsNullOrWhiteSpace(rawValue))
+				{
+					return null;
+				}
+
+				var parsedDifficulty = ParseAutomationDifficulty(rawValue);
+				if (parsedDifficulty.HasValue)
+				{
+					return parsedDifficulty;
+				}
+
+				try
+				{
+					using var nestedDocument = JsonDocument.Parse(rawValue);
+					return TryReadDifficulty(nestedDocument.RootElement);
+				}
+				catch (JsonException)
+				{
+					return null;
+				}
+			}
+
+			if (element.ValueKind == JsonValueKind.Object)
+			{
+				return TryReadDifficulty(element);
+			}
+
+			if (element.ValueKind == JsonValueKind.Array)
+			{
+				foreach (var item in element.EnumerateArray())
+				{
+					var nestedDifficulty = TryReadDifficultyFromNestedValue(item);
+					if (nestedDifficulty.HasValue)
+					{
+						return nestedDifficulty;
+					}
+				}
+			}
+
+			return null;
+		}
+
+		private static TaskDifficulty? ParseAutomationDifficulty(string? value)
+		{
+			return value?.Trim().ToLowerInvariant() switch
+			{
+				"low" or "easy" => TaskDifficulty.Easy,
+				"medium" or "med" => TaskDifficulty.Medium,
+				"high" or "hard" => TaskDifficulty.Hard,
+				"very high" or "veryhard" or "very hard" => TaskDifficulty.VeryHard,
+				_ => null
+			};
+		}
+
+		private static List<string> TryReadTags(JsonElement element)
+		{
+			foreach (var propertyName in new[] { "tags", "Tags" })
+			{
+				if (!element.TryGetProperty(propertyName, out var property))
+				{
+					continue;
+				}
+
+				if (property.ValueKind == JsonValueKind.Array)
+				{
+					return property
+						.EnumerateArray()
+						.Where(item => item.ValueKind == JsonValueKind.String)
+						.Select(item => item.GetString()?.Trim())
+						.Where(tag => !string.IsNullOrWhiteSpace(tag))
+						.Cast<string>()
+						.Distinct(StringComparer.OrdinalIgnoreCase)
+						.ToList();
+				}
+			}
+
+			foreach (var propertyName in new[] { "output", "Output" })
+			{
+				if (!element.TryGetProperty(propertyName, out var property))
+				{
+					continue;
+				}
+
+				var nestedTags = TryReadTagsFromNestedValue(property);
+				if (nestedTags.Count > 0)
+				{
+					return nestedTags;
+				}
+			}
+
+			return new List<string>();
+		}
+
+		private static List<string> TryReadTagsFromNestedValue(JsonElement element)
+		{
+			if (element.ValueKind == JsonValueKind.Object)
+			{
+				return TryReadTags(element);
+			}
+
+			if (element.ValueKind == JsonValueKind.Array)
+			{
+				var tags = new List<string>();
+
+				foreach (var item in element.EnumerateArray())
+				{
+					if (item.ValueKind == JsonValueKind.String)
+					{
+						var tag = item.GetString()?.Trim();
+						if (!string.IsNullOrWhiteSpace(tag))
+						{
+							tags.Add(tag);
+						}
+
+						continue;
+					}
+
+					tags.AddRange(TryReadTagsFromNestedValue(item));
+				}
+
+				return tags
+					.Distinct(StringComparer.OrdinalIgnoreCase)
+					.ToList();
+			}
+
+			if (element.ValueKind == JsonValueKind.String)
+			{
+				var rawValue = element.GetString();
+				if (string.IsNullOrWhiteSpace(rawValue))
+				{
+					return new List<string>();
+				}
+
+				try
+				{
+					using var nestedDocument = JsonDocument.Parse(rawValue);
+					return TryReadTags(nestedDocument.RootElement);
+				}
+				catch (JsonException)
+				{
+					return new List<string>();
+				}
+			}
+
+			return new List<string>();
+		}
+
+		private sealed class TaskAutomationResult
+		{
+			public int? Points { get; init; }
+			public TaskDifficulty? Difficulty { get; init; }
+			public List<string> Tags { get; init; } = new();
 		}
 
 		public static void ChatEndpoints(WebApplication app)

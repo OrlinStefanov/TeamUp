@@ -67,8 +67,23 @@
     background: #0f0f14;
 }
 
-.chat-container.dark-mode .message div.bg-light {
-    background-color: #1a1a22 !important; 
+.chat-container.dark-mode .message .msg-box.my-msg {
+    background-color: #22222c !important; 
+    color: #f5f5f5;
+}
+
+.chat-container.dark-mode .message .msg-box {
+    background-color: #18181f !important; 
+    color: #f5f5f5;
+}
+
+.chat-container.light-mode .message .msg-box {
+    background-color: #c0c0c049 !important; 
+    color: #1f2937; 
+}
+
+.chat-container.light-mode .message .msg-box.my-msg {
+    background-color: rgba(183, 214, 255, 0.616) !important; 
     color: #f5f5f5;
 }
 
@@ -96,12 +111,6 @@
     color: #666;
 }
 
-.chat-container.light-mode .message div.bg-light {
-    background-color: #ddd !important; 
-    color: #1f2937; 
-    border: 1px solid #ccc; 
-}
-
 .chat-container.light-mode .message div.bg-light .me-2,  .chat-container.light-mode .message div.bg-light .message-content{
     color: #161e2aae;
 }
@@ -110,4 +119,8 @@
     background-color: #a855f7 !important;
     color: white !important;
     border: none;
+}
+
+.msg-box {
+    max-width: 70%;
 }

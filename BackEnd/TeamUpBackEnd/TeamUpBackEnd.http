@@ -1,6 +1,6 @@
-@TeamUpBackEnd_HostAddress = http://localhost:5231
+@TeamUpBackEnd_HostAddress = https://localhost:5231
 
-GET {{TeamUpBackEnd_HostAddress}}/weatherforecast/
+GET {{TeamUpBackEnd_HostAddress}}/swagger/v1/swagger.json
 Accept: application/json
 
 ###

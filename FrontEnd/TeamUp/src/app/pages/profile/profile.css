@@ -1,8 +1,19 @@
+.profile-container.dark-mode {
+  background-color: #1a1a22 !important;
+}
+
 .profile-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 20px;
+  padding: 0px 10% 3% 10%;
+}
+
+.profile-container.dark-mode .card {
+  background-color: #1a1a22 !important;
+  border: solid 1px #333 !important;
+  color: #fff !important;
 }
 
 .profile-avatar {
@@ -31,4 +42,22 @@
   cursor: pointer;
   gap: 7px;
   transition: opacity 0.15s, transform 0.1s;
+}
+
+.profile-container.dark-mode .card .form-control {
+    background-color: #0f0f14 !important;
+    border-color: #333 !important;
+    color: white;
+}
+.card .form-control:focus {
+    outline: 1.5px solid #a64bfb;
+    border-color: #a64bfb;
+    box-shadow: 0 0 0 4px rgba(168, 85, 247, 0.2);
+}
+
+.danger-card {
+  background: #f425470d !important;
+  border: 1px solid #f425474d !important;
+  border-radius: 9px;
+  color: #ff6969;
 }

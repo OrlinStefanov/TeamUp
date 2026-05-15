@@ -1,14 +1,15 @@
 import { Component } from '@angular/core';
 import { ElementRef, Renderer2, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgClass } from '@angular/common';
+import { AsyncPipe, NgClass } from '@angular/common';
 import { Auth } from '../../services/auth/auth';
 import { ActivatedRoute } from '@angular/router';
 import { ResetUser } from '../../services/auth/auth-types';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-forgot-password',
-  imports: [FormsModule, NgClass],
+  imports: [FormsModule, NgClass, AsyncPipe],
   templateUrl: './forgot-password.html',
   styleUrl: './forgot-password.css',
 })
@@ -17,40 +18,37 @@ export class ForgotPassword {
   email: string = '';
   token: string = '';
 
-  isDarkMode: boolean = false;
+  isDarkMode$!: Observable<boolean>;
   showPassword = false;
   
   constructor(private renderer: Renderer2, private auth : Auth, private route: ActivatedRoute) {}
 
   ngOnInit() {
-    const savedMode = localStorage.getItem('darkMode');
+    this.isDarkMode$ = this.auth.darkMode$;
 
-    if (savedMode !== null) {
-      this.isDarkMode = savedMode === 'true';
+    const savedMode = this.auth.getCurrentDarkMode();
+    if (savedMode) {
+      this.renderer.addClass(this.pageDiv.nativeElement, 'dark-mode');
+    } else {
+      this.renderer.addClass(this.pageDiv.nativeElement, 'light-mode');
     }
 
     this.email = this.route.snapshot.queryParamMap.get('email') || '';
     this.token = this.route.snapshot.queryParamMap.get('token') || '';
 
-    if (this.isDarkMode) {
-      this.renderer.addClass(this.pageDiv.nativeElement, 'dark-mode');
-    } else {
-      this.renderer.addClass(this.pageDiv.nativeElement, 'light-mode');
-    }
+    this.isDarkMode$.subscribe(isDark => {
+      if (isDark) {
+        this.renderer.removeClass(this.pageDiv.nativeElement, 'light-mode');
+        this.renderer.addClass(this.pageDiv.nativeElement, 'dark-mode');
+      } else {
+        this.renderer.removeClass(this.pageDiv.nativeElement, 'dark-mode');
+        this.renderer.addClass(this.pageDiv.nativeElement, 'light-mode');
+      }
+    });
   }
 
   toggleDarkMode() {
-    this.isDarkMode = !this.isDarkMode;
-    
-    localStorage.setItem('darkMode', String(this.isDarkMode));
-
-    if(this.isDarkMode){
-      this.renderer.removeClass(this.pageDiv.nativeElement, 'light-mode');
-      this.renderer.addClass(this.pageDiv.nativeElement, 'dark-mode');
-    } else {
-      this.renderer.removeClass(this.pageDiv.nativeElement, 'dark-mode');
-      this.renderer.addClass(this.pageDiv.nativeElement, 'light-mode');
-    }
+    this.auth.toggleDarkMode();
   }
 
   togglePassword() {

@@ -1,4 +1,4 @@
-<div class="chat-container d-flex flex-column h-100 border" [ngClass]="{'dark-mode': isDarkMode, 'light-mode': !isDarkMode}">
+<div class="chat-container d-flex flex-column h-100 border" [ngClass]="{'dark-mode': isDarkMode$ | async, 'light-mode': !(isDarkMode$ | async)}">
 
   <!-- HEADER -->
   <div *ngIf="channel != null" class="chat-header border-bottom p-2">
@@ -33,36 +33,28 @@
       </ng-container>
 
       <!-- message -->
-      <div class="bg-light p-2 rounded">
+      <div class="bg-light p-2 rounded msg-box" [ngClass]="{
+        'my-msg': msg.senderId === currentUserId, }">
 
         <div class="d-flex align-items-center">
-          <strong class="me-2">{{ msg.sender?.userName }}</strong>
-          <small style="color: #666;">
+          <strong class="me-2" [style.color]="
+            msg.sender?.role === 'owner' ? '#facc15' :
+            msg.sender?.role === 'admin' ? '#9933ea' :
+            msg.sender?.role === 'member' ? '#6c757d' :
+            'gray'
+          ">{{ msg.sender?.userName }}</strong>
+        </div>
+
+        <div class="message-content align-items-start justify-content-start d-flex flex-column ">
+          {{ msg.content }}
+
+          <small style="color: #666; font-size: 0.75rem;" class="d-block mt-1 align-self-end">
             {{ msg.sentAt | date:'shortTime' }}
           </small>
         </div>
 
-        <div class="message-content">
-          {{ msg.content }}
-        </div>
       </div>
-
-      <!-- RIGHT avatar -->
-      <ng-container *ngIf="msg.senderId === currentUserId">
-        <img *ngIf="msg.sender?.profilePictureUrl"
-          [src]="msg.sender.profilePictureUrl"
-          class="rounded-circle ms-3"
-          style="width:40px;height:40px;object-fit:cover;">
-        
-        <div *ngIf="!msg.sender?.profilePictureUrl"
-          class="rounded-circle ms-3 text-center"
-          style="width:40px;height:40px;background-color:#ccc;">
-          <span class="text-white" style="line-height:40px;">
-            {{ msg.sender?.userName?.charAt(0) }}
-          </span>
-        </div>
-      </ng-container>
-
+      
     </div>
 
   </div>

@@ -5,3 +5,18 @@ body {
 .bg-secondary {
     background-color: #3333339a !important;
 }
+
+.text-muted {
+    color: #666 !important;
+}
+
+
+.btn-cancel {
+  background: transparent;
+  border: none;
+  color: #666;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.btn-cancel:hover { color: red; }

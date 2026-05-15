@@ -3,13 +3,13 @@ import { CommonModule, DatePipe } from '@angular/common';
 import { Auth } from '../services/auth/auth';
 import { ActivatedRoute, RouterLink } from "@angular/router";
 import { FormsModule } from '@angular/forms';
+import { Observable } from 'rxjs';
 import {
   DragDropModule,
   CdkDragDrop,
   moveItemInArray,
   transferArrayItem
 } from '@angular/cdk/drag-drop';
-import { Taskhub } from '../services/taskhub';
 
 @Component({
   selector: 'app-taskdetails',
@@ -21,10 +21,15 @@ import { Taskhub } from '../services/taskhub';
 
 export class Taskdetails {
 
+  selectedRole: string = 'all';
+  roleMenuOpen: boolean = false;
+  filtersOpen: boolean = false;
+
   worksapce_info: any = null;
   tasks: any[] = [];
   user_data: any = null;
-  isDarkMode = false;
+  isDarkMode$!: Observable<boolean>;
+  activeMenuTaskId: string | null = null;
 
   tasksToDo: any[] = [];
   tasksInProgress: any[] = [];
@@ -42,21 +47,41 @@ export class Taskdetails {
     3: 'Overdue'
   };
 
+  statusReverseMap: any = {
+    ToDo: 0,
+    InProgress: 1,
+    Done: 2,
+    Overdue: 3
+  };
+
   newTask: any = {
     title: '',
     description: '',
     dueDate: '',
     startDate: '',
     status: 0,
-    difficulty: 0,
-    points: 0,
+    difficulty: null,
+    points: null,
     assignedUserIds: [] as string[],
     tagIds: [] as number[],
     newTags: [] as string[],
     workspaceId: 0
   };
 
-  constructor(private auth: Auth, private route: ActivatedRoute, private realtime : Taskhub) {}
+  filters = {
+    user: localStorage.getItem('taskFilter_user') || 'all',
+    search: '',
+    tags: JSON.parse(localStorage.getItem('taskFilter_tags') || '[]') as string[],
+    difficulty: localStorage.getItem('taskFilter_difficulty') || 'all',
+    status: 'all'
+  };
+
+  tagMenuOpen: boolean = false;
+  difficultyMenuOpen: boolean = false;
+
+  private boundCloseDropdown!: () => void;
+
+  constructor(private auth: Auth, private route: ActivatedRoute) {}
 
   ngOnInit() {
     this.route.parent?.paramMap.subscribe(params => {
@@ -68,41 +93,31 @@ export class Taskdetails {
       });
 
       this.auth.getWorkspaceTasks(workspaceId).subscribe((res: any) => {
-        
-        this.realtime.setInitialTasks(workspaceId, res);
-      
-        //connect to hub
-        const token = this.auth.getToken()!;
-        this.realtime.connect(workspaceId, token);
-      });
-      
-      //listen for realtime updates
-      this.realtime.tasks$.subscribe(tasks => {
-        this.tasks = tasks;
-      
-        this.availableTags = this.tasks.reduce((acc: any[], task) => {
-          task.tags?.forEach((tag: any) => {
-            if (!acc.find(t => t.name === tag.name)) {
-              acc.push(tag);
-            }
-          });
-          return acc;
-        }, []);
-      
+        this.tasks = res.map((task: any) => this.normalizeTask(task));
+
+        console.log('Fetched tasks:', this.tasks);
+
+        this.refreshAvailableTags();
+
         this.filterTasksStatus();
       });
     });
 
-    const savedMode = localStorage.getItem('darkMode');
-    if (savedMode !== null) {
-      this.isDarkMode = savedMode === 'true';
-    }
-
+    this.isDarkMode$ = this.auth.darkMode$;
     this.user_data = this.auth.getCurrentUser();
+
+    // Close dropdowns and menus when clicking outside
+    this.boundCloseDropdown = () => {
+      this.roleMenuOpen = false;
+      this.tagMenuOpen = false;
+      this.difficultyMenuOpen = false;
+      this.activeMenuTaskId = null;
+    };
+    document.addEventListener('click', this.boundCloseDropdown);
   }
 
   ngOnDestroy() {
-    this.realtime.disconnect();
+    document.removeEventListener('click', this.boundCloseDropdown);
   }
 
   // FILTER TASKS
@@ -112,7 +127,9 @@ export class Taskdetails {
     this.tasksCompleted = [];
     this.tasksOverdue = [];
 
-    this.tasks.forEach(task => {
+    const filtered = this.applyFilters();
+
+    filtered.forEach(task => {
 
       if (this.isOverdue(task)) {
         this.tasksOverdue.push(task);
@@ -129,28 +146,21 @@ export class Taskdetails {
         case 'Done':
           this.tasksCompleted.push(task);
           break;
-        case 'Overdue':
-          this.tasksOverdue.push(task);
-          break;
       }
     });
   }
 
   // TAGS
   toggleTag(tag: any) {
-
     if (tag.id) {
       const exists = this.newTask.tagIds.includes(tag.id);
-
       if (exists) {
         this.newTask.tagIds = this.newTask.tagIds.filter((id: number) => id !== tag.id);
       } else {
         this.newTask.tagIds.push(tag.id);
       }
-
     } else {
       const exists = this.newTask.newTags.includes(tag.name);
-
       if (exists) {
         this.newTask.newTags = this.newTask.newTags.filter((t: string) => t !== tag.name);
       } else {
@@ -186,7 +196,6 @@ export class Taskdetails {
   }
 
   removeTag(tag: any) {
-
     if (tag.id) {
       this.newTask.tagIds = this.newTask.tagIds.filter((id: number) => id !== tag.id);
     } else {
@@ -198,31 +207,42 @@ export class Taskdetails {
 
   // DRAG & DROP
   drop(event: CdkDragDrop<any[]>, newStatusIndex: number) {
-    const movedTask = event.previousContainer.data[event.previousIndex];
-  
-    if (!movedTask) return;
-  
-    if (!this.canMoveTask(movedTask) || this.isOverdue(movedTask)) {
+    if (event.previousContainer === event.container) {
+      moveItemInArray(
+        event.container.data,
+        event.previousIndex,
+        event.currentIndex
+      );
       return;
     }
-  
-    if (newStatusIndex === 3) return;
-  
-    const oldStatus = movedTask.status;
-  
-    movedTask.status = this.statusMap[newStatusIndex];
-  
-    this.filterTasksStatus();
-  
-    this.auth.updateTaskStatus(movedTask.publicId, newStatusIndex)
+
+    transferArrayItem(
+      event.previousContainer.data,
+      event.container.data,
+      event.previousIndex,
+      event.currentIndex
+    );
+
+    const movedTask = event.container.data[event.currentIndex];
+
+    movedTask.status = newStatusIndex;
+
+    if (this.isOverdue(movedTask)) {
+      movedTask.status = 'Overdue';
+    }
+
+    const index = this.tasks.findIndex(t => t.id === movedTask.id);
+    if (index !== -1) {
+      this.tasks[index] = movedTask;
+    }
+
+    console.log('Moved task:', movedTask.status);
+
+    this.auth.updateTaskStatus(movedTask.publicId, movedTask.status)
       .subscribe({
-        next: () => {
-          console.log('Synced with backend');
-        },
+        next: () => console.log('Status updated'),
         error: (err) => {
-          console.error('Failed, reverting...', err);
-  
-          movedTask.status = oldStatus;
+          console.error('Update failed', err);
           this.filterTasksStatus();
         }
       });
@@ -233,45 +253,101 @@ export class Taskdetails {
     return new Date(task.dueDate) < new Date() && task.status !== 'Done';
   }
 
-  // CREATE TASK 
+  // CREATE TASK
   createTask() {
     this.newTask.workspaceId = this.worksapce_info.id;
-  
-    const payload = {
+    const points =
+      this.newTask.points === null || this.newTask.points === ''
+        ? null
+        : Number(this.newTask.points);
+
+    const payload: any = {
       title: this.newTask.title,
       description: this.newTask.description,
       dueDate: this.newTask.dueDate,
       startDate: this.newTask.startDate,
       status: this.newTask.status,
-      difficulty: this.newTask.difficulty,
-      points: this.newTask.points,
+      points,
       assignedUserIds: this.selectedUsers.map(u => String(u.id)),
       tagIds: this.newTask.tagIds,
       newTags: this.newTask.newTags,
       workspaceId: this.newTask.workspaceId
     };
-  
+
+    if (this.newTask.difficulty !== null && this.newTask.difficulty !== undefined) {
+      payload.difficulty = this.newTask.difficulty;
+    }
+
+    console.log('Creating task payload:', payload);
+
     this.auth.createTask(payload).subscribe({
-      next: () => {
+      next: (res: any) => {
+        this.tasks.push(this.normalizeTask(res));
+        this.refreshAvailableTags();
+        this.filterTasksStatus();
+
+        this.newTask = {
+          title: '',
+          description: '',
+          dueDate: '',
+          startDate: '',
+          status: 0,
+          difficulty: null,
+          points: null,
+          assignedUserIds: [],
+          tagIds: [],
+          newTags: [],
+          workspaceId: 0
+        };
+
+        this.selectedUsers = [];
       },
-      error: err => console.error(err)
+      error: (err) => {
+        console.error('Create task failed:', err?.error ?? err);
+      }
     });
-  
-    this.newTask = {
-      title: '',
-      description: '',
-      dueDate: '',
-      startDate: '',
-      status: 0,
-      difficulty: 0,
-      points: 0,
-      assignedUserIds: [],
-      tagIds: [],
-      newTags: [],
-      workspaceId: 0
+  }
+
+  private normalizeTask(task: any) {
+    const rawDifficulty = task.difficulty ?? task.Difficulty;
+    const difficultyMap: any = {
+      Easy: 0,
+      Medium: 1,
+      Hard: 2,
+      VeryHard: 3,
+      'Very Hard': 3
     };
-  
-    this.selectedUsers = [];
+
+    return {
+      ...task,
+      publicId: task.publicId ?? task.PublicId,
+      title: task.title ?? task.Title,
+      description: task.description ?? task.Description,
+      dueDate: task.dueDate ?? task.DueDate,
+      startDate: task.startDate ?? task.StartDate,
+      points: task.points ?? task.Points,
+      status: task.status ?? task.Status,
+      difficulty: typeof rawDifficulty === 'number'
+        ? rawDifficulty
+        : difficultyMap[task.difficulty ?? task.Difficulty] ?? 0,
+      tags: (task.tags ?? task.Tags ?? []).map((tag: any) =>
+        typeof tag === 'string' ? { name: tag } : {
+          id: tag.id ?? tag.Id,
+          name: tag.name ?? tag.Name
+        }
+      )
+    };
+  }
+
+  private refreshAvailableTags() {
+    this.availableTags = this.tasks.reduce((acc: any[], task) => {
+      task.tags?.forEach((tag: any) => {
+        if (!acc.find(t => t.name === tag.name)) {
+          acc.push(tag);
+        }
+      });
+      return acc;
+    }, []);
   }
 
   // UI HELPERS
@@ -283,42 +359,8 @@ export class Taskdetails {
     this.newTask.difficulty = level;
   }
 
-  canMoveTask(task: any): boolean {
-    if (!task) return false;
-    if (this.isOverdue(task)) return false;
-    if (this.isOwnerOrAdmin()) return true;
-    return this.isTaskAssignedToCurrentUser(task);
-  }
-
-  private isOwnerOrAdmin(): boolean {
-    const currentUserId = this.getEntityId(this.user_data);
-    if (!currentUserId || !this.worksapce_info) {
-      return false;
-    }
-
-    const ownerId = this.getEntityId(this.worksapce_info.owner);
-    if (ownerId && ownerId === currentUserId) {
-      return true;
-    }
-
-    const matchedMember = this.worksapce_info.members?.find((m: any) => this.getEntityId(m) === currentUserId);
-    return matchedMember?.role === 1 || matchedMember?.role === 2;
-  }
-
-  private isTaskAssignedToCurrentUser(task: any): boolean {
-    const currentUserId = this.getEntityId(this.user_data);
-    if (!currentUserId) return false;
-
-    return task?.assignedUsers?.some((u: any) => this.getEntityId(u) === currentUserId) ?? false;
-  }
-
-  private getEntityId(entity: any): string {
-    return String(entity?.id ?? entity?.userId ?? entity?.publicId ?? '');
-  }
-
   toggleUser(user: any) {
     const exists = this.selectedUsers.find(u => u.id === user.id);
-
     if (exists) {
       this.selectedUsers = this.selectedUsers.filter(u => u.id !== user.id);
     } else {
@@ -331,5 +373,209 @@ export class Taskdetails {
       document.getElementById('createTaskModal')
     );
     modal.show();
+  }
+
+  moveTask(task: any, status: string) {
+    task.status = status;
+
+    const index = this.tasks.findIndex(t => t.id === task.id);
+    if (index !== -1) {
+      this.tasks[index] = task;
+    }
+
+    this.filterTasksStatus();
+
+    this.auth.updateTaskStatus(task.publicId, this.statusReverseMap[status])
+      .subscribe({
+        next: () => console.log('Task moved'),
+        error: (err) => {
+          console.error(err);
+          this.filterTasksStatus();
+        }
+      });
+
+    this.activeMenuTaskId = null;
+  }
+
+  deleteTask(task: any) {
+    if (!task.publicId) {
+      console.error('Delete task failed: missing task public id', task);
+      return;
+    }
+
+    this.auth.deleteTask(task.publicId)
+      .subscribe({
+        next: () => {
+          this.tasks = this.tasks.filter(t => t.publicId !== task.publicId);
+          this.filterTasksStatus();
+          this.activeMenuTaskId = null;
+        },
+        error: (err) => {
+          console.error('Delete task failed', err);
+          if (err.status === 400) {
+            this.tasks = this.tasks.filter(t => t.publicId !== task.publicId);
+            this.filterTasksStatus();
+            this.activeMenuTaskId = null;
+          }
+        }
+      });
+  }
+
+  toggleMenu(event: MouseEvent, taskId: string) {
+    event.stopPropagation();
+    this.activeMenuTaskId = this.activeMenuTaskId === taskId ? null : taskId;
+  }
+
+  toggleRoleMenu(event: Event): void {
+    event.stopPropagation();
+    this.roleMenuOpen = !this.roleMenuOpen;
+    this.tagMenuOpen = false;
+    this.difficultyMenuOpen = false;
+  }
+
+  setRoleFilter(role: string, event?: Event): void {
+    event?.stopPropagation();
+    this.filters.user = role;
+    localStorage.setItem('taskFilter_user', role);
+    this.roleMenuOpen = false;
+    this.filterTasksStatus();
+  }
+
+  onSearch(value: string) {
+    this.filters.search = value;
+    this.filterTasksStatus();
+  }
+
+  get activeFilterLabel(): string {
+    if (this.filters.user === 'all') return 'All Members';
+    return this.filters.user;
+  }
+
+  isFilterActive(userName: string): boolean {
+    return this.filters.user === userName;
+  }
+
+  get sortedUsers() {
+    if (!this.worksapce_info) return [];
+
+    const currentUserId = this.user_data?.id;
+    const owner = this.worksapce_info.owner;
+    const members = this.worksapce_info.members || [];
+
+    const currentUser =
+      members.find((u: any) => u.id === currentUserId) ||
+      (owner?.id === currentUserId ? owner : null);
+
+    const otherMembers = members.filter(
+      (u: any) => u.id !== currentUserId
+    );
+
+    const includeOwner =
+      owner && owner.id !== currentUserId &&
+      !otherMembers.some((u: any) => u.id === owner.id);
+
+    const result: any[] = [];
+
+    if (currentUser) result.push(currentUser);
+    result.push(...otherMembers);
+    if (includeOwner) result.push(owner);
+
+    return result;
+  }
+
+  toggleTagFilter(tagName: string): void {
+    const idx = this.filters.tags.indexOf(tagName);
+    if (idx > -1) {
+      this.filters.tags.splice(idx, 1);
+    } else {
+      this.filters.tags.push(tagName);
+    }
+    localStorage.setItem('taskFilter_tags', JSON.stringify(this.filters.tags));
+    this.filterTasksStatus();
+  }
+
+  isTagFilterActive(tagName: string): boolean {
+    return this.filters.tags.includes(tagName);
+  }
+
+  setDifficultyFilter(level: string, event?: Event): void {
+    event?.stopPropagation();
+    this.filters.difficulty = level;
+    localStorage.setItem('taskFilter_difficulty', level);
+    this.difficultyMenuOpen = false;
+    this.filterTasksStatus();
+  }
+
+  get activeDifficultyLabel(): string {
+    const map: any = { 'all': 'All Difficulties', '0': 'Easy', '1': 'Medium', '2': 'Hard', '3': 'Very Hard' };
+    return map[this.filters.difficulty] || 'All Difficulties';
+  }
+
+  toggleTagMenu(event: Event): void {
+    event.stopPropagation();
+    this.tagMenuOpen = !this.tagMenuOpen;
+    this.difficultyMenuOpen = false;
+  }
+
+  toggleDifficultyMenu(event: Event): void {
+    event.stopPropagation();
+    this.difficultyMenuOpen = !this.difficultyMenuOpen;
+    this.tagMenuOpen = false;
+  }
+
+  applyFilters(): any[] {
+    return this.tasks.filter(task => {
+
+      // USER FILTER — assignedUsers have no id, filter by userName
+      if (this.filters.user !== 'all') {
+        const assigned = task.assignedUsers?.some(
+          (u: any) => u.userName === this.filters.user
+        );
+        if (!assigned) return false;
+      }
+
+      // SEARCH FILTER
+      if (this.filters.search) {
+        const text = (task.title + ' ' + task.description).toLowerCase();
+        if (!text.includes(this.filters.search.toLowerCase())) {
+          return false;
+        }
+      }
+
+      // TAG FILTER
+      if (this.filters.tags.length > 0) {
+        const hasTag = task.tags?.some((t: any) =>
+          this.filters.tags.includes(t.name)
+        );
+        if (!hasTag) return false;
+      }
+
+      // DIFFICULTY FILTER
+      if (this.filters.difficulty !== 'all') {
+        if (String(task.difficulty) !== String(this.filters.difficulty)) return false;
+      }
+
+      // STATUS FILTER
+      if (this.filters.status !== 'all') {
+        if (task.status !== this.filters.status) return false;
+      }
+
+      return true;
+    });
+  }
+
+  openFilterModal() {
+    this.filtersOpen = !this.filtersOpen;
+  }
+
+  clearAllFilters(): void {
+    this.filters.user = 'all';
+    this.filters.difficulty = 'all';
+    this.filters.tags = [];
+    localStorage.setItem('taskFilter_user', 'all');
+    localStorage.setItem('taskFilter_difficulty', 'all');
+    localStorage.setItem('taskFilter_tags', '[]');
+    this.roleMenuOpen = false;
+    this.filterTasksStatus();
   }
 }

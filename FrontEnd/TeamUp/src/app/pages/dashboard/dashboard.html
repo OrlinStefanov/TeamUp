@@ -1,4 +1,4 @@
-  <div class="container-fluid workspace-content pt-5" >
+  <div class="container-fluid workspace-content pt-5" [ngClass]="{'light-mode': !(isDarkMode$ | async), 'dark-mode': isDarkMode$ | async}">
 
     <!-- MAIN STATE -->
     @if (workspaces$ | async; as workspaces) {
@@ -166,7 +166,7 @@
 
   <!--==================Settings Modal===========================-->
   @if (showSettings) {
-    <div class="modal fade" id="settingsModal" tabindex="-1" aria-labelledby="settingsModalLabel" aria-hidden="true">
+    <div class="modal fade settings-modal" id="settingsModal" tabindex="-1" aria-labelledby="settingsModalLabel" aria-hidden="true" [ngClass]="{'light-mode': !(isDarkMode$ | async), 'dark-mode': isDarkMode$ | async}">
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
           <div class="modal-header">
@@ -271,7 +271,7 @@
 
   <!-- ================= CREATE WORKSPACE MODAL ================= -->
   @if (showCreateWorkspace) {
-  <div #createWorkspaceModal class="createWorkspace-overlay" [ngClass]="{'light-mode': !isDarkMode, 'dark-mode': isDarkMode}">
+  <div #createWorkspaceModal class="createWorkspace-overlay create-workspace-modal" [ngClass]="{'light-mode': !(isDarkMode$ | async), 'dark-mode': isDarkMode$ | async}">
 
     <form #createWorkspaceForm="ngForm" (ngSubmit)="createWorkspace()">
 
@@ -373,11 +373,9 @@
             }
           </div>
           }
-
         </div>
 
-        <!-- FOOTER -->
-        <div class="createWorkspace-actions tm-footer p-0 m-0">
+        <div class="createWorkspace-actions tm-footer">
           <button
             class="btn-primary"
             type="submit"
@@ -385,8 +383,8 @@
             Create workspace
           </button>
         </div>
-        
-        <div class="p-4 mt-2">
+
+        <div class="create-workspace-join-section">
           <div class="tm-field d-flex align-items-center gap-3" >
             <div class="separator-line" style="color: #666;"></div>
             <div class="separator-text">OR</div>
@@ -407,7 +405,8 @@
         <div class="joinWorkspace-actions tm-footer">
           <button
             class="btn-primary"
-            type="submit"
+            type="button"
+            (click)="joinWorkspace()"
             [disabled]="!joinInput.inviteCode && !joinInput.workspaceLink">
             Join Workspace →
           </button>
@@ -419,7 +418,7 @@
   }
 
   @if (showEditWorkspace) {
-  <div class="createWorkspace-overlay" [ngClass]="{'light-mode': !isDarkMode, 'dark-mode': isDarkMode}">
+  <div class="createWorkspace-overlay" [ngClass]="{'light-mode': !(isDarkMode$ | async), 'dark-mode': isDarkMode$ | async}">
 
     <form (ngSubmit)="updateWorkspace()">
 
@@ -517,7 +516,7 @@
   }
 
   @if (showDeleteWorkspace) {
-  <div class="createWorkspace-overlay" [ngClass]="{'light-mode': !isDarkMode, 'dark-mode': isDarkMode}">
+  <div class="createWorkspace-overlay" [ngClass]="{'light-mode': !(isDarkMode$ | async), 'dark-mode': isDarkMode$ | async}">
 
     <div class="createWorkspace-box">
 
@@ -562,7 +561,7 @@
 
   <!-- ================= JOIN WORKSPACE MODAL ================= -->
   @if (showJoinWorkspace) {
-  <div #joinWorkspaceModal class="joinWorkspace-overlay" [ngClass]="{'light-mode': !isDarkMode, 'dark-mode': isDarkMode}">
+  <div #joinWorkspaceModal class="joinWorkspace-overlay" [ngClass]="{'light-mode': !(isDarkMode$ | async), 'dark-mode': isDarkMode$ | async}">
 
     <form #joinForm="ngForm" (ngSubmit)="joinWorkspace()">
 

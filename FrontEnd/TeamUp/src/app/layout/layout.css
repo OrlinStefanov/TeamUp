@@ -48,6 +48,8 @@
   gap: 10px;
   width: 100%;
   margin-bottom: 20px;
+  border-bottom: 1px solid #9333ea;
+  padding-bottom: 10px;
 }
 
 .logo-row .logo-appName {
@@ -84,8 +86,7 @@
 
 .side-navbar.collapsed .logo-appName h5,
 .side-navbar.collapsed .nav-link-custom span:last-child,
-.side-navbar.collapsed .nav-footer .userName,
-.side-navbar.collapsed .settingsBtn {
+.side-navbar.collapsed .nav-footer .userName {
   display: none;
 }
 
@@ -94,6 +95,8 @@
   align-items: center;
   justify-content: center;
   gap: 10px;
+  border-bottom: 1px solid #9333ea;
+  padding-bottom: 10px;
 }
 
 .side-navbar.collapsed .logo-row .logo-appName {
@@ -110,6 +113,8 @@
 
 .side-navbar.collapsed .nav-footer {
   justify-content: center;
+  display: flex;
+  flex-direction:column-reverse;
 }
 
 .side-navbar.collapsed .desktop-menu-btn {
@@ -316,8 +321,8 @@
   flex-direction: column;
   justify-content: flex-start;
   transition: transform 0.3s ease;
-  background: #111118;
-  border-right: 1px solid #4c97ff;
+  border-right: 1px solid #333;
+  background: #19191d;
   overflow-y: auto;
 }
 
@@ -326,15 +331,17 @@
   align-items: center;
   justify-content: space-between;
   margin-bottom: 16px;
+  border-bottom: 1px solid #9333ea;
+  padding-bottom: 10px;
 }
 
 .mobile-sidebar.show {
   transform: translateX(0) !important;
-  box-shadow: 0 0 4px #4c97ff;
 }
 
 .page.light-mode .mobile-sidebar {
   background: #fff;
+  border: #bbb 1px solid;
 }
 
 .page.dark-mode .mobile-overlay {
@@ -400,6 +407,11 @@
 
   .nav-footer .userName {
     font-size: 13px;
+  }
+
+  .nav-footer{
+    display:flex;
+    justify-content: space-between;
   }
 
   .side-navbar.collapsed {
@@ -685,4 +697,14 @@ button.workspace-item.workspace-action-btn {
   background: #222;
   color: #f0eeff;
   cursor: pointer;
+}
+
+.collapsed-settings {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.collapsed-settings .settingsBtn {
+  margin: 0 auto;
 }

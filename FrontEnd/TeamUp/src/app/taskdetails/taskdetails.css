@@ -1,4 +1,4 @@
-.task-board.light-mode .card {
+.card.light-mode {
   border: 1px solid #ccc;
   background: #f5f5f5;
   color: #1a1a2e;
@@ -6,7 +6,7 @@
   padding: 15px;
 }
 
-.task-board.dark-mode .card {
+.card.dark-mode {
   border: 1px solid #666;
   background: #111;
   color: #f0eeff;
@@ -14,9 +14,75 @@
   padding: 15px;
 }
 
-.task-board .card:hover {
+.card:hover {
   transform: translateY(-2px);
   border: #a64bfb 1px solid;
+}
+
+.card:hover .card-body .menu-trigger {
+  visibility: visible;
+}
+
+.menu-trigger {
+  visibility: hidden;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 18px;
+  color: #999;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.menu-trigger:hover {
+  background: rgba(0,0,0,0.05);
+}
+
+.card.dark-mode .task-menu, .container-fluid.dark-mode .role-filter-dropdown {
+  background-color: #16161f;
+}
+
+.container-fluid.dark-mode .dropdown-item {
+  color: white;
+}
+
+.card.dark-mode .menu-item:hover, .container-fluid.dark-mode .dropdown-item:hover {
+  background-color: #1e1e2e;
+}
+
+.task-menu, .role-filter-dropdown {
+  position: absolute;
+  top: 25px;
+  right: 0;
+  width: 180px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.menu-item, .dropdown-item {
+  padding: 10px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.menu-item:hover, .dropdown-item:hover {
+  background: #f5f5f5;
+}
+
+.menu-divider {
+  border-top: 1px solid rgba(128, 128, 128, 0.25);
+  margin: 4px 0;
+}
+
+.menu-item-danger {
+  color: #dc3545;
+}
+
+.menu-item-danger:hover {
+  background: rgba(220, 53, 69, 0.12);
 }
 
 .card-footer {
@@ -209,15 +275,6 @@
 
 .tm-input::placeholder,
 .tm-textarea::placeholder { color: #777; opacity: 1; }
-
-.disabled-task {
-  opacity: 0.6;
-  cursor: not-allowed !important;
-}
-
-.disabled-task .card {
-  pointer-events: none;
-}
 
 .tm-input:focus,
 .tm-textarea:focus {
@@ -427,16 +484,25 @@
 .btn-create:active { transform: scale(0.98); }
 
 /* Searhch input */
-.container.dark-mode .form-control {
+.container-fluid.dark-mode .form-control, .container-fluid.dark-mode .input-group-text {
     background-color: #0f0f14 !important;
     border-color: #333 !important;
     color: white;
 }
 
-.form-control:focus {
-  outline: 1.5px solid #a64bfb;
-  border-color: #a64bfb;
-  box-shadow: 0 0 0 4px rgba(168, 85, 247, 0.2);
+.container-fluid .input-group-text:hover {
+    cursor: pointer;
+}
+
+.container-fluid .form-control:focus {
+    outline: 1.5px solid #a64bfb;
+    border-color: #a64bfb;
+    box-shadow: 0 0 0 4px rgba(168, 85, 247, 0.2);
+}
+
+
+.form-control::placeholder {
+  color: #666;
 }
 
 .cdk-drag-preview {
@@ -452,6 +518,53 @@
   transition: transform 0.2s ease;
 }
 
-.card{
-  box-shadow: 0 10px 20px rgba(26, 25, 25, 0.2);
+.role-filter-menu {
+  position: relative;
+  width: 220px;
+}
+
+.role-filter-trigger {
+  width: 100%;
+  display: inline-flex;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 10px;
+}
+
+.role-filter-dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  max-width: 100%;
+  min-width: 180px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  z-index: 30;
+  overflow: hidden;
+}
+
+.dropdown-item
+{
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #1f2937;
+  text-align: left;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: background-color 0.15s ease-in-out;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.filtersRow.hidden {
+  display: none;
+}
+
+.filtersRow.visible {
+  display: block;
 }
