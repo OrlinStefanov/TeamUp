@@ -214,14 +214,13 @@ namespace TeamUpBackEnd.Extensions
 
 				var link = $"https://localhost:4200/forgot-password?email={Uri.EscapeDataString(user_email)}&token={encodedToken}"; // in development
 																																	//$"https://teamup.com/reset-password";
-
 				await emailService.SendEmailAsync(
 					user_email,
 					"Reset Password",
 					$"Click here to reset your password:<br><a href='{link}'>Reset</a>");
 
 				return Results.Ok("Reset email sent");
-			}).WithSummary("Resets the old password and via email sends link in the frontend for a new one")
+			}).RequireAuthorization().WithSummary("Resets the old password and via email sends link in the frontend for a new one")
 				.WithTags("User Management");
 
 			//resets the password using the token that was sent to the user's email. If the token is invalid, it returns a bad request status with the error(s) that occurred during password reset.
@@ -369,7 +368,50 @@ namespace TeamUpBackEnd.Extensions
 			.RequireAuthorization()
 			.WithSummary("Updates user's personal info")
 			.WithTags("User Management");
+<<<<<<< Updated upstream
 		}
+=======
+
+            app.MapPost("/change-password", [Authorize] async (ClaimsPrincipal userClaims, UserManager<ApplicationUser> userManager, user_data.ChangePasswordDTO dto) =>
+            {
+                var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                if (userId is null)
+                    return Results.BadRequest("User not found");
+
+                var user = await userManager.FindByIdAsync(userId);
+
+                if (user is null)
+                    return Results.BadRequest("User not found");
+
+                if (string.IsNullOrWhiteSpace(dto.CurrentPassword))
+                    return Results.BadRequest("Current password is required");
+
+                if (string.IsNullOrWhiteSpace(dto.NewPassword))
+                    return Results.BadRequest("New password is required");
+
+                var result = await userManager.ChangePasswordAsync(
+                    user,
+                    dto.CurrentPassword,
+                    dto.NewPassword
+                );
+
+                if (!result.Succeeded)
+                {
+                    var errors = result.Errors.Select(e => e.Description);
+                    return Results.BadRequest(errors);
+                }
+
+                // invalidate old tokens (important)
+                await userManager.UpdateSecurityStampAsync(user);
+
+                return Results.Ok("Password changed successfully");
+            })
+			.RequireAuthorization()
+			.WithSummary("Change password for authenticated user")
+			.WithTags("User Management");
+        }
+>>>>>>> Stashed changes
 
 		public static void WorkspaceEndpoints(WebApplication app)
 		{
