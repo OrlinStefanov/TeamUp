@@ -216,14 +216,13 @@ namespace TeamUpBackEnd.Extensions
 
 				var link = $"https://localhost:4200/forgot-password?email={Uri.EscapeDataString(user_email)}&token={encodedToken}"; // in development
 																																	//$"https://teamup.com/reset-password";
-
 				await emailService.SendEmailAsync(
 					user_email,
 					"Reset Password",
 					$"Click here to reset your password:<br><a href='{link}'>Reset</a>");
 
 				return Results.Ok("Reset email sent");
-			}).WithSummary("Resets the old password and via email sends link in the frontend for a new one")
+			}).RequireAuthorization().WithSummary("Resets the old password and via email sends link in the frontend for a new one")
 				.WithTags("User Management");
 
 			//resets the password using the token that was sent to the user's email. If the token is invalid, it returns a bad request status with the error(s) that occurred during password reset.
@@ -407,6 +406,7 @@ namespace TeamUpBackEnd.Extensions
 
                 return Results.Ok("Password changed successfully");
             })
+
 .RequireAuthorization()
 .WithSummary("Change password for authenticated user")
 .WithTags("User Management");
