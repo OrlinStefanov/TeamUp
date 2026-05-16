@@ -1,11 +1,13 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using System.Text;
 using TeamUpBackEnd.DbContext;
 using TeamUpBackEnd.Extensions;
+using TeamUpBackEnd.Interfaces;
 using TeamUpBackEnd.Models;
 using TeamUpBackEnd.Services;
 
@@ -29,7 +31,7 @@ builder.Services.Configure<IdentityOptions>(options =>
 	options.Password.RequireNonAlphanumeric = true;
 });
 
-builder.Services.AddScoped<EmailService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<CloudinaryService>();
 builder.Services.AddScoped<TokenService>();
 builder.Services.AddHttpClient();
@@ -39,6 +41,7 @@ builder.Services.AddAuthentication(options =>
 	options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
 	options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 })
+
 .AddJwtBearer(options =>
 {
 	var key = Encoding.ASCII.GetBytes(builder.Configuration["Jwt:Key"]!);
@@ -52,6 +55,7 @@ builder.Services.AddAuthentication(options =>
 		ValidAudience = builder.Configuration["Jwt:Audience"],
 		IssuerSigningKey = new SymmetricSecurityKey(key)
 	};
+
 	options.Events = new JwtBearerEvents
 	{
 		OnMessageReceived = context =>
@@ -99,6 +103,15 @@ builder.Services.AddSwaggerGen(options =>
 	});
 });
 
+builder.Services.AddRateLimiter(options =>
+{
+	options.AddFixedWindowLimiter("auth", config =>
+	{
+		config.PermitLimit = 5;
+		config.Window = TimeSpan.FromMinutes(3);
+	});
+});
+
 builder.Services.AddSignalR();
 
 var app = builder.Build();
@@ -120,6 +133,8 @@ app.UseCors("AllowAll");
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseRateLimiter();
 
 app.MapHub<ChatHub>("/chathub");
 app.MapHub<TaskHub>("/taskhub");

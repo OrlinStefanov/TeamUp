@@ -15,7 +15,7 @@ export class Auth {
     this.loadUserFromStorage();
   };
 
-  private apiUrl = 'http://localhost:5231';
+  private apiUrl = 'https://localhost:7094';
   private tokenKey = 'token';
   private userSubject = new BehaviorSubject<any | null>(null);
   user$ = this.userSubject.asObservable();
