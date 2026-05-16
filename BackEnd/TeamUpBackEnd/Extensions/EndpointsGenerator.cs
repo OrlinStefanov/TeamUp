@@ -6,10 +6,13 @@ using Microsoft.EntityFrameworkCore;
 using System.Net.Http.Json;
 using System.Reflection.Metadata.Ecma335;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text.Json;
 using TeamUpBackEnd.DbContext;
 using TeamUpBackEnd.Helpers;
+using TeamUpBackEnd.Interfaces;
 using TeamUpBackEnd.Models;
+using TeamUpBackEnd.Models.Auth;
 using TeamUpBackEnd.Models.Chat;
 using TeamUpBackEnd.Models.Tasks;
 using TeamUpBackEnd.Models.WorkspaceRelated;
@@ -33,29 +36,171 @@ namespace TeamUpBackEnd.Extensions
 			TaskEndpoints(app);
 			ChatEndpoints(app);
 			LeaderBoard(app);
+
+			AuthenticaionEndpoints(app);
+		}
+
+		public static void AuthenticaionEndpoints(WebApplication app)
+		{
+			var authGroup = app.MapGroup("/auth");
+
+			authGroup.MapPost("/register", async (RequestEmailCodeDto request, UserManager<ApplicationUser> userManager,	AppDbContext db, IEmailService emailService) =>
+				{
+					if (string.IsNullOrWhiteSpace(request.Email))
+					{
+						return Results.BadRequest("Email is required");
+					}
+
+					var existingUser = await userManager.FindByEmailAsync(request.Email);
+
+					if (existingUser != null)
+					{
+						return Results.BadRequest("Email already exists");
+					}
+
+					var recentRequest = await db.EmailVerifications
+						.Where(x => x.Email == request.Email)
+						.OrderByDescending(x => x.CreatedAt)
+						.FirstOrDefaultAsync();
+
+					if (recentRequest != null &&
+						recentRequest.CreatedAt > DateTime.UtcNow.AddSeconds(-60))
+					{
+						return Results.BadRequest("Please wait before requesting another code");
+					}
+
+					var code = RandomNumberGenerator
+						.GetInt32(100000, 999999)
+						.ToString();
+
+					var verification = new EmailVerification
+					{
+						Email = request.Email,
+						CodeHash = BCrypt.Net.BCrypt.HashPassword(code),
+						ExpiresAt = DateTime.UtcNow.AddMinutes(10),
+						Attempts = 0,
+						IsVerified = false
+					};
+
+					db.EmailVerifications.Add(verification);
+
+					await db.SaveChangesAsync();
+
+					await emailService.SendEmailAsync(
+						request.Email,
+						"TeamUp Verification Code",
+						$"""
+						<h2>Email Verification</h2>
+						<p>Your verification code is:</p>
+						<h1>{code}</h1>
+						<p>This code expires in 10 minutes.</p>
+						""");
+
+					return Results.Ok("Verification code sent");
+				})
+				.WithTags("Authentication").RequireRateLimiting("auth");
+
+			authGroup.MapPost("/verify-email", async (VerifyEmailCodeDto request, AppDbContext db) =>
+			{
+				var verification = await db.EmailVerifications
+					.Where(x =>
+						x.Email == request.Email &&
+						!x.IsVerified)
+					.OrderByDescending(x => x.CreatedAt)
+					.FirstOrDefaultAsync();
+
+				if (verification == null)
+				{
+					return Results.BadRequest("No verification request found");
+				}
+
+				if (verification.ExpiresAt < DateTime.UtcNow)
+				{
+					return Results.BadRequest("Verification code expired");
+				}
+
+				if (verification.Attempts >= 5)
+				{
+					return Results.BadRequest("Too many attempts");
+				}
+
+				verification.Attempts++;
+
+				var valid = BCrypt.Net.BCrypt.Verify(
+					request.Code,
+					verification.CodeHash);
+
+				if (!valid)
+				{
+					await db.SaveChangesAsync();
+					return Results.BadRequest("Invalid code");
+				}
+
+				verification.IsVerified = true;
+
+				await db.SaveChangesAsync();
+
+				return Results.Ok("Email verified successfully");
+			}).WithTags("Authentication").RequireRateLimiting("auth");
 		}
 
 		public static void UserEndpoints(WebApplication app)
 		{
 			//registers new user and returns a token with user info, if the registration is successful. If not, it returns the error(s) that occurred during registration.
-			app.MapPost("/register", async (user_data.RegisterUser input_user, UserManager<ApplicationUser> userManager, IConfiguration config) =>
+			app.MapPost("/register", async (user_data.RegisterUser input_user, UserManager<ApplicationUser> userManager, IConfiguration config, AppDbContext db) =>
 			{
 				if (input_user == null)
 				{
 					return Results.BadRequest("No input");
 				}
 
-				if (string.IsNullOrWhiteSpace(input_user.UserName)) return Results.BadRequest("Username is required");
-				if (string.IsNullOrWhiteSpace(input_user.Email)) return Results.BadRequest("Email is required");
-				if (string.IsNullOrWhiteSpace(input_user.Password)) return Results.BadRequest("Password is required");
-				if (string.IsNullOrWhiteSpace(input_user.FirstName)) return Results.BadRequest("First name is required");
-				if (string.IsNullOrWhiteSpace(input_user.LastName)) return Results.BadRequest("Last name is required");
-				if (string.IsNullOrWhiteSpace(input_user.PhoneNumber)) return Results.BadRequest("Phone number is required");
-				if (string.IsNullOrWhiteSpace(input_user.BirthDate.ToString())) return Results.BadRequest("BirthDate is required");
+				var verification = await db.EmailVerifications
+					.Where(x =>
+						x.Email == input_user.Email &&
+						x.IsVerified)
+					.OrderByDescending(x => x.CreatedAt)
+					.FirstOrDefaultAsync();
 
-				if (!DateOnly.TryParse(input_user.BirthDate.ToString(), out var birthDate))
+				if (verification == null)
 				{
-					return Results.BadRequest("Invalid birth date format");
+					return Results.BadRequest("Email not verified");
+				}
+
+				if (string.IsNullOrWhiteSpace(input_user.UserName))
+					return Results.BadRequest("Username is required");
+
+				if (string.IsNullOrWhiteSpace(input_user.Email))
+					return Results.BadRequest("Email is required");
+
+				if (string.IsNullOrWhiteSpace(input_user.Password))
+					return Results.BadRequest("Password is required");
+
+				if (string.IsNullOrWhiteSpace(input_user.FirstName))
+					return Results.BadRequest("First name is required");
+
+				if (string.IsNullOrWhiteSpace(input_user.LastName))
+					return Results.BadRequest("Last name is required");
+
+				if (string.IsNullOrWhiteSpace(input_user.PhoneNumber))
+					return Results.BadRequest("Phone number is required");
+
+				if (input_user.BirthDate == null)
+					return Results.BadRequest("BirthDate is required");
+
+				var existingUsername = await userManager
+					.FindByNameAsync(input_user.UserName);
+
+				if (existingUsername != null)
+				{
+					return Results.BadRequest("Username already exists");
+				}
+
+				var existingEmail = await userManager
+					.FindByEmailAsync(input_user.Email);
+
+				if (existingEmail != null)
+				{
+					return Results.BadRequest("Email already exists");
 				}
 
 				var user = new ApplicationUser
@@ -66,29 +211,32 @@ namespace TeamUpBackEnd.Extensions
 					LastName = input_user.LastName,
 					BirthDate = input_user.BirthDate,
 					PhoneNumber = input_user.PhoneNumber,
+					EmailConfirmed = true
 				};
 
-				if (userManager.Users.Any(u => u.UserName == user.UserName))
-				{
-					return Results.BadRequest("Username already exists");
-				}
-
-				if (userManager.Users.Any(u => u.Email == user.Email))
-				{
-					return Results.BadRequest("Email already exists");
-				}
-
-				var result = await userManager.CreateAsync(user, input_user.Password);
+				var result = await userManager.CreateAsync(
+					user,
+					input_user.Password);
 
 				if (!result.Succeeded)
 				{
-					var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+					var errors = string.Join(
+						", ",
+						result.Errors.Select(e => e.Description));
+
 					return Results.BadRequest(errors);
 				}
 
 				var token = TokenService.GenerateToken(user, config);
 
-				return Results.Ok(token);
+				return Results.Ok(new
+				{
+					token,
+					user.Id,
+					user.UserName,
+					user.Email,
+					user.ProfilePictureUrl
+				});
 
 			})
 				.WithSummary("Register a new user").WithTags("User Management");
@@ -99,15 +247,26 @@ namespace TeamUpBackEnd.Extensions
 				if (input_user == null)
 					return Results.BadRequest("No input");
 
-				if (string.IsNullOrWhiteSpace(input_user.EmailOrUsername)) return Results.BadRequest("Email or username is required");
-				if (string.IsNullOrWhiteSpace(input_user.Password)) return Results.BadRequest("Password is required");
+				if (string.IsNullOrWhiteSpace(input_user.EmailOrUsername))
+					return Results.BadRequest("Email or username is required");
 
-				var user = await userManager.FindByEmailAsync(input_user.EmailOrUsername) ?? await userManager.FindByNameAsync(input_user.EmailOrUsername);
+				if (string.IsNullOrWhiteSpace(input_user.Password))
+					return Results.BadRequest("Password is required");
+
+				var user = await userManager.FindByEmailAsync(
+						input_user.EmailOrUsername)
+					?? await userManager.FindByNameAsync(
+						input_user.EmailOrUsername);
 
 				if (user == null)
 					return Results.Unauthorized();
 
-				var passwordValid = await userManager.CheckPasswordAsync(user, input_user.Password);
+				if (!user.EmailConfirmed)
+					return Results.BadRequest("Email not verified");
+
+				var passwordValid = await userManager.CheckPasswordAsync(
+					user,
+					input_user.Password);
 
 				if (!passwordValid)
 					return Results.Unauthorized();
@@ -405,11 +564,9 @@ namespace TeamUpBackEnd.Extensions
                 await userManager.UpdateSecurityStampAsync(user);
 
                 return Results.Ok("Password changed successfully");
-            })
-
-.RequireAuthorization()
-.WithSummary("Change password for authenticated user")
-.WithTags("User Management");
+            }).RequireAuthorization()
+			.WithSummary("Change password for authenticated user")
+			.WithTags("User Management");
         }
 
 		public static void WorkspaceEndpoints(WebApplication app)
@@ -1656,8 +1813,8 @@ namespace TeamUpBackEnd.Extensions
 				.ToList();
 		}
 
-		private static async Task<TaskAutomationResult?> GetTaskAutomationAsync(
-			IHttpClientFactory httpClientFactory,
+		#region AIAutomatization
+		private static async Task<TaskAutomationResult?> GetTaskAutomationAsync( IHttpClientFactory httpClientFactory,
 			IConfiguration config,
 			taskDTO.CreateTaskItemDTO data,
 			List<string> tagNames)
@@ -2017,6 +2174,8 @@ namespace TeamUpBackEnd.Extensions
 			public List<string> Tags { get; init; } = new();
 		}
 
+		#endregion
+
 		public static void ChatEndpoints(WebApplication app)
 		{
 			//---------------Channels-----------------------//
@@ -2225,6 +2384,19 @@ namespace TeamUpBackEnd.Extensions
 		}
 	}
 
+	#region DTOs
+	public class RequestEmailCodeDto
+	{
+		public string Email { get; set; } = string.Empty;
+	}
+	public class VerifyEmailCodeDto
+	{
+		public string Email { get; set; } = string.Empty;
+
+		public string Code { get; set; } = string.Empty;
+	}
+
+
 	public record MemberSearch(string emailOrUsername);
 	public record JoinCodeDTO(string join_code);
 	public record InvitationActionDto
@@ -2250,4 +2422,6 @@ namespace TeamUpBackEnd.Extensions
 		public string EmailOrUsername { get; set; } = "";
 		public int Role { get; set; } // 0 - Member, 1 - Admin
 	}
+
+	#endregion
 }

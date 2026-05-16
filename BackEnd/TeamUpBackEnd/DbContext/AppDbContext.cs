@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TeamUpBackEnd.Models;
+using TeamUpBackEnd.Models.Auth;
 using TeamUpBackEnd.Models.Chat;
 using TeamUpBackEnd.Models.Tasks;
 using TeamUpBackEnd.Models.WorkspaceRelated;
@@ -30,6 +31,9 @@ namespace TeamUpBackEnd.DbContext
 		public DbSet<TaskAssignment> TaskAssignments { get; set; }
 		public DbSet<Tag> Tags { get; set; }
 		public DbSet<TaskItemTag> TaskItemTags { get; set; }
+
+		//auth verification
+		public DbSet<EmailVerification> EmailVerifications { get; set; }
 
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
 		{
