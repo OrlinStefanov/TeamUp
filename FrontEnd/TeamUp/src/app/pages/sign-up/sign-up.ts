@@ -6,6 +6,8 @@ import { FormsModule } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { Router } from '@angular/router';
 
+type SignUpStep = 'email' | 'verify' | 'details';
+
 @Component({
   selector: 'app-sign-up',
   standalone: true,
@@ -17,6 +19,9 @@ import { Router } from '@angular/router';
 export class SignUp {
 
   @ViewChild('pageDiv') pageDiv!: ElementRef;
+  signUpStep: SignUpStep = 'email';
+  verificationCode = '';
+
   userData: RegisterUser = {
     userName: '',
     firstName: '',
@@ -30,7 +35,8 @@ export class SignUp {
   showPassword = false;
   isDarkMode$!: Observable<boolean>;
 
-  errorMessage : string = '';
+  errorMessage = '';
+  isLoading = false;
 
   constructor(private renderer: Renderer2, private auth: Auth, private router: Router) {}
 
@@ -64,16 +70,87 @@ export class SignUp {
     this.showPassword = !this.showPassword;
   }
 
+  continueWithEmail() {
+    this.errorMessage = '';
+    const email = this.userData.email.trim();
+
+    if (!email) {
+      this.errorMessage = 'Email is required';
+      return;
+    }
+
+    this.isLoading = true;
+    this.auth.requestEmailVerificationCode(email).subscribe({
+      next: () => {
+        this.userData.email = email;
+        this.signUpStep = 'verify';
+        this.verificationCode = '';
+        this.isLoading = false;
+      },
+      error: (error) => {
+        this.errorMessage = this.extractErrorMessage(error, 'Failed to send verification code');
+        this.isLoading = false;
+      }
+    });
+  }
+
+  verifyCode() {
+    this.errorMessage = '';
+    const code = this.verificationCode.trim();
+
+    if (!code) {
+      this.errorMessage = 'Verification code is required';
+      return;
+    }
+
+    this.isLoading = true;
+    this.auth.verifyEmail(this.userData.email, code).subscribe({
+      next: () => {
+        this.signUpStep = 'details';
+        this.isLoading = false;
+      },
+      error: (error) => {
+        this.errorMessage = this.extractErrorMessage(error, 'Verification failed');
+        this.isLoading = false;
+      }
+    });
+  }
+
+  resendCode() {
+    this.verificationCode = '';
+    this.continueWithEmail();
+  }
+
+  goBack() {
+    this.errorMessage = '';
+    if (this.signUpStep === 'verify') {
+      this.signUpStep = 'email';
+      this.verificationCode = '';
+    } else if (this.signUpStep === 'details') {
+      this.signUpStep = 'verify';
+    }
+  }
+
   register() {
+    this.errorMessage = '';
+    this.isLoading = true;
+
     this.auth.register(this.userData).subscribe({
-      next: (response) => {
-        console.log('Registration successful:', response);
+      next: () => {
+        this.isLoading = false;
         this.router.navigate(['/dashboard']);
       },
       error: (error) => {
-        console.error('Registration failed:', error);
-        this.errorMessage = error.error || 'Registration failed. Please try again.';
+        this.errorMessage = this.extractErrorMessage(error, 'Registration failed. Please try again.');
+        this.isLoading = false;
       }
     });
+  }
+
+  private extractErrorMessage(error: { error?: unknown }, fallback: string): string {
+    if (typeof error.error === 'string' && error.error.length > 0) {
+      return error.error;
+    }
+    return fallback;
   }
 }

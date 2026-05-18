@@ -71,13 +71,22 @@ export class Auth {
     return this.http.post(`${this.apiUrl}/register`, user, { withCredentials: true, headers: { 'Content-Type': 'application/json' } });
   }
 
+  //#region Email Verification
+  requestEmailVerificationCode(email: string) {
+    return this.http.post(`${this.apiUrl}/auth/register`, { email }, { withCredentials: true, headers: { 'Content-Type': 'application/json' } });
+  }
+
+  verifyEmail(email: string, code: string) {
+    return this.http.post(`${this.apiUrl}/auth/verify-email`, { email, code }, { withCredentials: true, headers: { 'Content-Type': 'application/json' } });
+  }
+
+  //#endregion
+
+  //#region Password Reset
   changePassword(data: { currentPassword: string; newPassword: string }) {
     return this.http.post(`${this.apiUrl}/change-password`, data, { withCredentials: true, headers: { 'Content-Type': 'application/json' } });
   }
-
-  deleteAccount() {
-    return this.http.delete(`${this.apiUrl}/delete-account`, { withCredentials: true });
-  }
+  //#endregion
 
   //returns the user information based on the token
   me()

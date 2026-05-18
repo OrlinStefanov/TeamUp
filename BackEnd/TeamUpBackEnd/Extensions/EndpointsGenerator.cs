@@ -358,7 +358,7 @@ namespace TeamUpBackEnd.Extensions
 				.WithSummary("Returns the current user's info").WithTags("User Management");
 
 			//forgets the old password and via email sends proposition for a new one. If the email is not found, it returns ok status without sending an email, to prevent email enumeration attacks.
-			app.MapPost("/forgot-password", async (user_data.ForgotPasswordDTO dto, UserManager<ApplicationUser> userManager, EmailService emailService) =>
+			app.MapPost("/forgot-password", async (user_data.ForgotPasswordDTO dto, UserManager<ApplicationUser> userManager, IEmailService emailService) =>
 			{
 				var user = await userManager.FindByEmailAsync(dto.EmailOrUsername) ?? await userManager.FindByNameAsync(dto.EmailOrUsername);
 
