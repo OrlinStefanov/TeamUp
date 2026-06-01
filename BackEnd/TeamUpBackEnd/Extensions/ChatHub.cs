@@ -46,6 +46,7 @@ namespace TeamUpBackEnd.Extensions
 
 			if (member != null)
 			{
+				member.LastSeen = DateTime.UtcNow;
 				await _db.SaveChangesAsync();
 			}
 		}
