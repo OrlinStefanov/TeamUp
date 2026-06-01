@@ -62,8 +62,10 @@ builder.Services.AddAuthentication(options =>
 		{
 			var accessToken = context.Request.Query["access_token"];
 			var path = context.HttpContext.Request.Path;
+
 			if (!string.IsNullOrEmpty(accessToken) &&
-				path.StartsWithSegments("/chathub"))
+				(path.StartsWithSegments("/chathub") ||
+				 path.StartsWithSegments("/dmhub")))
 			{
 				context.Token = accessToken;
 			}
@@ -139,7 +141,10 @@ app.UseRateLimiter();
 app.MapHub<ChatHub>("/chathub");
 app.MapHub<TaskHub>("/taskhub");
 
+app.MapHub<DmHub>("/dmhub");
+
 EndpointsGenerator.MapEndpoints(app);
+DirectMessagesEndpoints.MapDirectMessages(app);
 
 app.UseHttpsRedirection();
 

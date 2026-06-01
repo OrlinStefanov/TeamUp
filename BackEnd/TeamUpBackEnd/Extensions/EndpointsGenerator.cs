@@ -645,6 +645,18 @@ namespace TeamUpBackEnd.Extensions
 				}
 
 				await db.Workspaces.AddAsync(workspace);
+
+				var generalChannel = new Channel
+				{
+					Name = "general",
+					Description = "General workspace discussion",
+					IsPrivate = false,
+					WorkspaceId = workspace.Id,  // EF will resolve this after insert
+					Members = new List<ChannelMember>()
+				};
+
+				workspace.Channels.Add(generalChannel);
+
 				await db.SaveChangesAsync();
 
 				return Results.Ok(new
@@ -2218,24 +2230,35 @@ namespace TeamUpBackEnd.Extensions
 			app.MapGet("/workspace/{workspaceId}/get/channels", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, int workspaceId) =>
 			{
 				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
-
 				if (userId is null) return Results.BadRequest("User id not found");
 
+				// verify the user is in the workspace at all
+				var isMember = await db.WorkspaceMembers
+					.AnyAsync(m => m.WorkspaceId == workspaceId && m.UserId == userId);
+
+				if (!isMember) return Results.Forbid();
+
 				var channels = await db.Channels
-					.Where(c => c.WorkspaceId == workspaceId)
+					.Where(c =>
+						c.WorkspaceId == workspaceId &&
+						(!c.IsPrivate || c.Members!.Any(m => m.UserId == userId)))
 					.Select(c => new
 					{
 						c.PublicId,
 						c.Name,
 						c.Description,
-						c.IsPrivate
+						c.IsPrivate,
+						// unread count for this user on this channel
+						UnreadCount = db.Messages
+							.Count(msg =>
+								msg.ChannelId == c.Id &&
+								msg.SenderId != userId &&
+								msg.SentAt > db.ChannelMembers
+									.Where(cm => cm.ChannelId == c.Id && cm.UserId == userId)
+									.Select(cm => cm.LastSeen)
+									.FirstOrDefault())
 					})
 					.ToListAsync();
-
-				if (channels is null || channels.Count < 0)
-				{
-					return Results.BadRequest("Channels is null");
-				}
 
 				return Results.Ok(channels);
 			}).RequireAuthorization().WithSummary("Returns all channels in the workspace").WithTags("Chat Management");
