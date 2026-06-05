@@ -17,8 +17,8 @@
     </label>
 
     <div class="chat-list">
-      @for (chat of filteredChats; track chat.id) {
-        <button class="chat-row" type="button" [class.active]="chat.id === selectedChatId" (click)="selectChat(chat.id)">
+      @for (chat of filteredChats; track chat.publicId) {
+        <button class="chat-row" type="button" [class.active]="chat.publicId === selectedConversationId" (click)="selectChat(chat.publicId)">
           <span class="avatar" [style.--avatar-color]="chat.accent">
             {{ chat.initials }}
             @if (chat.status === 'online') {
@@ -57,10 +57,10 @@
     </header>
 
     <div class="message-area">
-      @for (message of selectedChat.messages; track message.id) {
-        <article class="message-bubble" [class.mine]="message.mine">
-          <p>{{ message.text }}</p>
-          <time>{{ message.time }}</time>
+      @for (message of messages; track message.publicId) {
+        <article class="message-bubble" [class.mine]="message.senderId === auth.getUserId()">
+          <p>{{ message.content }}</p>
+          <time>{{ message.sentAt | date:'shortTime' }}</time>
         </article>
       }
     </div>
@@ -77,7 +77,7 @@
 
   @if (isNewMessageOpen) {
     <div class="dm-modal-backdrop" (click)="closeNewMessage()">
-      <section class="dm-modal" (click)="$event.stopPropagation()">
+      <form class="dm-modal" (ngSubmit)="startConversation()" (click)="$event.stopPropagation()">
         <button class="modal-close" type="button" aria-label="Close" (click)="closeNewMessage()">×</button>
         <h2>New direct message</h2>
         <p>Search by username, email, or phone number.</p>
@@ -100,6 +100,8 @@
           <span>⌕ phone</span>
         </div>
 
+        <button class="send-btn" type="submit">Start conversation</button>
+
         <div class="empty-results">
           @if (searchText.trim()) {
             <span>No frontend results yet</span>
@@ -107,7 +109,7 @@
             <span>Start typing to find people</span>
           }
         </div>
-      </section>
+      </form>
     </div>
   }
 </section>

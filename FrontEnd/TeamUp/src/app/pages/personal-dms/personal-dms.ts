@@ -1,27 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, ElementRef, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Observable } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { Auth } from '../../services/auth/auth';
-
-type DirectMessage = {
-  id: number;
-  text: string;
-  time: string;
-  mine: boolean;
-};
-
-type DirectChat = {
-  id: number;
-  name: string;
-  handle: string;
-  preview: string;
-  time: string;
-  initials: string;
-  status: 'online' | 'away' | 'offline';
-  accent: string;
-  messages: DirectMessage[];
-};
+import { DirectMessagesService, DmConversation, DmMessage } from '../../services/direct-messages.service';
 
 @Component({
   selector: 'app-personal-dms',
@@ -30,7 +12,7 @@ type DirectChat = {
   templateUrl: './personal-dms.html',
   styleUrl: './personal-dms.css',
 })
-export class PersonalDms {
+export class PersonalDms implements OnInit, OnDestroy {
   @ViewChild('personSearchInput') personSearchInput?: ElementRef<HTMLInputElement>;
 
   isDarkMode$: Observable<boolean>;
@@ -39,72 +21,104 @@ export class PersonalDms {
   messageText = '';
   isNewMessageOpen = false;
   isMobileChatOpen = false;
-  selectedChatId = 1;
+  selectedConversationId: string | null = null;
+  conversations: DmConversation[] = [];
+  messages: DmMessage[] = [];
 
-  readonly chats: DirectChat[] = [
-    {
-      id: 1,
-      name: 'Alice Chen',
-      handle: '@alice_dev',
-      preview: 'merging now ✨',
-      time: '18:24',
-      initials: 'AC',
-      status: 'online',
-      accent: '#2dd4bf',
-      messages: [
-        { id: 1, text: 'hey, did you push the auth fix?', time: '10:21', mine: false },
-        { id: 2, text: 'yep, on the feature branch', time: '10:23', mine: true },
-        { id: 3, text: 'merging now ✨', time: '18:24', mine: false },
-      ],
-    },
-    {
-      id: 2,
-      name: 'Bob Rust',
-      handle: '@bob.rust',
-      preview: 'down. ramen?',
-      time: '12:02',
-      initials: 'BR',
-      status: 'away',
-      accent: '#a78bfa',
-      messages: [
-        { id: 1, text: 'small bug hunt after standup?', time: '11:56', mine: false },
-        { id: 2, text: 'down. ramen?', time: '12:02', mine: false },
-      ],
-    },
-    {
-      id: 3,
-      name: 'Carol Codes',
-      handle: '@carol_codes',
-      preview: 'review when you can 🙏',
-      time: 'Yesterday',
-      initials: 'CC',
-      status: 'offline',
-      accent: '#f472b6',
-      messages: [
-        { id: 1, text: 'left comments on the profile page', time: 'Yesterday', mine: false },
-        { id: 2, text: 'review when you can 🙏', time: 'Yesterday', mine: false },
-      ],
-    },
-  ];
+  private subscription = new Subscription();
+  private currentConversationId: string | null = null;
 
-  constructor(private auth: Auth) {
+  constructor(
+    public auth: Auth,
+    private dmService: DirectMessagesService
+  ) {
     this.isDarkMode$ = this.auth.darkMode$;
+  }
+
+  ngOnInit() {
+    this.dmService.startConnection().catch(() => {
+      // connection may fail if user is not authenticated yet
+    });
+
+    this.loadConversations();
+
+    this.subscription.add(
+      this.dmService.incomingMessage$.subscribe((message) => {
+        if (!message || message.conversationId !== this.selectedConversationId) {
+          return;
+        }
+
+        this.messages = [...this.messages, message];
+      })
+    );
+  }
+
+  ngOnDestroy() {
+    this.subscription.unsubscribe();
+    if (this.currentConversationId) {
+      this.dmService.leaveConversation(this.currentConversationId).catch(() => {});
+    }
   }
 
   get filteredChats() {
     const query = this.filterText.trim().toLowerCase();
+    const views = this.conversations.map(conversation => this.buildChatView(conversation));
 
-    if (!query) return this.chats;
+    if (!query) {
+      return views;
+    }
 
-    return this.chats.filter((chat) =>
-      [chat.name, chat.handle, chat.preview].some((value) =>
-        value.toLowerCase().includes(query)
-      )
+    return views.filter((chat) =>
+      [chat.name, chat.handle, chat.preview]
+        .some(value => value.toLowerCase().includes(query))
     );
   }
 
   get selectedChat() {
-    return this.chats.find((chat) => chat.id === this.selectedChatId) ?? this.chats[0];
+    const conversation = this.conversations.find(c => c.publicId === this.selectedConversationId)
+      ?? this.conversations[0];
+
+    if (!conversation) {
+      return {
+        name: 'No conversation selected',
+        handle: '@direct',
+        preview: 'Select a conversation from the list',
+        time: '',
+        initials: 'DM',
+        status: 'offline' as 'online' | 'away' | 'offline',
+        accent: '#888888',
+      };
+    }
+
+    return this.buildChatView(conversation);
+  }
+
+  private buildChatView(conversation: DmConversation) {
+    const otherMember = conversation.members.find(m => m.userId !== this.auth.getUserId());
+    const name = conversation.isGroup
+      ? conversation.title ?? 'Group conversation'
+      : otherMember?.userName ?? 'Direct message';
+
+    const handle = conversation.isGroup
+      ? '@group'
+      : otherMember?.userName ? `@${otherMember.userName}` : '@direct';
+
+    const preview = conversation.lastMessage?.content ?? 'No messages yet';
+    const time = conversation.lastMessageAt ? this.formatDate(conversation.lastMessageAt) : '';
+    const initials = conversation.isGroup
+      ? (conversation.title ? this.buildInitials(conversation.title) : 'GR')
+      : this.buildInitials(otherMember?.userName ?? 'DM');
+
+    return {
+      publicId: conversation.publicId,
+      name,
+      handle,
+      preview,
+      time,
+      initials,
+      status: 'online' as 'online' | 'away' | 'offline',
+      accent: this.colorFromId(conversation.publicId),
+    };
   }
 
   openNewMessage() {
@@ -119,9 +133,21 @@ export class PersonalDms {
     this.searchText = '';
   }
 
-  selectChat(chatId: number) {
-    this.selectedChatId = chatId;
+  selectChat(conversationId: string) {
+    if (this.currentConversationId && this.currentConversationId !== conversationId) {
+      this.dmService.leaveConversation(this.currentConversationId).catch(() => {});
+    }
+
+    this.selectedConversationId = conversationId;
+    this.currentConversationId = conversationId;
     this.isMobileChatOpen = true;
+
+    this.dmService.startConnection()
+      .then(() => this.dmService.joinConversation(conversationId))
+      .catch(() => null);
+
+    this.loadMessages(conversationId);
+    this.dmService.markAsRead(conversationId).catch(() => {});
   }
 
   closeMobileChat() {
@@ -130,15 +156,88 @@ export class PersonalDms {
 
   sendMessage() {
     const text = this.messageText.trim();
-    if (!text) return;
+    if (!text || !this.selectedConversationId) {
+      return;
+    }
 
-    this.selectedChat.messages.push({
-      id: Date.now(),
-      text,
-      time: 'now',
-      mine: true,
-    });
+    this.dmService.sendMessage(this.selectedConversationId, text)
+      .then(() => {
+        this.messageText = '';
+      })
+      .catch(() => {
+        // silently ignore send failure for now
+      });
+  }
 
-    this.messageText = '';
+  startConversation() {
+    const identifier = this.searchText.trim();
+    if (!identifier) {
+      return;
+    }
+
+    this.dmService.startDirectMessage([identifier], null, false)
+      .subscribe(conversation => {
+        this.isNewMessageOpen = false;
+        this.searchText = '';
+
+        if (!this.conversations.some(c => c.publicId === conversation.publicId)) {
+          this.conversations = [conversation, ...this.conversations];
+        }
+
+        this.selectChat(conversation.publicId);
+      });
+  }
+
+  private loadConversations() {
+    this.dmService.getConversations()
+      .subscribe(conversations => {
+        this.conversations = conversations;
+        if (!this.selectedConversationId && conversations.length > 0) {
+          this.selectChat(conversations[0].publicId);
+        }
+      });
+  }
+
+  private loadMessages(conversationId: string) {
+    this.dmService.getMessages(conversationId)
+      .subscribe(response => {
+        this.messages = response.messages.map(msg => ({
+          ...msg,
+          conversationId: response.conversationId
+        }));
+      });
+  }
+
+  private formatDate(value: string) {
+    const date = new Date(value);
+    if (isNaN(date.getTime())) {
+      return value;
+    }
+
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+
+  private buildInitials(value: string) {
+    return value
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map(word => word[0].toUpperCase())
+      .join('')
+      .slice(0, 2);
+  }
+
+  private getConversationLabel(conversation: DmConversation) {
+    return conversation.title ?? conversation.members.map(m => m.userName).filter(Boolean).join(', ');
+  }
+
+  private colorFromId(id: string) {
+    let hash = 0;
+    for (let i = 0; i < id.length; i++) {
+      hash = id.charCodeAt(i) + ((hash << 5) - hash);
+    }
+
+    const color = `hsl(${hash % 360}, 62%, 45%)`;
+    return color;
   }
 }
