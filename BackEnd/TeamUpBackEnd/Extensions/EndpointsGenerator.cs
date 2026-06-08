@@ -14,6 +14,7 @@ using TeamUpBackEnd.Interfaces;
 using TeamUpBackEnd.Models;
 using TeamUpBackEnd.Models.Auth;
 using TeamUpBackEnd.Models.Chat;
+using TeamUpBackEnd.Models.Inbox;
 using TeamUpBackEnd.Models.Tasks;
 using TeamUpBackEnd.Models.WorkspaceRelated;
 using TeamUpBackEnd.Services;
@@ -993,7 +994,7 @@ namespace TeamUpBackEnd.Extensions
 			}).RequireAuthorization().WithSummary("Soft delete on the workspace").WithTags("Workspace Management");
 
 			//remove member from the workspace
-			app.MapDelete("/workspace/{publicId}/members/{userId}", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, string publicId, string userId) =>
+			app.MapDelete("/workspace/{publicId}/members/{userId}", [Authorize] async (AppDbContext db, IHubContext<TaskHub> hub, ClaimsPrincipal userClaims, string publicId, string userId) =>
 			{
 				var currentUserId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -1039,6 +1040,15 @@ namespace TeamUpBackEnd.Extensions
 				db.WorkspaceInvitations.RemoveRange(invitations);
 
 				await db.SaveChangesAsync();
+
+				await InboxHelper.SendInboxMessageAsync(
+					db, hub,
+					workspace.Id,
+					workspace.PublicId.ToString(),
+					InboxMessageType.MemberRemoved,
+					"Member Removed",
+					$"A member was removed from the workspace"
+				);
 
 				return Results.Ok("User removed from workspace");
 
@@ -1302,7 +1312,7 @@ namespace TeamUpBackEnd.Extensions
 			}).RequireAuthorization().WithSummary("Changes the role of a user in the workspace").WithTags("Workspace Management");
 
 			//add new member to the workspace by the owner
-			app.MapPost("/workspace/add-member", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, UserManager<ApplicationUser> userManager, AddMemberDto model) =>
+			app.MapPost("/workspace/add-member", [Authorize] async (AppDbContext db, IHubContext<TaskHub> hub, ClaimsPrincipal userClaims, UserManager<ApplicationUser> userManager, AddMemberDto model) =>
 			{
 				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -1343,6 +1353,15 @@ namespace TeamUpBackEnd.Extensions
 				});
 
 				await db.SaveChangesAsync();
+
+				await InboxHelper.SendInboxMessageAsync(
+					db, hub,
+					workspace.Id,
+					workspace.PublicId.ToString(),
+					InboxMessageType.MemberAdded,
+					"Member Joined",
+					$"A new member joined the workspace"
+				);
 
 				return Results.Ok("User added to workspace");
 
@@ -1388,6 +1407,7 @@ namespace TeamUpBackEnd.Extensions
 				var isDifficultyMissing = !data.Difficulty.HasValue;
 				var areTagsMissing = selectedTagIds.Count == 0 && newTagNames.Count == 0;
 				var arePointsMissing = !data.Points.HasValue || data.Points <= 0;
+
 				TaskAutomationResult? automationResult = null;
 
 				if (isDifficultyMissing || areTagsMissing || arePointsMissing)
@@ -1537,6 +1557,15 @@ namespace TeamUpBackEnd.Extensions
 						Tags = tags
 					});
 
+				await InboxHelper.SendInboxMessageAsync(
+					db, hb,
+					workspace.Id,
+					workspace.PublicId.ToString(),
+					InboxMessageType.TaskCreated,
+					"Task Created",
+					$"New task \"{task.Title}\" was created"
+				);
+
 				return Results.Ok(new
 				{
 					task.PublicId,
@@ -1669,8 +1698,16 @@ namespace TeamUpBackEnd.Extensions
 				if (dto.Difficulty.HasValue)
 					task.Difficulty = dto.Difficulty.Value;
 
+				// track assignment changes for inbox
+				var removedUsers = new List<string>();
+				var addedUsers = new List<string>();
+
 				if (dto.AssignedUsers != null)
 				{
+					var previousAssignedIds = task.Assignments!
+						.Select(a => a.UserId!)
+						.ToHashSet();
+
 					db.TaskAssignments.RemoveRange(task.Assignments!);
 
 					var workspaceUserIds = task.WorkSpace.Members
@@ -1684,6 +1721,11 @@ namespace TeamUpBackEnd.Extensions
 							workspaceUserIds.Contains(u.Id))
 						.ToListAsync();
 
+					var newAssignedIds = users.Select(u => u.Id).ToHashSet();
+
+					addedUsers = newAssignedIds.Except(previousAssignedIds).ToList();
+					removedUsers = previousAssignedIds.Except(newAssignedIds).ToList();
+
 					var newAssignments = users.Select(u => new TaskAssignment
 					{
 						UserId = u.Id,
@@ -1694,18 +1736,41 @@ namespace TeamUpBackEnd.Extensions
 				}
 
 				task.UpadeAt = DateTime.UtcNow;
-
 				await db.SaveChangesAsync();
 
-				await hub.Clients
-					.Group(task.WorkSpace.PublicId.ToString())
-					.SendAsync("taskUpdated", new
-					{
-						task.PublicId,
-						task.Title,
-						Status = task.Status.ToString(),
-						task.Points
-					});
+				// inbox messages
+				await InboxHelper.SendInboxMessageAsync(
+					db, hub,
+					task.WorkSpace.Id,
+					task.WorkSpace.PublicId.ToString(),
+					InboxMessageType.TaskUpdated,
+					"Task Updated",
+					$"Task \"{task.Title}\" was updated"
+				);
+
+				if (addedUsers.Count > 0)
+				{
+					await InboxHelper.SendInboxMessageAsync(
+						db, hub,
+						task.WorkSpace.Id,
+						task.WorkSpace.PublicId.ToString(),
+						InboxMessageType.TaskAssigned,
+						"Task Assigned",
+						$"New members were assigned to \"{task.Title}\""
+					);
+				}
+
+				if (removedUsers.Count > 0)
+				{
+					await InboxHelper.SendInboxMessageAsync(
+						db, hub,
+						task.WorkSpace.Id,
+						task.WorkSpace.PublicId.ToString(),
+						InboxMessageType.TaskUnassigned,
+						"Task Unassigned",
+						$"Members were removed from \"{task.Title}\""
+					);
+				}
 
 				return Results.Ok(new
 				{
@@ -1754,6 +1819,14 @@ namespace TeamUpBackEnd.Extensions
 					{
 						task.PublicId
 					});
+				await InboxHelper.SendInboxMessageAsync(
+					db, hub,
+					task.WorkSpaceId,
+					task.WorkSpace!.PublicId.ToString(),
+					InboxMessageType.TaskDeleted,
+					"Task Deleted",
+					$"Task \"{task.Title}\" was deleted"
+				);
 
 				return Results.Ok();
 			}).RequireAuthorization().WithSummary("Soft delete a task by it's id").WithTags("Task Management");
@@ -1786,6 +1859,15 @@ namespace TeamUpBackEnd.Extensions
 							task.PublicId,
 							Status = task.Status.ToString()
 						});
+
+					await InboxHelper.SendInboxMessageAsync(
+						db, hub,
+						task.WorkSpaceId,
+						task.WorkSpace!.PublicId.ToString(),
+						InboxMessageType.TaskStatusChanged,
+						"Task Status Changed",
+						$"Task \"{task.Title}\" is now {task.Status}"
+					);
 
 					return Results.Ok("Successfully changed " + task.Status);
 				}
