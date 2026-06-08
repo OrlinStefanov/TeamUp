@@ -1,7 +1,22 @@
 <nav class="navbar sticky-top border-bottom" [ngClass]="{'light-mode': !(isDarkMode$ | async), 'dark-mode': isDarkMode$ | async}">
   <div class="container-fluid">
     <span class="navbar-brand px-3 pt-2"> <b>{{ workspace_info?.title }}</b></span>
-    <div class="d-flex align-items-center ms-auto">
+    <div class="d-flex align-items-center ms-auto gap-3">
+      <!-- Inbox Button -->
+      <div class="inbox-button-wrapper position-relative">
+        <button class="btn btn-link p-0" (click)="openInbox()" style="color: inherit; text-decoration: none;">
+          <svg xmlns="http://www.w3.org/2000/svg" style="color: #9938fa;" width="25" height="25" fill="currentColor" class="bi bi-envelope-paper-fill" viewBox="0 0 16 16">
+            <path fill-rule="evenodd" d="M6.5 9.5 3 7.5v-6A1.5 1.5 0 0 1 4.5 0h7A1.5 1.5 0 0 1 13 1.5v6l-3.5 2L8 8.75zM1.059 3.635 2 3.133v3.753L0 5.713V5.4a2 2 0 0 1 1.059-1.765M16 5.713l-2 1.173V3.133l.941.502A2 2 0 0 1 16 5.4zm0 1.16-5.693 3.337L16 13.372v-6.5Zm-8 3.199 7.941 4.412A2 2 0 0 1 14 16H2a2 2 0 0 1-1.941-1.516zm-8 3.3 5.693-3.162L0 6.873v6.5Z"/>
+          </svg>
+        </button>
+        @if (inboxUnreadCount > 0) {
+          <span class="badge bg-danger position-absolute top-0 start-100 translate-middle">
+            {{ inboxUnreadCount > 9 ? '9+' : inboxUnreadCount }}
+          </span>
+        }
+      </div>
+
+      <!-- Profile Icon -->
       @if (user_data.profilePictureUrl) {
         <img [routerLink]="['/profile']" src="{{ user_data.profilePictureUrl }}" alt="Profile" class="rounded-circle" style="width:30px;height:30px;object-fit:cover; cursor: pointer;">
       } @else {
@@ -48,3 +63,10 @@
 <div class="workspace-content" [ngClass]="{'light-mode': !(isDarkMode$ | async), 'dark-mode': isDarkMode$ | async}">
   <router-outlet></router-outlet>
 </div>
+
+<!-- Inbox Drawer -->
+<app-inbox-drawer 
+  [isOpen]="isInboxOpen" 
+  (close)="closeInbox()"
+  [ngClass]="{'light-mode': !(isDarkMode$ | async), 'dark-mode': isDarkMode$ | async}">
+</app-inbox-drawer>

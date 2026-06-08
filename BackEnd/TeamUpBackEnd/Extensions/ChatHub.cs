@@ -2,17 +2,21 @@
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using TeamUpBackEnd.DbContext;
+using TeamUpBackEnd.Helpers;
 using TeamUpBackEnd.Models.Chat;
+using TeamUpBackEnd.Models.Inbox;
 
 namespace TeamUpBackEnd.Extensions
 {
 	public class ChatHub : Hub
 	{
 		private readonly AppDbContext _db;
+		private readonly IHubContext<TaskHub> _taskHub;
 
-		public ChatHub(AppDbContext db)
+		public ChatHub(AppDbContext db, IHubContext<TaskHub> taskHub)
 		{
 			_db = db;
+			_taskHub = taskHub;
 		}
 
 		// JOIN CHANNEL
@@ -46,6 +50,7 @@ namespace TeamUpBackEnd.Extensions
 
 			if (member != null)
 			{
+				member.LastSeen = DateTime.UtcNow;
 				await _db.SaveChangesAsync();
 			}
 		}
@@ -63,6 +68,7 @@ namespace TeamUpBackEnd.Extensions
 			if (string.IsNullOrEmpty(userId)) return;
 
 			var channel = await _db.Channels
+				.Include(c => c.Workspace)
 				.FirstOrDefaultAsync(c => c.PublicId.ToString() == channelPublicId);
 
 			if (channel is null) return;
@@ -108,6 +114,17 @@ namespace TeamUpBackEnd.Extensions
 				{
 					channelId = channelPublicId
 				});
+
+			await InboxHelper.SendInboxMessageAsync(
+				_db,
+				_taskHub,
+				channel.WorkspaceId,
+				channel.Workspace!.PublicId.ToString(),
+				InboxMessageType.ChannelActivity,
+				$"#{channel.Name}",
+				$"New messages in #{channel.Name}",
+				channelPublicId
+			);
 		}
 
 		public async Task Typing(string channelId)

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using TeamUpBackEnd.DbContext;
@@ -11,9 +12,11 @@ using TeamUpBackEnd.DbContext;
 namespace TeamUpBackEnd.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260601073241_DmConversationFields")]
+    partial class DmConversationFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -405,70 +408,6 @@ namespace TeamUpBackEnd.Migrations
                     b.ToTable("Messages");
                 });
 
-            modelBuilder.Entity("TeamUpBackEnd.Models.Inbox.WorkspaceInboxLastSeen", b =>
-                {
-                    b.Property<int>("WorkspaceId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("UserId")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("LastSeen")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("WorkspaceId", "UserId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("WorkspaceInboxLastSeen");
-                });
-
-            modelBuilder.Entity("TeamUpBackEnd.Models.Inbox.WorkspaceInboxMessage", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Body")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("ChannelPublicId")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime>("ExpiresAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("PublicId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("Type")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("WorkspaceId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ExpiresAt");
-
-                    b.HasIndex("PublicId")
-                        .IsUnique();
-
-                    b.HasIndex("WorkspaceId");
-
-                    b.ToTable("WorkspaceInboxMessages");
-                });
-
             modelBuilder.Entity("TeamUpBackEnd.Models.Tasks.Tag", b =>
                 {
                     b.Property<int>("Id")
@@ -787,36 +726,6 @@ namespace TeamUpBackEnd.Migrations
                     b.Navigation("Sender");
                 });
 
-            modelBuilder.Entity("TeamUpBackEnd.Models.Inbox.WorkspaceInboxLastSeen", b =>
-                {
-                    b.HasOne("TeamUpBackEnd.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("TeamUpBackEnd.Models.WorkspaceRelated.WorkSpace", "WorkSpace")
-                        .WithMany("InboxLastSeen")
-                        .HasForeignKey("WorkspaceId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-
-                    b.Navigation("WorkSpace");
-                });
-
-            modelBuilder.Entity("TeamUpBackEnd.Models.Inbox.WorkspaceInboxMessage", b =>
-                {
-                    b.HasOne("TeamUpBackEnd.Models.WorkspaceRelated.WorkSpace", "WorkSpace")
-                        .WithMany("InboxMessages")
-                        .HasForeignKey("WorkspaceId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("WorkSpace");
-                });
-
             modelBuilder.Entity("TeamUpBackEnd.Models.Tasks.TaskAssignment", b =>
                 {
                     b.HasOne("TeamUpBackEnd.Models.Tasks.TaskItem", "TaskItem")
@@ -960,10 +869,6 @@ namespace TeamUpBackEnd.Migrations
                     b.Navigation("Channels");
 
                     b.Navigation("Conversations");
-
-                    b.Navigation("InboxLastSeen");
-
-                    b.Navigation("InboxMessages");
 
                     b.Navigation("Invitations");
 

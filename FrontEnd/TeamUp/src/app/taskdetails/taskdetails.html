@@ -196,7 +196,7 @@
   <div class="row">
     <div class="col-12 px-3">
       <div class="row mt-2">
-        <div class="col-12 d-flex flex-row gap-4 task-board">
+        <div class="col-12 d-flex flex-row gap-3 task-board">
 
           <!-- TO DO -->
           <div class="flex-fill"
@@ -216,7 +216,7 @@
               <span class="badge bg-secondary ms-auto mt-2">{{ tasksToDo.length }}</span>
             </div>
 
-            <div *ngFor="let task of tasksToDo" cdkDrag class="mb-4">
+            <div *ngFor="let task of tasksToDo" cdkDrag class="mb-3">
               <ng-container *ngTemplateOutlet="taskCard; context:{task: task}"></ng-container>
             </div>
           </div>
@@ -240,7 +240,7 @@
               <span class="badge bg-secondary ms-auto mt-2">{{ tasksInProgress.length }}</span>
             </div>
 
-            <div *ngFor="let task of tasksInProgress" cdkDrag class="mb-4">
+            <div *ngFor="let task of tasksInProgress" cdkDrag class="mb-3">
               <ng-container *ngTemplateOutlet="taskCard; context:{task: task}"></ng-container>
             </div>
           </div>
@@ -265,7 +265,7 @@
               <span class="badge bg-secondary ms-auto mt-2">{{ tasksCompleted.length }}</span>
             </div>
 
-            <div *ngFor="let task of tasksCompleted" cdkDrag class="mb-4">
+            <div *ngFor="let task of tasksCompleted" cdkDrag class="mb-3">
               <ng-container *ngTemplateOutlet="taskCard; context:{task: task}"></ng-container>
             </div>
           </div>
@@ -290,7 +290,7 @@
               <span class="badge bg-secondary ms-auto mt-2">{{ tasksOverdue.length }}</span>
             </div>
 
-            <div *ngFor="let task of tasksOverdue" cdkDrag class="mb-4">
+            <div *ngFor="let task of tasksOverdue" cdkDrag class="mb-3">
               <ng-container *ngTemplateOutlet="taskCard; context:{task: task}"></ng-container>
             </div>
           </div>

@@ -1,9 +1,11 @@
-﻿using System.Net;
+﻿using Microsoft.AspNetCore.Identity;
+using System.Net;
 using System.Net.Mail;
+using TeamUpBackEnd.Interfaces;
 
 namespace TeamUpBackEnd.Services
 {
-	public class EmailService
+	public class EmailService : IEmailService
 	{
 		private readonly IConfiguration _config;
 
@@ -23,7 +25,7 @@ namespace TeamUpBackEnd.Services
 				EnableSsl = true
 			};
 
-			var message = new MailMessage
+			using var message = new MailMessage
 			{
 				From = new MailAddress(_config["Email:From"]),
 				Subject = subject,
