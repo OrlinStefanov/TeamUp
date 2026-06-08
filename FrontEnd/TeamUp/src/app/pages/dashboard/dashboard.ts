@@ -6,6 +6,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { map, Observable } from 'rxjs';
 import { CdkDragPlaceholder } from "@angular/cdk/drag-drop";
+import { InboxService } from '../../services/inbox.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -46,7 +47,7 @@ export class Dashboard implements OnInit {
     inviteCode: '',
     workspaceLink: ''
   };
-
+ 
   inviteInput: string = '';
 
   showEditWorkspace = false;
@@ -58,8 +59,11 @@ export class Dashboard implements OnInit {
   editSuggestions: any[] = [];
   editInviteInput = '';
   editMembers: any[] = [];
+  
+  //inbox messages
+  inboxUnreadCounts = new Map<string, number>(); 
 
-  constructor(private auth: Auth) {}
+  constructor(private auth: Auth, private inboxService: InboxService) {}
 
   myWorkspaces$!: Observable<any[]>;
   otherWorkspaces$!: Observable<any[]>;
@@ -83,8 +87,20 @@ export class Dashboard implements OnInit {
       map(workspaces => (workspaces || []).filter(w => w.ownerId !== this.currentUserId))
     );
 
-    this.auth.getWorkspaces().subscribe();
+  this.auth.getWorkspaces().subscribe(workspaces => {
+      if (!workspaces) return;
 
+      for (const workspace of workspaces) {
+        this.inboxService.setWorkspace(workspace.publicId);
+        this.inboxService.getInboxMessages(1).subscribe(response => {
+          this.inboxUnreadCounts.set(workspace.publicId, response.unreadCount);
+        });
+      }
+    });      
+  }
+
+  inboxUnreadCount(workspace: any): number {
+    return this.inboxUnreadCounts.get(workspace.publicId) ?? 0;
   }
 
   updateWorkspace() {

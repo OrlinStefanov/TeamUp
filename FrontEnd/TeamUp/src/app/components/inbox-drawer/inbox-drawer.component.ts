@@ -7,7 +7,7 @@ import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'app-inbox-drawer',
-  standalone: true,
+  standalone: true, 
   imports: [CommonModule],
   template: `
     <div class="inbox-drawer-overlay" [class.show]="isOpen" (click)="closeDrawer()"></div>
