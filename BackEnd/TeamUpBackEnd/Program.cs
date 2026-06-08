@@ -145,6 +145,7 @@ app.MapHub<DmHub>("/dmhub");
 
 EndpointsGenerator.MapEndpoints(app);
 DirectMessagesEndpoints.MapDirectMessages(app);
+InboxEndpoints.MapInboxEndpoints(app);
 
 app.UseHttpsRedirection();
 

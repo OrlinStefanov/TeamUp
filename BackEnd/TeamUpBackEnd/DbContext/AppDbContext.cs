@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TeamUpBackEnd.Models;
 using TeamUpBackEnd.Models.Auth;
 using TeamUpBackEnd.Models.Chat;
+using TeamUpBackEnd.Models.Inbox;
 using TeamUpBackEnd.Models.Tasks;
 using TeamUpBackEnd.Models.WorkspaceRelated;
 
@@ -34,6 +35,10 @@ namespace TeamUpBackEnd.DbContext
 
 		//auth verification
 		public DbSet<EmailVerification> EmailVerifications { get; set; }
+
+		// Add these two DbSets alongside the other workspace-related ones
+		public DbSet<WorkspaceInboxMessage> WorkspaceInboxMessages { get; set; }
+		public DbSet<WorkspaceInboxLastSeen> WorkspaceInboxLastSeen { get; set; }
 
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
 		{
@@ -220,6 +225,42 @@ namespace TeamUpBackEnd.DbContext
 			modelBuilder.Entity<Message>().HasIndex(m => m.PublicId).IsUnique();
 			modelBuilder.Entity<Message>().HasIndex(m => m.ChannelId);
 			modelBuilder.Entity<Message>().HasIndex(m => m.ConversationId);
+
+			// ------------------------
+			// Inbox related
+			//------------------------
+			// WorkspaceInboxMessage
+			modelBuilder.Entity<WorkspaceInboxMessage>()
+				.HasOne(m => m.WorkSpace)
+				.WithMany(w => w.InboxMessages)
+				.HasForeignKey(m => m.WorkspaceId)
+				.OnDelete(DeleteBehavior.Cascade);
+
+			modelBuilder.Entity<WorkspaceInboxMessage>()
+				.HasIndex(m => m.PublicId)
+				.IsUnique();
+
+			modelBuilder.Entity<WorkspaceInboxMessage>()
+				.HasIndex(m => m.WorkspaceId);
+
+			modelBuilder.Entity<WorkspaceInboxMessage>()
+				.HasIndex(m => m.ExpiresAt);
+
+			// WorkspaceInboxLastSeen
+			modelBuilder.Entity<WorkspaceInboxLastSeen>()
+				.HasKey(ls => new { ls.WorkspaceId, ls.UserId });
+
+			modelBuilder.Entity<WorkspaceInboxLastSeen>()
+				.HasOne(ls => ls.WorkSpace)
+				.WithMany(w => w.InboxLastSeen)
+				.HasForeignKey(ls => ls.WorkspaceId)
+				.OnDelete(DeleteBehavior.Cascade);
+
+			modelBuilder.Entity<WorkspaceInboxLastSeen>()
+				.HasOne(ls => ls.User)
+				.WithMany()
+				.HasForeignKey(ls => ls.UserId)
+				.OnDelete(DeleteBehavior.Cascade);
 		}
 	}
 }

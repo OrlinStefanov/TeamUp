@@ -1,7 +1,22 @@
 <nav class="navbar sticky-top border-bottom" [ngClass]="{'light-mode': !(isDarkMode$ | async), 'dark-mode': isDarkMode$ | async}">
   <div class="container-fluid">
     <span class="navbar-brand px-3 pt-2"> <b>{{ workspace_info?.title }}</b></span>
-    <div class="d-flex align-items-center ms-auto">
+    <div class="d-flex align-items-center ms-auto gap-3">
+      <!-- Inbox Button -->
+      <div class="inbox-button-wrapper position-relative">
+        <button class="btn btn-link p-0" (click)="openInbox()" style="color: inherit; text-decoration: none;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M5 1a2 2 0 0 0-2 2v4H2a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-1V3a2 2 0 0 0-2-2H5zM4 3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v4H4V3zm1 5a1 1 0 0 0-1 1v5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9a1 1 0 0 0-1-1H5z"/>
+          </svg>
+        </button>
+        @if (inboxUnreadCount > 0) {
+          <span class="badge bg-danger position-absolute top-0 start-100 translate-middle">
+            {{ inboxUnreadCount > 9 ? '9+' : inboxUnreadCount }}
+          </span>
+        }
+      </div>
+
+      <!-- Profile Icon -->
       @if (user_data.profilePictureUrl) {
         <img [routerLink]="['/profile']" src="{{ user_data.profilePictureUrl }}" alt="Profile" class="rounded-circle" style="width:30px;height:30px;object-fit:cover; cursor: pointer;">
       } @else {
@@ -48,3 +63,10 @@
 <div class="workspace-content" [ngClass]="{'light-mode': !(isDarkMode$ | async), 'dark-mode': isDarkMode$ | async}">
   <router-outlet></router-outlet>
 </div>
+
+<!-- Inbox Drawer -->
+<app-inbox-drawer 
+  [isOpen]="isInboxOpen" 
+  (close)="closeInbox()"
+  [ngClass]="{'light-mode': !(isDarkMode$ | async), 'dark-mode': isDarkMode$ | async}">
+</app-inbox-drawer>

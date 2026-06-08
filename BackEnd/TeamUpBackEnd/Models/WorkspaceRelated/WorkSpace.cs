@@ -1,6 +1,6 @@
-﻿using TeamUpBackEnd.Models.Tasks;
-using TeamUpBackEnd.Models.Chat;
-
+﻿using TeamUpBackEnd.Models.Chat;
+using TeamUpBackEnd.Models.Inbox;
+using TeamUpBackEnd.Models.Tasks;
 using Helper = TeamUpBackEnd.Helpers.WorkspaceAuthorization;
 
 namespace TeamUpBackEnd.Models.WorkspaceRelated
@@ -23,5 +23,7 @@ namespace TeamUpBackEnd.Models.WorkspaceRelated
 		public ICollection<TaskItem> Tasks { get; set; } = new List<TaskItem>();
 		public ICollection<WorkspaceInvitation> Invitations { get; set; } = new List<WorkspaceInvitation>();
 		public ICollection<Conversation> Conversations { get; set; } = new List<Conversation>();
+		public ICollection<WorkspaceInboxMessage> InboxMessages { get; set; } = new List<WorkspaceInboxMessage>();
+		public ICollection<WorkspaceInboxLastSeen> InboxLastSeen { get; set; } = new List<WorkspaceInboxLastSeen>();
 	}
 }

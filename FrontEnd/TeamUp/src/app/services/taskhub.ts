@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
 import * as signalR from '@microsoft/signalr';
 import { BehaviorSubject } from 'rxjs';
+import { InboxService } from './inbox.service';
+import { InboxMessage, InboxMessageType } from '../models/inbox.models';
 
 @Injectable({
   providedIn: 'root',
@@ -16,6 +18,8 @@ export class Taskhub {
   private tasksCache = new Map<string, any[]>();
 
   private apiUrl = 'https://localhost:7094';
+
+  constructor(private inboxService: InboxService) {}
 
   //connect
   connect(workspaceId: string, token: string) {
@@ -101,6 +105,21 @@ export class Taskhub {
 
       this.tasksCache.set(this.currentWorkspaceId!, updated);
       this.tasksSubject.next(updated);
+    });
+
+    // new inbox message
+    this.hubConnection.on('NewInboxMessage', (messageData: any) => {
+      const inboxMessage: InboxMessage = {
+        publicId: messageData.publicId,
+        title: messageData.title,
+        body: messageData.body,
+        type: messageData.type as InboxMessageType,
+        channelPublicId: messageData.channelPublicId || null,
+        createdAt: messageData.createdAt,
+        isRead: false,
+      };
+
+      this.inboxService.receiveNewMessage(inboxMessage);
     });
   }
 }
