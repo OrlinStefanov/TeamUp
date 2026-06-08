@@ -1,4 +1,4 @@
-@TeamUpBackEnd_HostAddress = https://localhost:5231
+@TeamUpBackEnd_HostAddress = https://localhost:7094
 
 GET {{TeamUpBackEnd_HostAddress}}/swagger/v1/swagger.json
 Accept: application/json

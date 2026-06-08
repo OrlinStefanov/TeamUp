@@ -47,20 +47,56 @@
       }
 
       <ul class="workspace-list list-unstyled">
-        @for (workspace of (workspaces$ | async); track workspace) {
+        @if (myWorkspaces$ | async; as myWorkspaces) {
           <li>
-            <a class="workspace-item"
-              (click)="openWorkspace(workspace.publicId)">
-              <span class="workspace-icon">
-                {{ workspace?.title?.charAt(0) }}
-              </span>
-              @if (!isDesktopSidebarCollapsed) {
-                <span class="workspace-name">
-                  {{ workspace.title }}
-                </span>
-              }
-            </a>
+            <button type="button" class="workspace-section-btn" (click)="toggleMyWorkspaces()">
+              <svg class="section-chevron" [class.open]="isMyWorkspacesOpen" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                <path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span>My workspaces</span>
+              <span class="section-count">{{ myWorkspaces.length }}</span>
+            </button>
           </li>
+          @if (isMyWorkspacesOpen) {
+            @for (workspace of myWorkspaces; track workspace) {
+              <li>
+                <a class="workspace-item workspace-child" (click)="openWorkspace(workspace.publicId)">
+                  <span class="workspace-icon">
+                    {{ workspace?.title?.charAt(0) }}
+                  </span>
+                  <span class="workspace-name">
+                    {{ workspace.title }}
+                  </span>
+                </a>
+              </li>
+            }
+          }
+        }
+
+        @if (sharedWorkspaces$ | async; as sharedWorkspaces) {
+          <li>
+            <button type="button" class="workspace-section-btn" (click)="toggleSharedWorkspaces()">
+              <svg class="section-chevron" [class.open]="isSharedWorkspacesOpen" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                <path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span>Shared with me</span>
+              <span class="section-count">{{ sharedWorkspaces.length }}</span>
+            </button>
+          </li>
+          @if (isSharedWorkspacesOpen) {
+            @for (workspace of sharedWorkspaces; track workspace) {
+              <li>
+                <a class="workspace-item workspace-child" (click)="openWorkspace(workspace.publicId)">
+                  <span class="workspace-icon shared">
+                    {{ workspace?.title?.charAt(0) }}
+                  </span>
+                  <span class="workspace-name">
+                    {{ workspace.title }}
+                  </span>
+                </a>
+              </li>
+            }
+          }
         }
       </ul>
     </ul>
@@ -75,12 +111,22 @@
         </button>
         </div>
         <div class="settings-dropdown" *ngIf="isSettingsOpen">
-            <button class="dropdown-item" (click)="toggleTheme()">
-              {{ (isDarkMode$ | async) ? 'Light Mode' : 'Dark Mode' }}
+            <button class="dropdown-item icon-dropdown-item" (click)="toggleTheme()" [title]="(isDarkMode$ | async) ? 'Light mode' : 'Dark mode'">
+              @if (isDarkMode$ | async) {
+                <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                  <path d="M12 4V2m0 20v-2m8-8h2M2 12h2m14.4-6.4 1.4-1.4M4.2 19.8l1.4-1.4m0-12.8L4.2 4.2m15.6 15.6-1.4-1.4M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              } @else {
+                <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                  <path d="M21 14.6A8 8 0 0 1 9.4 3 7 7 0 1 0 21 14.6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                </svg>
+              }
             </button>
 
-            <button class="dropdown-item danger" (click)="logout()">
-              Sign out
+            <button class="dropdown-item icon-dropdown-item danger" (click)="logout()" title="Sign out">
+              <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                <path d="M10 17l5-5-5-5M15 12H3m6-7V4a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2h-7a2 2 0 0 1-2-2v-1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
             </button>
           </div>
       </div>
@@ -136,20 +182,66 @@
           }
  
           <ul class="workspace-list list-unstyled">
-            @for (workspace of (workspaces$ | async); track workspace) {
-              <li>
-                <a class="workspace-item"
-                  [routerLink]="['/workspace', workspace.publicId, 'tasks']">
-                  <span class="align-items-center justify-content-center text-center workspace-icon">
-                    {{ workspace.title.charAt(0) }}
-                  </span>
-                  @if (!isDesktopSidebarCollapsed) {
-                    <span class="workspace-name">
-                      {{ workspace.title }}
-                    </span>
-                  }
-                </a>
-              </li>
+            @if (myWorkspaces$ | async; as myWorkspaces) {
+              @if (!isDesktopSidebarCollapsed) {
+                <li>
+                  <button type="button" class="workspace-section-btn" (click)="toggleMyWorkspaces()">
+                    <svg class="section-chevron" [class.open]="isMyWorkspacesOpen" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                      <path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span>My workspaces</span>
+                    <span class="section-count">{{ myWorkspaces.length }}</span>
+                  </button>
+                </li>
+              }
+              @if (isMyWorkspacesOpen) {
+                @for (workspace of myWorkspaces; track workspace) {
+                  <li>
+                    <a class="workspace-item workspace-child"
+                      [routerLink]="['/workspace', workspace.publicId, 'tasks']">
+                      <span class="align-items-center justify-content-center text-center workspace-icon">
+                        {{ workspace.title.charAt(0) }}
+                      </span>
+                      @if (!isDesktopSidebarCollapsed) {
+                        <span class="workspace-name">
+                          {{ workspace.title }}
+                        </span>
+                      }
+                    </a>
+                  </li>
+                }
+              }
+            }
+
+            @if (sharedWorkspaces$ | async; as sharedWorkspaces) {
+              @if (!isDesktopSidebarCollapsed) {
+                <li>
+                  <button type="button" class="workspace-section-btn" (click)="toggleSharedWorkspaces()">
+                    <svg class="section-chevron" [class.open]="isSharedWorkspacesOpen" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                      <path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span>Shared with me</span>
+                    <span class="section-count">{{ sharedWorkspaces.length }}</span>
+                  </button>
+                </li>
+              }
+              @if (isSharedWorkspacesOpen) {
+                @for (workspace of sharedWorkspaces; track workspace) {
+                  <li>
+                    <a class="workspace-item workspace-child"
+                      [routerLink]="['/workspace', workspace.publicId, 'tasks']">
+                      <span class="align-items-center justify-content-center text-center workspace-icon shared">
+                        {{ workspace.title.charAt(0) }}
+                      </span>
+                      @if (!isDesktopSidebarCollapsed) {
+                        <span class="workspace-name">
+                          {{ workspace.title }}
+                        </span>
+                      }
+                    </a>
+                  </li>
+                }
+              }
             }
 
             <li>
@@ -197,12 +289,22 @@
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-gear" viewBox="0 0 16 16"> <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492M5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0"/> <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115z"/> </svg>
                 </button>
                   <div class="settings-dropdown" *ngIf="isSettingsOpen">
-                    <button class="dropdown-item" (click)="toggleTheme()">
-                      {{ (isDarkMode$ | async) ? 'Light Mode' : 'Dark Mode' }}
+                    <button class="dropdown-item icon-dropdown-item" (click)="toggleTheme()" [title]="(isDarkMode$ | async) ? 'Light mode' : 'Dark mode'">
+                      @if (isDarkMode$ | async) {
+                        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                          <path d="M12 4V2m0 20v-2m8-8h2M2 12h2m14.4-6.4 1.4-1.4M4.2 19.8l1.4-1.4m0-12.8L4.2 4.2m15.6 15.6-1.4-1.4M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                      } @else {
+                        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                          <path d="M21 14.6A8 8 0 0 1 9.4 3 7 7 0 1 0 21 14.6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                        </svg>
+                      }
                     </button>
 
-                    <button class="dropdown-item danger" (click)="logout()">
-                      Sign out
+                    <button class="dropdown-item icon-dropdown-item danger" (click)="logout()" title="Sign out">
+                      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                        <path d="M10 17l5-5-5-5M15 12H3m6-7V4a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2h-7a2 2 0 0 1-2-2v-1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
                     </button>
                 </div>
               </div>
@@ -252,7 +354,11 @@
               </div>
           </div>
 
-          <button type="button" class="btn-cancel tm-close" (click)="closeCreateWorkspace()">✕</button>
+          <button type="button" class="btn-cancel tm-close icon-button" (click)="closeCreateWorkspace()" aria-label="Close create workspace">
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+              <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
         </div>
 
         <div class="tm-body">
@@ -325,7 +431,11 @@
                     </ul>
                   </div>
 
-                  <button type="button" (click)="removeMember(member)">✕</button>
+                  <button type="button" class="btn-cancel tm-close icon-button" (click)="removeMember(member)" aria-label="Remove member">
+                    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                      <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                  </button>
                 </div>
               </div>
             }
@@ -368,7 +478,11 @@
                 <p class="tm-subtitle" style=" font-size: 0.85rem;">Enter an invite code or workspace link to join.</p>
               </div>
           </div>
-          <button type="button" class="btn-cancel tm-close" (click)="closeJoinWorkspace()">✕</button>
+          <button type="button" class="btn-cancel tm-close icon-button" (click)="closeJoinWorkspace()" aria-label="Close join workspace">
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+              <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
         </div>
 
         <div class="tm-body">
@@ -406,7 +520,7 @@
             class="btn-primary"
             type="submit"
             [disabled]="!joinInput.inviteCode && !joinInput.workspaceLink">
-            Join Workspace →
+            Join Workspace
           </button>
         </div>
 

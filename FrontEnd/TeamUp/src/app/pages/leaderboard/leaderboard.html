@@ -1,4 +1,4 @@
-<div class="container-fluid" style="margin-top: 20px;">
+<div class="container-fluid" [ngClass]="{'light-mode': !(isDarkMode$ | async), 'dark-mode': isDarkMode$ | async}" style="margin-top: 20px;">
   <div class="row">
     <div class="col-md-12 justify-content-between d-flex align-items-center mb-4">
         <div class="d-flex align-items-center" style="font-weight: 500;">
@@ -39,18 +39,67 @@
             </div>
         </div>
     </div>
+    <!-- PODIUM TOP 3 -->
+    <div class="col-md-12 mb-5">
+      <div class="podium-container">
+        <!-- 3RD PLACE -->
+        <div class="podium-place podium-third" *ngIf="leaderboardData.leaderboard[2]">
+          <div class="podium-medal">🥉</div>
+          <div class="podium-card">
+            @if (leaderboardData.leaderboard[2].profilePictureUrl) {
+              <img src="{{ leaderboardData.leaderboard[2].profilePictureUrl }}" alt="3rd" class="podium-avatar">
+            } @else {
+              <div class="podium-avatar-placeholder">
+                {{ leaderboardData.leaderboard[2].userName.charAt(0).toUpperCase() }}
+              </div>
+            }
+            <p class="podium-name">{{ leaderboardData.leaderboard[2].userName }}</p>
+            <p class="podium-points">{{ leaderboardData.leaderboard[2].points }} <span class="pts-label">pts</span></p>
+          </div>
+        </div>
+
+        <!-- 1ST PLACE -->
+        <div class="podium-place podium-first" *ngIf="leaderboardData.leaderboard[0]">
+          <div class="podium-medal">🥇</div>
+          <div class="podium-card">
+            @if (leaderboardData.leaderboard[0].profilePictureUrl) {
+              <img src="{{ leaderboardData.leaderboard[0].profilePictureUrl }}" alt="1st" class="podium-avatar">
+            } @else {
+              <div class="podium-avatar-placeholder">
+                {{ leaderboardData.leaderboard[0].userName.charAt(0).toUpperCase() }}
+              </div>
+            }
+            <p class="podium-name">{{ leaderboardData.leaderboard[0].userName }}</p>
+            <p class="podium-points">{{ leaderboardData.leaderboard[0].points }} <span class="pts-label">pts</span></p>
+          </div>
+        </div>
+
+        <!-- 2ND PLACE -->
+        <div class="podium-place podium-second" *ngIf="leaderboardData.leaderboard[1]">
+          <div class="podium-medal">🥈</div>
+          <div class="podium-card">
+            @if (leaderboardData.leaderboard[1].profilePictureUrl) {
+              <img src="{{ leaderboardData.leaderboard[1].profilePictureUrl }}" alt="2nd" class="podium-avatar">
+            } @else {
+              <div class="podium-avatar-placeholder">
+                {{ leaderboardData.leaderboard[1].userName.charAt(0).toUpperCase() }}
+              </div>
+            }
+            <p class="podium-name">{{ leaderboardData.leaderboard[1].userName }}</p>
+            <p class="podium-points">{{ leaderboardData.leaderboard[1].points }} <span class="pts-label">pts</span></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REST OF LEADERBOARD -->
     <div class="col-md-12 justify-content-center d-flex align-items-center gap-4 mb-4 flex-wrap">
-      @for (user of leaderboardData.leaderboard; track user; let i = $index) {
+      @for (user of leaderboardData.leaderboard.slice(3); track user; let i = $index) {
         <div class="col-md-12">
           <div class="d-flex p-3 align-items-center gap-3"
               style="border: 1px solid #9938fa; border-radius: 20px;">
 
-            <div>
-              <span *ngIf="i === 0">🥇</span>
-                <span *ngIf="i === 1">🥈</span>
-                <span *ngIf="i === 2">🥉</span>
-                <span *ngIf="i > 2">{{ i + 1 }}</span>
-            </div>
+            <div class="leaderboard-rank">{{ i + 4 }}</div>
 
             @if (user.profilePictureUrl) {
               <img src="{{ user.profilePictureUrl }}"
@@ -62,12 +111,7 @@
               </div>
             }
 
-            <p class="mb-0 mt-1" [ngClass]="{
-              'gold': i === 0,
-              'silver': i === 1,
-              'bronze': i === 2,
-              'default': i > 2
-            }" ><b>{{ user.userName }}</b></p>
+            <p class="mb-0 mt-1"><b>{{ user.userName }}</b></p>
 
             <div class="ms-auto d-flex flex-column">
                 <span class="fw-bold text-center">{{ user.points }}</span>

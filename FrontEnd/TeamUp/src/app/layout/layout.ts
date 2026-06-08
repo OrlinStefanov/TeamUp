@@ -3,7 +3,7 @@ import { Auth } from '../services/auth/auth';
 import { RouterOutlet, RouterLinkWithHref, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { Workspace, WorkspaceMember } from '../services/auth/auth-types';
 
 @Component({
@@ -16,6 +16,8 @@ export class Layout implements OnInit {
   isSidebarOpen = false;
   isDesktopSidebarCollapsed = false;
   isSettingsOpen = false;
+  isMyWorkspacesOpen = true;
+  isSharedWorkspacesOpen = true;
   activeLink: string = '';
 
   workspaces: any[] = [];
@@ -44,12 +46,22 @@ export class Layout implements OnInit {
 
   user$!: Observable<any>;
   workspaces$!: Observable<any[]>;
+  myWorkspaces$!: Observable<any[]>;
+  sharedWorkspaces$!: Observable<any[]>;
   isDarkMode$!: Observable<boolean>;
+  currentUserId = '';
 
   ngOnInit() {
     this.user$ = this.auth.user$;
     this.workspaces$ = this.auth.workspaces$;
     this.isDarkMode$ = this.auth.darkMode$;
+    this.currentUserId = this.auth.getUserId();
+    this.myWorkspaces$ = this.workspaces$.pipe(
+      map(workspaces => (workspaces || []).filter(w => w.ownerId === this.currentUserId))
+    );
+    this.sharedWorkspaces$ = this.workspaces$.pipe(
+      map(workspaces => (workspaces || []).filter(w => w.ownerId !== this.currentUserId))
+    );
 
     this.auth.getWorkspaces().subscribe();
   }
@@ -60,6 +72,14 @@ export class Layout implements OnInit {
 
   toggleDesktopSidebar() {
     this.isDesktopSidebarCollapsed = !this.isDesktopSidebarCollapsed;
+  }
+
+  toggleMyWorkspaces() {
+    this.isMyWorkspacesOpen = !this.isMyWorkspacesOpen;
+  }
+
+  toggleSharedWorkspaces() {
+    this.isSharedWorkspacesOpen = !this.isSharedWorkspacesOpen;
   }
 
   openWorkspace(id: string) {

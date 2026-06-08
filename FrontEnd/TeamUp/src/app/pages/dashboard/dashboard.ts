@@ -24,6 +24,7 @@ export class Dashboard implements OnInit {
   showSettingsDropdown = false;
   showCreateWorkspace = false;
   showJoinWorkspace = false;
+  createModalMode: 'create' | 'join' = 'create';
   copied = false;
   timeout: any;
 
@@ -103,12 +104,36 @@ export class Dashboard implements OnInit {
     return this.inboxUnreadCounts.get(workspace.publicId) ?? 0;
   }
 
+  totalUnreadCount(workspaces: any[]): number {
+    return (workspaces || []).reduce((total, workspace) => total + this.inboxUnreadCount(workspace), 0);
+  }
+
+  ownedWorkspaceCount(workspaces: any[]): number {
+    return (workspaces || []).filter(workspace => workspace.ownerId === this.currentUserId).length;
+  }
+
+  sharedWorkspaceCount(workspaces: any[]): number {
+    return (workspaces || []).filter(workspace => workspace.ownerId !== this.currentUserId).length;
+  }
+
   updateWorkspace() {
-    this.selectedWorkspace.members = this.editMembers.filter(m => m.id !== this.selectedWorkspace.ownerId);
-    console.log('update', this.selectedWorkspace);
-    this.auth.editWorkspace(this.selectedWorkspace).subscribe();
-    
-    this.showEditWorkspace = false;
+    const members = this.editMembers
+      .filter(m => (m.userId || m.id) !== this.selectedWorkspace.ownerId)
+      .map(m => ({
+        emailOrUsername: m.emailOrUsername || m.userName || m.email,
+        role: m.role ?? 0
+      }))
+      .filter(m => !!m.emailOrUsername);
+
+    this.auth.editWorkspace({
+      ...this.selectedWorkspace,
+      members
+    }).subscribe({
+      next: () => {
+        this.auth.getWorkspaces(true).subscribe();
+        this.showEditWorkspace = false;
+      }
+    });
   }
 
   deleteWorkspace() {
@@ -121,8 +146,28 @@ export class Dashboard implements OnInit {
   }
 
   onEditInputChange(value: string) {
-    // call your API (same as create modal)
-    console.log('search user', value);
+    if (this.searchTimeout) clearTimeout(this.searchTimeout);
+
+    this.searchTimeout = setTimeout(() => {
+      if (value.trim().length < 2) {
+        this.editSuggestions = [];
+        return;
+      }
+
+      this.auth.searchUsers(value).subscribe({
+        next: (res: any) => {
+          this.editSuggestions = res.filter((u: any) =>
+            !this.editMembers.some(m =>
+              (m.emailOrUsername || m.userName || m.email) === u.userName ||
+              (m.emailOrUsername || m.userName || m.email) === u.email
+            )
+          );
+        },
+        error: () => {
+          this.editSuggestions = [];
+        }
+      });
+    }, 300);
   }
 
   copyJoinCode() {
@@ -139,9 +184,18 @@ export class Dashboard implements OnInit {
   }
 
   addMember(user: any) {
-    const exists = this.editMembers.some(m => m.id === user.id);
+    const identifier = user.userName || user.email;
+    const exists = this.editMembers.some(m =>
+      (m.emailOrUsername || m.userName || m.email) === identifier ||
+      (m.emailOrUsername || m.userName || m.email) === user.email
+    );
+
     if (!exists) {
-      this.editMembers.push(user);
+      this.editMembers.push({
+        ...user,
+        emailOrUsername: identifier,
+        role: 0
+      });
     }
 
     this.editInviteInput = '';
@@ -149,7 +203,7 @@ export class Dashboard implements OnInit {
   }
 
   removeEditMember(member: any) {
-    this.editMembers = this.editMembers.filter(m => m.id !== member.id);
+    this.editMembers = this.editMembers.filter(m => m !== member);
   }
 
   openEditWorkspace(workspace: any) {
@@ -211,10 +265,12 @@ export class Dashboard implements OnInit {
 
   openCreateWorkspace() {
     this.showCreateWorkspace = true;
+    this.createModalMode = 'create';
   }
   
   closeCreateWorkspace() {
     this.showCreateWorkspace = false;
+    this.createModalMode = 'create';
     this.workspace = { title: '', description: '', ownerId: '', members: [] };
     this.invitedMembers = [];
     this.inviteInput = '';
@@ -345,5 +401,12 @@ export class Dashboard implements OnInit {
         window.location.href = '/dashboard';
       }
     });
+  }
+
+  getTimeGreeting(): string {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'morning';
+    if (hour < 18) return 'afternoon';
+    return 'evening';
   }
 }
