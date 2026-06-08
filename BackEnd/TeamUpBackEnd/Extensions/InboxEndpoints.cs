@@ -75,7 +75,8 @@ namespace TeamUpBackEnd.Extensions
 						Type = m.Type.ToString(),
 						m.ChannelPublicId,
 						m.CreatedAt,
-						IsRead = m.CreatedAt <= lastSeen
+						IsRead = m.CreatedAt <= lastSeen,
+						WorkspacePublicId = workspace.PublicId
 					})
 					.ToListAsync();
 

@@ -33,7 +33,7 @@ export class InboxService {
   /**
    * Set the current workspace context
    */
-  setWorkspace(workspacePublicId: string): void {
+  setWorkspace(workspacePublicId: string): void { 
     if (this.currentWorkspaceId !== workspacePublicId) {
       this.currentWorkspaceId = workspacePublicId;
       this.resetState();

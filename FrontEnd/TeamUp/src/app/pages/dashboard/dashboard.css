@@ -249,6 +249,31 @@
   color: inherit;
 }
 
+.workspace-card {
+  overflow: visible; /* allows badge to render outside card bounds */
+}
+
+.workspaces-grid {
+  padding: 10px; /* prevents badge from being clipped at grid edges */
+  overflow: visible;
+}
+
+/*badge css*/
+.badge-msg {
+  display: inline-block;
+  padding: 0.25em 0.4em;
+
+  width: 24px;
+  height: 24px;
+
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: baseline;
+  border-radius: 0.25rem;
+  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
 .create-workspace-modal .form-control,
 .create-workspace-modal .tm-input {
   min-height: 48px;

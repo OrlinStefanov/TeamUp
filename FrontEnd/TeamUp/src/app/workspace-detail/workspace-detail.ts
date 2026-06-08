@@ -44,7 +44,7 @@ export class WorkspaceDetail implements OnInit, OnDestroy {
         this.workspace_info = this.auth.getCachedWorkspaceById(id);
 
         // If more details needed, fetch full workspace info
-        if (!this.workspace_info) {
+        if (!this.workspace_info) { 
           this.auth.getWorkspaceInfo(id).subscribe(ws => {
             this.workspace_info = ws;
           });
