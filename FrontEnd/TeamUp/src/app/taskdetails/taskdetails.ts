@@ -97,8 +97,12 @@ export class Taskdetails {
 
         console.log('Fetched tasks:', this.tasks);
 
-        this.refreshAvailableTags();
+        // Add sample tasks only if no real tasks exist
+        if (this.tasks.length === 0) {
+          this.tasks = this.generateSampleTasks();
+        }
 
+        this.refreshAvailableTags();
         this.filterTasksStatus();
       });
     });
@@ -114,6 +118,36 @@ export class Taskdetails {
       this.activeMenuTaskId = null;
     };
     document.addEventListener('click', this.boundCloseDropdown);
+  }
+
+  private generateSampleTasks(): any[] {
+    const statuses = ['ToDo', 'InProgress', 'Done'];
+    const sampleData = [
+      { title: 'Design homepage mockup', description: 'Create high-fidelity UI design for the main landing page', difficulty: 2, points: 8 },
+      { title: 'Fix login bug', description: 'Users unable to login with SSO credentials', difficulty: 1, points: 5 },
+      { title: 'Update documentation', description: 'Add API endpoints documentation', difficulty: 0, points: 3 },
+      { title: 'Database optimization', description: 'Optimize queries for better performance', difficulty: 3, points: 13 },
+      { title: 'Code review sprint tasks', description: 'Review and merge pending pull requests', difficulty: 1, points: 5 },
+      { title: 'Implement notifications', description: 'Add real-time notification system', difficulty: 2, points: 8 },
+      { title: 'Create unit tests', description: 'Write comprehensive tests for auth module', difficulty: 1, points: 5 },
+      { title: 'Setup CI/CD pipeline', description: 'Configure GitHub Actions for automated testing', difficulty: 2, points: 8 },
+      { title: 'Mobile responsive fixes', description: 'Fix layout issues on mobile devices', difficulty: 1, points: 5 },
+      { title: 'Security audit', description: 'Run security scan and fix vulnerabilities', difficulty: 3, points: 13 }
+    ];
+
+    return sampleData.map((data, idx) => ({
+      id: `sample-${idx}`,
+      publicId: `sample-${idx}`,
+      title: data.title,
+      description: data.description,
+      status: statuses[idx % 3],
+      difficulty: data.difficulty,
+      points: data.points,
+      dueDate: new Date(Date.now() + Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
+      startDate: new Date(Date.now() - Math.random() * 10 * 24 * 60 * 60 * 1000).toISOString(),
+      tags: [],
+      assignedUsers: []
+    }));
   }
 
   ngOnDestroy() {
@@ -224,8 +258,9 @@ export class Taskdetails {
     );
 
     const movedTask = event.container.data[event.currentIndex];
+    const newStatus = this.statusMap[newStatusIndex];
 
-    movedTask.status = newStatusIndex;
+    movedTask.status = newStatus;
 
     if (this.isOverdue(movedTask)) {
       movedTask.status = 'Overdue';
@@ -236,7 +271,7 @@ export class Taskdetails {
       this.tasks[index] = movedTask;
     }
 
-    console.log('Moved task:', movedTask.status);
+    console.log('Moved task to:', movedTask.status);
 
     this.auth.updateTaskStatus(movedTask.publicId, movedTask.status)
       .subscribe({

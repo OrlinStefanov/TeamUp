@@ -708,3 +708,240 @@ button.workspace-item.workspace-action-btn {
 .collapsed-settings .settingsBtn {
   margin: 0 auto;
 }
+
+/* Sidebar and profile menu polish */
+.workspace-list {
+  margin-top: 6px;
+  gap: 4px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.workspace-group-label {
+  padding: 14px 12px 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #8b8ba3;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.workspace-title {
+  margin: 18px 12px 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #a64bfb;
+}
+
+.workspace-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workspace-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #a64bfb;
+}
+
+.workspace-icon.shared {
+  background-color: rgba(20, 184, 166, 0.12);
+  border-color: rgba(20, 184, 166, 0.5);
+  color: #14b8a6;
+}
+
+.workspace-action-btn {
+  margin-top: 4px;
+  color: inherit !important;
+}
+
+.workspace-action-btn svg {
+  color: #a64bfb;
+}
+
+.settingsBtn,
+.icon-button {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: 8px;
+}
+
+.settingsBtn:hover,
+.icon-button:hover {
+  background: rgba(168, 85, 247, 0.12);
+}
+
+.settings-dropdown {
+  right: 0;
+  bottom: calc(100% + 12px);
+  min-width: auto;
+  display: flex;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid rgba(147, 51, 234, 0.25);
+}
+
+.icon-dropdown-item {
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+}
+
+.icon-dropdown-item:hover {
+  background: rgba(168, 85, 247, 0.14);
+  color: #a64bfb;
+}
+
+.icon-dropdown-item.danger:hover {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+}
+
+.side-navbar.collapsed .workspace-list {
+  align-items: center;
+}
+
+.side-navbar.collapsed .workspace-group-label {
+  display: none;
+}
+
+.side-navbar.collapsed .settings-dropdown {
+  right: auto;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.createWorkspace-overlay,
+.joinWorkspace-overlay {
+  padding: 16px;
+}
+
+.createWorkspace-box,
+.joinWorkspace-box {
+  max-height: calc(100vh - 32px);
+  display: flex;
+  flex-direction: column;
+}
+
+.tm-body {
+  min-height: 0;
+}
+
+.member-row {
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+}
+
+.member-row:last-child {
+  border-bottom: 0;
+}
+
+.member-row > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.suggestion-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 8px;
+}
+
+.suggestion-item img,
+.suggestion-item .badge {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.workspace-section-btn {
+  width: 100%;
+  min-height: 38px;
+  display: grid;
+  grid-template-columns: 18px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  text-align: left;
+  cursor: pointer;
+}
+
+.workspace-section-btn:hover {
+  background: rgba(168, 85, 247, 0.12);
+  color: #a64bfb;
+}
+
+.section-chevron {
+  color: #8b8ba3;
+  transition: transform 0.16s ease;
+}
+
+.section-chevron.open {
+  transform: rotate(90deg);
+}
+
+.section-count {
+  min-width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(168, 85, 247, 0.14);
+  color: #a64bfb;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.workspace-child {
+  padding-left: 28px;
+}
+
+.side-navbar.collapsed .workspace-child {
+  padding-left: 12px;
+}

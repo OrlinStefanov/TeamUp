@@ -1,109 +1,188 @@
-  <div class="container-fluid workspace-content pt-5" [ngClass]="{'light-mode': !(isDarkMode$ | async), 'dark-mode': isDarkMode$ | async}">
+  <div class="dashboard-layout" [ngClass]="{'light-mode': !(isDarkMode$ | async), 'dark-mode': isDarkMode$ | async}">
 
-    <!-- MAIN STATE -->
-    @if (workspaces$ | async; as workspaces) {
-      <!-- HAS WORKSPACES -->
-      @if (workspaces.length > 0) {
-        <div class="row">
-          <div class="col-12">
-            <div class="workspace-header">
-              <h2>Welcome to your dashboard,<a style="color: #a64bfb; text-shadow: #9333ea 0 0 3px;"> {{ (user$ | async)?.userName }}</a></h2>              
-              <h6 style=" color: #999; padding-bottom: 20px;">Pick a workspace to continue where you left off.</h6>
-            </div>
-            
-            <!-- ================= MY WORKSPACES ================= -->
+    <!-- HEADER -->
+    <header class="dashboard-header">
+      <div class="dashboard-header-content">
+        <div>
+          <h1 class="dashboard-greeting">Good {{ getTimeGreeting() }}, <span class="accent">{{ (user$ | async)?.userName }}</span></h1>
+          @if (workspaces$ | async; as workspaces) {
+            @if (workspaces.length > 0) {
+              <p class="dashboard-subtitle">{{ workspaces.length }} workspace{{ workspaces.length !== 1 ? 's' : '' }} • {{ totalUnreadCount(workspaces) }} unread update{{ totalUnreadCount(workspaces) !== 1 ? 's' : '' }}</p>
+            }
+          }
+        </div>
+        <div class="header-actions">
+          <button class="btn-secondary" type="button" (click)="openJoinWorkspace()" title="Join a workspace">
+            <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+              <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <button class="btn-primary" type="button" (click)="openCreateWorkspace()" title="Create new workspace">
+            <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+              <path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <div class="dashboard-main">
+      @if (workspaces$ | async; as workspaces) {
+        <!-- HAS WORKSPACES -->
+        @if (workspaces.length > 0) {
+          <div class="workspaces-container">
+            <!-- MY WORKSPACES SECTION -->
             @if (myWorkspaces$ | async; as myWorkspaces) {
               @if (myWorkspaces.length > 0) {
-            
-                <h4>My Workspaces</h4>
-                <p class="text-muted">Workspace's you have created</p>
-                <div class="workspaces-grid">
-                  @for (workspace of myWorkspaces; track workspace) {
-                    <ng-container 
-                      [ngTemplateOutlet]="workspacecard" 
-                      [ngTemplateOutletContext]="{ workspace: workspace }">
-                    </ng-container>
-                  }
-                  <button class="workspaces-grid-add" style="display: flex;" (click)="openCreateWorkspace()">
-                    <a>+</a> Add New Workspace
-                    <p style="color: #999; font-size: x-small; padding: 20px;">Create or Join a new workspace to get started.</p> 
-                 </button>
-                </div>
-            
-              }
-            }
-
-            <div class="mt-5">
-              <!-- ================= OTHER WORKSPACES ================= -->
-              @if (otherWorkspaces$ | async; as otherWorkspaces) {
-                @if (otherWorkspaces.length > 0) {
-              
-                  <h4>Shared With Me</h4>
-                  <p class="text-muted">Workspaces you have joined</p>
+                <section class="workspace-section">
+                  <div class="section-header">
+                    <div>
+                      <h2>My workspaces</h2>
+                      <p>Spaces you created and manage</p>
+                    </div>
+                    <span class="section-count">{{ myWorkspaces.length }}</span>
+                  </div>
                   <div class="workspaces-grid">
-                    @for (workspace of otherWorkspaces; track workspace) {
-                      <ng-container 
-                        [ngTemplateOutlet]="workspacecard" 
+                    @for (workspace of myWorkspaces; track workspace.publicId) {
+                      <ng-container
+                        [ngTemplateOutlet]="workspacecard"
                         [ngTemplateOutletContext]="{ workspace: workspace }">
                       </ng-container>
                     }
-                  </div>              
-                }
+                  </div>
+                </section>
               }
+            }
+
+            <!-- SHARED WITH ME SECTION -->
+            @if (otherWorkspaces$ | async; as otherWorkspaces) {
+              @if (otherWorkspaces.length > 0) {
+                <section class="workspace-section">
+                  <div class="section-header">
+                    <div>
+                      <h2>Shared with me</h2>
+                      <p>Spaces where you are a member</p>
+                    </div>
+                    <span class="section-count">{{ otherWorkspaces.length }}</span>
+                  </div>
+                  <div class="workspaces-grid">
+                    @for (workspace of otherWorkspaces; track workspace.publicId) {
+                      <ng-container
+                        [ngTemplateOutlet]="workspacecard"
+                        [ngTemplateOutletContext]="{ workspace: workspace }">
+                      </ng-container>
+                    }
+                  </div>
+                </section>
+              }
+            }
+          </div>
+        } @else {
+          <!-- EMPTY STATE -->
+          <div class="empty-state">
+            <div class="empty-content">
+              <div class="empty-icon">
+                <svg viewBox="0 0 24 24" width="48" height="48" aria-hidden="true">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z" fill="currentColor"/>
+                </svg>
+              </div>
+              <h2>Start your first workspace</h2>
+              <p>Create a collaborative space for your team with tasks, chat, members, and progress tracking.</p>
+              <div class="empty-actions">
+                <button class="btn-primary" (click)="openCreateWorkspace()">
+                  <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                    <path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+                  </svg>
+                  Create workspace
+                </button>
+                <button class="btn-secondary" (click)="openJoinWorkspace()">
+                  <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  Join workspace
+                </button>
+              </div>
+            </div>
+            <div class="empty-preview">
+              <div class="preview-card">
+                <div class="preview-header">
+                  <span class="preview-icon">T</span>
+                  <div>
+                    <h3>What you can do</h3>
+                  </div>
+                </div>
+                <ul class="preview-features">
+                  <li><strong>Tasks</strong> – organize & track work</li>
+                  <li><strong>Members</strong> – invite your team</li>
+                  <li><strong>Updates</strong> – stay in the loop</li>
+                  <li><strong>Progress</strong> – see the leaderboard</li>
+                </ul>
+              </div>
             </div>
           </div>
-        </div>
-      } @else {
-        <div class="empty-dashboard d-flex flex-column justify-content-center align-items-center text-center">
-          <h1>
-            Welcome to <span class="accent">Team Up</span>
-          </h1>
-          <p class="subtitle">
-            Your gamified workspace for developer teams. Ship code, earn points,
-            and compete with your crew.
-          </p>
-          <div class="steps-grid">
-            <div class="step-card">
-              <h6>STEP 1</h6>
-              <h5>Create or join a workspace</h5>
-              <p>Start fresh with your own workspace or join an existing team.</p>
-            </div>
-            <div class="step-card">
-              <h6>STEP 2</h6>
-              <h5>Invite your team</h5>
-              <p>Add teammates via email or invite link.</p>
-            </div>
-            <div class="step-card">
-              <h6>STEP 3</h6>
-              <h5>Complete tasks & earn points</h5>
-              <p>Track progress on boards and earn points.</p>
-            </div>
-            <div class="step-card">
-              <h6>STEP 4</h6>
-              <h5>Climb the leaderboard</h5>
-              <p>Compete with your team and build streaks.</p>
-            </div>
-          </div>
-          
-          <div class="empty-actions d-flex justify-content-center align-items-center gap-3 me-3">
-            <button class="btn-primary" (click)="openCreateWorkspace()">
-              + Create Workspace
-            </button>
-            <button class="btn-secondary" (click)="openJoinWorkspace()">
-              Join Workspace
-            </button>
-          </div>
-        </div>
+        }
       }
-    }
+    </div>
+  </div>
 
     <!-- Templete for workspace card -->
 
+<<<<<<< Updated upstream
     <ng-template #workspacecard let-workspace="workspace">
       <div class="workspace-card" [routerLink]="['/workspace', workspace.publicId, 'tasks']">
         <div class="d-flex justify-content-between">
           <span class="workspace-icon">
             {{ workspace.title.charAt(0) }}
+=======
+<ng-template #workspacecard let-workspace="workspace">
+  <div class="workspace-card" style="position: relative; overflow: visible;" [routerLink]="['/workspace', workspace.publicId, 'tasks']">
+
+    <div class="workspace-card-top">
+      <span class="workspace-icon">
+        {{ workspace.title.charAt(0) }}
+      </span>
+      <div class="workspace-card-tools">
+        <button type="button" class="workspace-tool-btn notification-btn" title="Notifications" (click)="$event.stopPropagation()">
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+            <path d="M18 8a6 6 0 1 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M10 21h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <span class="notification-count" [class.is-zero]="inboxUnreadCount(workspace) === 0">
+            {{ inboxUnreadCount(workspace) > 9 ? '9+' : inboxUnreadCount(workspace) }}
+          </span>
+        </button>
+
+        <button type="button" class="workspace-tool-btn" title="Settings" (click)="openSettings(workspace); $event.stopPropagation()">
+          <svg xmlns="http://www.w3.org/2000/svg" style="color: #9333ea;" width="16" height="16" fill="currentColor" class="bi bi-gear" viewBox="0 0 16 16">
+            <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492M5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0"/>
+            <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <h3>{{ workspace.title }}</h3>
+
+    <div class="d-flex justify-content-between">
+      <p style="color: #999;">{{ workspace.description }}</p>
+      <div class="members d-flex align-items-center">
+        @for (member of workspace.members.slice(0, 3); track member) {
+          @if (member.profilePictureUrl) {
+            <img [src]="member.profilePictureUrl" 
+                style="width: 30px; height: 30px; border-radius: 50%; margin-right: 5px; object-fit: cover;" 
+                [title]="member.userName">
+          } @else {
+            <span class="badge" 
+                  style="display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; color: #fff; background-color: #999; border-radius: 50%; font-size: 14px; margin-right: 5px;" 
+                  [title]="member.userName">
+              {{ member.userName.charAt(0) }}
+            </span>
+          }
+        }
+        @if (workspace.members.length > 3) {
+          <span class="extra-members" style="font-size: 14px; color: #666; font-weight: bold; margin-left: 2px;">
+            +{{ workspace.members.length - 3 }}
+>>>>>>> Stashed changes
           </span>
           <div class="footer">
             <button type="button" class="btn btn-sm" (click)="openSettings(workspace); $event.stopPropagation()">
@@ -116,6 +195,7 @@
         </div>
         <h3>{{ workspace.title }}</h3>
 
+<<<<<<< Updated upstream
         <div class="d-flex justify-content-between">
           <p style="color: #999;">{{ workspace.description }}</p>
           <div class="members d-flex align-items-center">
@@ -163,6 +243,24 @@
     </ng-template>
 
   </div>
+=======
+    <div *ngIf="workspace.ownerId == currentUserId" class="workspace-card-actions">
+      <button class="workspace-action-card-btn" title="Edit workspace" (click)="openEditWorkspace(workspace); $event.stopPropagation()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" style="color: #9333ea;" height="16" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
+          <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
+          <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z"/>
+        </svg>
+      </button>
+      <button class="workspace-action-card-btn danger" title="Delete workspace" (click)="openDeleteWorkspace(workspace); $event.stopPropagation()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash-fill" viewBox="0 0 16 16">
+          <path d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1zm3 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5M8 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 5m3 .5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 1 0"/>
+        </svg>
+      </button>
+    </div>
+
+  </div>
+</ng-template>
+>>>>>>> Stashed changes
 
   <!--==================Settings Modal===========================-->
   @if (showSettings) {
@@ -258,10 +356,20 @@
               </div>
             </div>
           </div>
-          <div class="modal-footer justify-content-center">
-            <div *ngIf="selectedWorkspace.ownerId === currentUserId" class="justify-content-between gap-3">
-              <button class="btn btn-outline-secondary" data-bs-dismiss="modal" (click)="openEditWorkspace(selectedWorkspace); $event.stopPropagation()">Edit Workspace</button>
-              <button class="btn btn-outline-secondary text-danger ms-3" data-bs-dismiss="modal" (click)="openDeleteWorkspace(workspace); $event.stopPropagation()">Delete</button>
+          <div class="modal-footer settings-actions-footer">
+            <div *ngIf="selectedWorkspace.ownerId === currentUserId" class="settings-action-row">
+              <button class="settings-action-btn" data-bs-dismiss="modal" (click)="openEditWorkspace(selectedWorkspace); $event.stopPropagation()">
+                <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true">
+                  <path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Edit workspace
+              </button>
+              <button class="settings-action-btn danger" data-bs-dismiss="modal" (click)="openDeleteWorkspace(selectedWorkspace); $event.stopPropagation()">
+                <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true">
+                  <path d="M3 6h18M8 6V4h8v2m-9 0 1 16h8l1-16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Delete
+              </button>
             </div>
           </div>
         </div>
@@ -291,10 +399,24 @@
               </div>
           </div>
 
-          <button type="button" class="btn-cancel tm-close" (click)="closeCreateWorkspace()">✕</button>
+          <button type="button" class="btn-cancel tm-close icon-button" (click)="closeCreateWorkspace()" aria-label="Close create workspace">
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+              <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
         </div>
 
         <!-- BODY -->
+        <div class="workspace-mode-tabs" role="tablist" aria-label="Workspace action">
+          <button type="button" [class.active]="createModalMode === 'create'" (click)="createModalMode = 'create'">
+            Create
+          </button>
+          <button type="button" [class.active]="createModalMode === 'join'" (click)="createModalMode = 'join'">
+            Join
+          </button>
+        </div>
+
+        @if (createModalMode === 'create') {
         <div class="tm-body">
 
           <div class="form-group tm-field">
@@ -367,14 +489,20 @@
                       </ul>
                     </div>
                   </div>
-                  <button type="button" class="btn-cancel tm-close" (click)="removeMember(member)">✕</button>
+                  <button type="button" class="btn-cancel tm-close icon-button" (click)="removeMember(member)" aria-label="Remove member">
+                    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                      <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                  </button>
                 </div>
               </div>
             }
           </div>
           }
         </div>
+        }
 
+        @if (createModalMode === 'create') {
         <div class="createWorkspace-actions tm-footer">
           <button
             class="btn-primary"
@@ -383,15 +511,11 @@
             Create workspace
           </button>
         </div>
+        }
 
+        @if (createModalMode === 'join') {
         <div class="create-workspace-join-section">
-          <div class="tm-field d-flex align-items-center gap-3" >
-            <div class="separator-line" style="color: #666;"></div>
-            <div class="separator-text">OR</div>
-            <div class="separator-line" style="color: #666;"></div>
-          </div>
-  
-          <div class="mt-2 form-group tm-field">
+          <div class="form-group tm-field">
             <label class="form-label tm-label">Invite Code</label>
             <input
               type="text"
@@ -401,17 +525,33 @@
               [(ngModel)]="joinInput.inviteCode">
           </div>
 
-                  <!-- FOOTER -->
+          <div class="separator-row tm-field d-flex align-items-center gap-3" >
+            <div class="separator-line" style="color: #666;"></div>
+            <div class="separator-text">OR PASTE LINK</div>
+            <div class="separator-line" style="color: #666;"></div>
+          </div>
+
+          <div class="form-group tm-field">
+            <label class="form-label tm-label">Workspace Link</label>
+            <input
+              type="text"
+              class="form-control tm-input"
+              name="workspaceLinkFromCreateModal"
+              placeholder="https://teamup.io/join/..."
+              [(ngModel)]="joinInput.workspaceLink">
+          </div>
+        </div>
+
         <div class="joinWorkspace-actions tm-footer">
           <button
             class="btn-primary"
             type="button"
             (click)="joinWorkspace()"
             [disabled]="!joinInput.inviteCode && !joinInput.workspaceLink">
-            Join Workspace →
+            Join Workspace
           </button>
         </div>
-        </div>
+        }
       </div>
     </form>
   </div>
@@ -436,7 +576,11 @@
                 <p class="tm-subtitle" style="font-size: 0.85rem;">Update workspace details and manage members.</p>
               </div>
           </div>
-          <button type="button" class="btn-cancel tm-close" (click)="closeEditWorkspace()">✕</button>
+          <button type="button" class="btn-cancel tm-close icon-button" (click)="closeEditWorkspace()" aria-label="Close edit workspace">
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+              <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
         </div>
 
         <div class="tm-body">
@@ -468,9 +612,15 @@
             @if (editSuggestions.length > 0) {
             <ul class="suggestions-dropdown">
               @for (user of editSuggestions; track user) {
-                <li (click)="addMember(user)">
-                  <img [src]="user.profilePictureUrl" width="24" height="24" />
-                  {{ user.userName }}
+                <li class="suggestion-item" (click)="addMember(user)">
+                  @if (user.profilePictureUrl) {
+                    <img [src]="user.profilePictureUrl" width="24" height="24" alt="" />
+                  } @else {
+                    <span class="badge">
+                      {{ user.userName.charAt(0) }}
+                    </span>
+                  }
+                  <span>{{ user.userName }} ({{ user.email }})</span>
                 </li>
               }
             </ul>
@@ -480,7 +630,7 @@
           <div class="selected-members tm-field">
             @for (member of editMembers; track member) {
               <div class="member-row d-flex align-items-center justify-content-between">
-                <span>{{ member.userName || member.email }}</span>
+                <span>{{ member.userName || member.email || member.emailOrUsername }}</span>
                 <div class="actions d-flex align-items-center gap-2">
                   <div>
                     <div class="dropdown">
@@ -496,7 +646,11 @@
                       </ul>
                     </div>
                   </div>
-                  <button type="button" class="btn-cancel tm-close" (click)="removeEditMember(member)">✕</button>
+                  <button type="button" class="btn-cancel tm-close icon-button" (click)="removeEditMember(member)" aria-label="Remove member">
+                    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                      <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                  </button>
                 </div>
               </div>
             }
@@ -533,7 +687,11 @@
               <p class="tm-subtitle" style="font-size: 0.85rem;">This action cannot be undone.</p>
             </div>
         </div>
-        <button class="btn-cancel tm-close" (click)="closeDeleteWorkspace()">✕</button>
+        <button type="button" class="btn-cancel tm-close icon-button" (click)="closeDeleteWorkspace()" aria-label="Close delete workspace">
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+            <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
       </div>
 
       <!-- BODY -->
@@ -581,7 +739,11 @@
                 <p class="tm-subtitle" style=" font-size: 0.85rem;">Enter an invite code or workspace link to join.</p>
               </div>
           </div>
-          <button type="button" class="btn-cancel tm-close" (click)="closeJoinWorkspace()">✕</button>
+          <button type="button" class="btn-cancel tm-close icon-button" (click)="closeJoinWorkspace()" aria-label="Close join workspace">
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+              <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
         </div>
 
         <!-- BODY -->
@@ -621,7 +783,7 @@
             class="btn-primary"
             type="submit"
             [disabled]="!joinInput.inviteCode && !joinInput.workspaceLink">
-            Join Workspace →
+            Join Workspace
           </button>
         </div>
 
