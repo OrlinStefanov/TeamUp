@@ -286,18 +286,19 @@ namespace TeamUpBackEnd.Extensions
 			// into groups silently.
 
 			dm.MapPost("/{conversationPublicId}/add-member", async (
-				AppDbContext db,
-				ClaimsPrincipal userClaims,
-				UserManager<ApplicationUser> userManager,
-				string conversationPublicId,
-				AddDmMemberDTO dto) =>
+			AppDbContext db,
+			ClaimsPrincipal userClaims,
+			UserManager<ApplicationUser> userManager,
+			string conversationPublicId,
+			AddConversationMemberDto dto) =>
 			{
 				var currentUserId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
+
 				if (currentUserId is null)
 					return Results.BadRequest("User not found");
 
-				if (string.IsNullOrWhiteSpace(dto.Identifier))
-					return Results.BadRequest("Identifier is required");
+				if (string.IsNullOrWhiteSpace(dto.UserId))
+					return Results.BadRequest("UserId is required");
 
 				var conversation = await db.Conversations
 					.Include(c => c.Members)
@@ -306,27 +307,34 @@ namespace TeamUpBackEnd.Extensions
 				if (conversation is null)
 					return Results.NotFound("Conversation not found");
 
-				// only members can add people
+				// Only existing members can add new members
 				if (!conversation.Members!.Any(m => m.UserId == currentUserId))
 					return Results.Forbid();
 
-				// guard — do not silently convert a 1:1 DM into a group
+				// Prevent converting a 1:1 DM into a group
 				if (conversation.IsGroup != true)
-					return Results.BadRequest("Cannot add members to a 1:1 conversation. Start a new group DM instead.");
+					return Results.BadRequest(
+						"Cannot add members to a 1:1 conversation. Start a new group DM instead.");
 
-				var targetUser = await UserResolver.ResolveAsync(dto.Identifier, userManager);
+				var targetUser = await userManager.FindByIdAsync(dto.UserId);
 
 				if (targetUser is null)
-					return Results.BadRequest($"User '{dto.Identifier}' not found");
+					return Results.BadRequest("User not found");
+
+				if (targetUser.Id == currentUserId)
+					return Results.BadRequest("You are already in the conversation");
 
 				if (conversation.Members!.Any(m => m.UserId == targetUser.Id))
 					return Results.BadRequest("User is already a member of this conversation");
 
-				conversation.Members!.Add(new ConversationMember
+				var member = new ConversationMember
 				{
 					UserId = targetUser.Id,
+					ConversationId = conversation.Id,
 					LastSeen = DateTime.UtcNow
-				});
+				};
+
+				conversation.Members!.Add(member);
 
 				await db.SaveChangesAsync();
 
@@ -337,11 +345,67 @@ namespace TeamUpBackEnd.Extensions
 					{
 						targetUser.Id,
 						targetUser.UserName,
+						targetUser.Email,
 						targetUser.ProfilePictureUrl
 					}
 				});
+			}).WithSummary("Adds a selected user to an existing group DM.");
+
+			//search for users to add to a conversation — excludes existing members
+			dm.MapGet("/{conversationPublicId}/search-users", async (
+			AppDbContext db,
+			ClaimsPrincipal userClaims,
+			string conversationPublicId,
+			string q) =>
+			{
+				var currentUserId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
+
+				if (currentUserId is null)
+					return Results.BadRequest("User not found");
+
+				if (string.IsNullOrWhiteSpace(q) || q.Length < 3)
+					return Results.Ok(Array.Empty<object>());
+
+				var conversation = await db.Conversations
+					.Include(c => c.Members)
+					.FirstOrDefaultAsync(c => c.PublicId.ToString() == conversationPublicId);
+
+				if (conversation is null)
+					return Results.NotFound("Conversation not found");
+
+				// Only members can search for people to add
+				if (!conversation.Members!.Any(m => m.UserId == currentUserId))
+					return Results.Forbid();
+
+				var existingMemberIds = conversation.Members!
+					.Select(m => m.UserId)
+					.ToList();
+
+				q = q.Trim().ToLower();
+
+				var users = await db.Users
+					.Where(u =>
+						!existingMemberIds.Contains(u.Id) &&
+						(
+							(u.UserName != null && u.UserName.ToLower().Contains(q)) ||
+							(u.Email != null && u.Email.ToLower().Contains(q)) ||
+							(u.PhoneNumber != null && u.PhoneNumber.Contains(q))
+						))
+					.OrderBy(u => u.UserName)
+					.Take(20)
+					.Select(u => new
+					{
+						u.Id,
+						u.UserName,
+						u.Email,
+						u.PhoneNumber,
+						u.ProfilePictureUrl
+					})
+					.ToListAsync();
+
+				return Results.Ok(users);
 			})
-			.WithSummary("Adds a new participant to an existing group DM by email, username, or phone number. Only existing members can add others. Blocked on 1:1 conversations — start a new group DM instead.");
+			.WithSummary("Search users by username, email, or phone number for adding to a group conversation.");
 
 			// ── LEAVE CONVERSATION ────────────────────────────────────────────────
 			// Removes the calling user from a group DM.
@@ -376,5 +440,10 @@ namespace TeamUpBackEnd.Extensions
 			})
 			.WithSummary("Removes the calling user from a conversation. Works on both 1:1 and group DMs — the conversation and its history are preserved for the other participants.");
 		}
+	}
+
+	public record AddConversationMemberDto()
+	{
+		public string? UserId { get; set; }
 	}
 }
