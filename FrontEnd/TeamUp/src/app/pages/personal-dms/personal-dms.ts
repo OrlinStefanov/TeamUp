@@ -3,7 +3,8 @@ import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/co
 import { FormsModule } from '@angular/forms';
 import { Observable, Subscription } from 'rxjs';
 import { Auth } from '../../services/auth/auth';
-import { DirectMessagesService, DmConversation, DmMessage } from '../../services/direct-messages.service';
+import { DirectMessagesService, DmConversation, DmMessage, UserSearchResult } from '../../services/direct-messages.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-personal-dms',
@@ -17,7 +18,12 @@ export class PersonalDms implements OnInit, OnDestroy {
 
   isDarkMode$: Observable<boolean>;
   filterText = '';
+
   searchText = '';
+  searchResults: UserSearchResult[] = [];
+  selectedUser: UserSearchResult | null = null;
+  isSearching = false;
+  
   messageText = '';
   isNewMessageOpen = false;
   isMobileChatOpen = false;
@@ -30,14 +36,21 @@ export class PersonalDms implements OnInit, OnDestroy {
 
   constructor(
     public auth: Auth,
-    private dmService: DirectMessagesService
+    private dmService: DirectMessagesService,
+    private router: Router
   ) {
     this.isDarkMode$ = this.auth.darkMode$;
   }
 
+  typingUsers: string[] = [];
+  private typingSub?: Subscription;
+
+  private typingTimeout: any;
+
   ngOnInit() {
     this.dmService.startConnection().catch(() => {
       // connection may fail if user is not authenticated yet
+      this.router.navigate(['/dashboard']);
     });
 
     this.loadConversations();
@@ -53,8 +66,65 @@ export class PersonalDms implements OnInit, OnDestroy {
     );
   }
 
+  onSearchChange() {
+    const query = this.searchText.trim();
+
+    this.selectedUser = null;
+
+    if (!query) {
+      this.searchResults = [];
+      return;
+    }
+
+    this.isSearching = true;
+
+    this.dmService
+      .searchUsers(
+        this.selectedConversationId ?? '',
+        query
+      )
+      .subscribe({
+        next: users => {
+          this.searchResults = users;
+          this.isSearching = false;
+        },
+        error: () => {
+          this.searchResults = [];
+          this.isSearching = false;
+        }
+      });
+  }
+
+  selectUser(user: UserSearchResult) {
+    this.selectedUser = user;
+    this.searchText = user.userName;
+    this.searchResults = [];
+  }
+
+  openNewMessage() {
+    this.isNewMessageOpen = true;
+
+    this.searchText = '';
+    this.searchResults = [];
+    this.selectedUser = null;
+
+    setTimeout(() => this.personSearchInput?.nativeElement.focus(), 0);
+  }
+    onTyping() {
+      if (!this.selectedConversationId) return;
+
+      this.dmService.typing(this.selectedConversationId);
+
+      clearTimeout(this.typingTimeout);
+
+      this.typingTimeout = setTimeout(() => {
+        this.dmService.stopTyping(this.selectedConversationId!);
+      }, 1200);
+    }
   ngOnDestroy() {
     this.subscription.unsubscribe();
+    this.typingSub?.unsubscribe();
+
     if (this.currentConversationId) {
       this.dmService.leaveConversation(this.currentConversationId).catch(() => {});
     }
@@ -121,16 +191,12 @@ export class PersonalDms implements OnInit, OnDestroy {
     };
   }
 
-  openNewMessage() {
-    this.isNewMessageOpen = true;
-    this.searchText = '';
-
-    setTimeout(() => this.personSearchInput?.nativeElement.focus(), 0);
-  }
-
   closeNewMessage() {
     this.isNewMessageOpen = false;
+
     this.searchText = '';
+    this.searchResults = [];
+    this.selectedUser = null;
   }
 
   selectChat(conversationId: string) {
@@ -145,6 +211,13 @@ export class PersonalDms implements OnInit, OnDestroy {
     this.dmService.startConnection()
       .then(() => this.dmService.joinConversation(conversationId))
       .catch(() => null);
+
+    this.typingSub?.unsubscribe();
+
+    this.typingSub = this.dmService.typingUsers$
+      .subscribe(state => {
+        this.typingUsers = state[conversationId] ?? [];
+    });
 
     this.loadMessages(conversationId);
     this.dmService.markAsRead(conversationId).catch(() => {});
@@ -170,21 +243,61 @@ export class PersonalDms implements OnInit, OnDestroy {
   }
 
   startConversation() {
-    const identifier = this.searchText.trim();
-    if (!identifier) {
+    if (!this.selectedUser) {
       return;
     }
-
-    this.dmService.startDirectMessage([identifier], null, false)
+    this.dmService
+      .startDirectMessage(
+        [this.selectedUser.userName],
+        null,
+        false
+      )
       .subscribe(conversation => {
+
         this.isNewMessageOpen = false;
+
         this.searchText = '';
+        this.searchResults = [];
+        this.selectedUser = null;
 
         if (!this.conversations.some(c => c.publicId === conversation.publicId)) {
           this.conversations = [conversation, ...this.conversations];
         }
 
         this.selectChat(conversation.publicId);
+      });
+  }
+
+
+  addMemberToGroup() {
+    if (!this.selectedConversationId || !this.selectedUser) {
+      return;
+    }
+
+    this.dmService
+      .addMember(
+        this.selectedConversationId,
+        this.selectedUser.id
+      )
+      .subscribe({
+        next: () => {
+
+          const conversation = this.conversations.find(
+            c => c.publicId === this.selectedConversationId
+          );
+
+          if (conversation) {
+            conversation.members.push({
+              userId: this.selectedUser!.id,
+              userName: this.selectedUser!.userName,
+              profilePictureUrl: this.selectedUser!.profilePictureUrl
+            });
+          }
+
+          this.searchText = '';
+          this.searchResults = [];
+          this.selectedUser = null;
+        }
       });
   }
 
