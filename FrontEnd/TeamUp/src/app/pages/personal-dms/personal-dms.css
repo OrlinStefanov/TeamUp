@@ -25,7 +25,7 @@
   color: #858391;
   padding: 6px 12px;
   font-style: italic;
-}
+}s
 
 .dark-mode .dm-list-panel {
   background: #14141b;
@@ -80,11 +80,86 @@
   color: #7d7a8c;
 }
 
+
+
 .chat-filter {
   height: 33px;
   margin: 0 12px 16px;
   padding: 0 11px;
   border-radius: 9px;
+}
+
+.search-results {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+/* behaves like chat-row */
+.user-row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.user-row:hover {
+  background: #e8ddf8;
+}
+
+.dark-mode .user-row:hover {
+  background: #241b33;
+}
+
+.user-row.active {
+  background: #e8ddf8;
+  border-color: #a855f7;
+}
+
+.dark-mode .user-row.active {
+  background: #241b33;
+}
+
+.avatar.small {
+  width: 34px;
+  height: 34px;
+  font-size: 12px;
+}
+
+/* text block */
+
+.user-copy strong {
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-copy small {
+  font-size: 11px;
+  color: #858391;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dark-mode .user-copy small {
+  color: #9a98a8;
 }
 
 .dark-mode .chat-filter,

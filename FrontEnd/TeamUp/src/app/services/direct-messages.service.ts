@@ -1,8 +1,16 @@
-import { Injectable } from '@angular/core';
+﻿import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { tap, shareReplay } from 'rxjs/operators';
 import * as signalR from '@microsoft/signalr';
+
+export interface UserSearchResult {
+  id: string;
+  userName: string;
+  email?: string;
+  phoneNumber?: string;
+  profilePictureUrl?: string;
+}
 
 export interface DmMember {
   userId: string;
@@ -36,13 +44,23 @@ export interface DmMessage {
   };
 }
 
+export interface UserSearchResult {
+  id: string;
+  userName: string;
+  email?: string;
+  phoneNumber?: string;
+  profilePictureUrl?: string;
+}
+
 @Injectable({ providedIn: 'root' })
+
 export class DirectMessagesService {
   private apiUrl = 'https://localhost:7094';
   private hubConnection!: signalR.HubConnection;
 
   private messageCache = new Map<string, DmMessage[]>();
   private messageRequests = new Map<string, Observable<DmMessage[]>>();
+  private typingUserIdMap = new Map<string, Map<string, string>>();
 
   private incomingMessageSubject = new BehaviorSubject<DmMessage | null>(null);
   incomingMessage$ = this.incomingMessageSubject.asObservable();
@@ -86,6 +104,13 @@ export class DirectMessagesService {
     this.totalUnreadSubject.next(Math.max(0, this.totalUnreadSubject.value - count));
   }
 
+  searchUsers(query: string): Observable<UserSearchResult[]> {
+    return this.http.get<UserSearchResult[]>(
+      `${this.apiUrl}/api/users/search?q=${encodeURIComponent(query)}`,
+      { withCredentials: true }
+    );
+  }
+
   startDirectMessage(identifiers: string[], title?: string | null, isGroup?: boolean) {
     const payload = { identifiers, title, isGroup };
     return this.http.post<DmConversation>(`${this.apiUrl}/api/direct-messages/start`, payload, {
@@ -102,11 +127,35 @@ export class DirectMessagesService {
     );
   }
 
-  addMember(conversationPublicId: string, identifier: string) {
-    return this.http.post<any>(`${this.apiUrl}/api/direct-messages/${conversationPublicId}/add-member`, { identifier }, {
-      withCredentials: true,
-      headers: { 'Content-Type': 'application/json' }
-    });
+  addMember(conversationPublicId: string, userId: string) {
+    return this.http.post<any>(
+      `${this.apiUrl}/api/direct-messages/${conversationPublicId}/add-member`,
+      { userId },
+      {
+        withCredentials: true,
+        headers: { 'Content-Type': 'application/json' }
+      }
+    );
+  }
+
+  searchUsers(
+    conversationPublicId: string,
+    query: string
+  ): Observable<UserSearchResult[]> {
+
+    if (!query.trim()) {
+      return of([]);
+    }
+
+    return this.http.get<UserSearchResult[]>(
+      `${this.apiUrl}/api/direct-messages/${conversationPublicId}/search-users`,
+      {
+        params: {
+          q: query
+        },
+        withCredentials: true
+      }
+    );
   }
 
   leaveConversationApi(conversationPublicId: string) {
@@ -159,8 +208,23 @@ export class DirectMessagesService {
       this.totalUnreadSubject.next(this.totalUnreadSubject.value + 1);
     });
 
-    this.hubConnection.on('DmUserTyping', () => {});
-    this.hubConnection.on('DmUserStopTyping', () => {});
+    this.hubConnection.on('DmUserTyping', (data: any) => {
+      if (!this.typingUserIdMap.has(data.conversationId)) {
+        this.typingUserIdMap.set(data.conversationId, new Map());
+      }
+      this.typingUserIdMap.get(data.conversationId)!.set(data.userId, data.userName);
+      const names = Array.from(this.typingUserIdMap.get(data.conversationId)!.values());
+      this.typingUsersSubject.next({ ...this.typingUsersSubject.value, [data.conversationId]: names });
+    });
+
+    this.hubConnection.on('DmUserStopTyping', (data: any) => {
+      const map = this.typingUserIdMap.get(data.conversationId);
+      if (map) {
+        map.delete(data.userId);
+        const names = Array.from(map.values());
+        this.typingUsersSubject.next({ ...this.typingUsersSubject.value, [data.conversationId]: names });
+      }
+    });
 
     this.hubConnection.onreconnected(() => {
       this.joinedConversationIds.forEach(id =>
@@ -173,6 +237,10 @@ export class DirectMessagesService {
       throw err;
     });
     return this.connectionPromise;
+  }
+
+  getTypingUsers(conversationId: string): string[] {
+    return this.typingUsersSubject.value[conversationId] ?? [];
   }
 
   joinConversation(conversationPublicId: string) {

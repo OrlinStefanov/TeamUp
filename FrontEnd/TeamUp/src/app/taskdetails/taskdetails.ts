@@ -273,7 +273,7 @@ export class Taskdetails {
 
     console.log('Moved task to:', movedTask.status);
 
-    this.auth.updateTaskStatus(movedTask.publicId, movedTask.status)
+    this.auth.updateTaskStatus(movedTask.publicId, this.statusReverseMap[movedTask.status])
       .subscribe({
         next: () => console.log('Status updated'),
         error: (err) => {
