@@ -1,4 +1,4 @@
-<section class="dm-shell" [ngClass]="{ 'dark-mode': isDarkMode$ | async, 'light-mode': !(isDarkMode$ | async) }">
+﻿<section class="dm-shell" [ngClass]="{ 'dark-mode': isDarkMode$ | async, 'light-mode': !(isDarkMode$ | async) }">
   <aside class="dm-list-panel" [class.mobile-hidden]="isMobileChatOpen">
     <div class="dm-list-header">
       <p>Direct messages</p>
@@ -74,12 +74,11 @@
     
     @if (typingUsers.length > 0) {
       <div class="typing-indicator">
-        Someone is typing...
+        {{ typingUsers.join(', ') }} {{ typingUsers.length === 1 ? 'is' : 'are' }} typing...
       </div>
     }
 
     <form class="message-composer" (ngSubmit)="sendMessage()">
-      <input type="text" name="dmMessage" [(ngModel)]="messageText" [placeholder]="'Message ' + selectedChat.handle">
       <input
         type="text"
         [(ngModel)]="messageText"

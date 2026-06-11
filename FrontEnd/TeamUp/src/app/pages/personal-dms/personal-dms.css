@@ -372,8 +372,8 @@
 }
 
 .dark-mode .message-bubble {
-  background: #191922;
-  border-color: #343346;
+  background: #22222e;
+  border-color: #3a3a52;
 }
 
 .message-bubble.mine {

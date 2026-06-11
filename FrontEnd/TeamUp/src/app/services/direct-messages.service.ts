@@ -1,8 +1,16 @@
-import { Injectable } from '@angular/core';
+﻿import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { tap, shareReplay } from 'rxjs/operators';
 import * as signalR from '@microsoft/signalr';
+
+export interface UserSearchResult {
+  id: string;
+  userName: string;
+  email?: string;
+  phoneNumber?: string;
+  profilePictureUrl?: string;
+}
 
 export interface DmMember {
   userId: string;
@@ -52,15 +60,23 @@ export class DirectMessagesService {
 
   private messageCache = new Map<string, DmMessage[]>();
   private messageRequests = new Map<string, Observable<DmMessage[]>>();
+  private typingUserIdMap = new Map<string, Map<string, string>>();
 
   private incomingMessageSubject = new BehaviorSubject<DmMessage | null>(null);
   incomingMessage$ = this.incomingMessageSubject.asObservable();
 
   private unreadSubject = new BehaviorSubject<Record<string, number>>({});
-  unread$ = this.unreadSubject.asObservable(
-    
+  unread$ = this.unreadSubject.asObservable();
+
+  private totalUnreadSubject = new BehaviorSubject<number>(0);
+  totalUnread$ = this.totalUnreadSubject.asObservable();
+
   private typingUsersSubject = new BehaviorSubject<Record<string, string[]>>({});
   typingUsers$ = this.typingUsersSubject.asObservable();
+
+  private connectionPromise: Promise<void> | null = null;
+  private joinedConversationIds = new Set<string>();
+
   constructor(private http: HttpClient) {}
 
   getConversations(): Observable<DmConversation[]> {
@@ -86,6 +102,13 @@ export class DirectMessagesService {
     if (count === 0) return;
     this.unreadSubject.next({ ...current, [conversationId]: 0 });
     this.totalUnreadSubject.next(Math.max(0, this.totalUnreadSubject.value - count));
+  }
+
+  searchUsers(query: string): Observable<UserSearchResult[]> {
+    return this.http.get<UserSearchResult[]>(
+      `${this.apiUrl}/api/users/search?q=${encodeURIComponent(query)}`,
+      { withCredentials: true }
+    );
   }
 
   startDirectMessage(identifiers: string[], title?: string | null, isGroup?: boolean) {
@@ -186,27 +209,21 @@ export class DirectMessagesService {
     });
 
     this.hubConnection.on('DmUserTyping', (data: any) => {
-      const current = this.typingUsersSubject.value;
-
-      const users = current[data.conversationId] ?? [];
-
-      if (!users.includes(data.userId)) {
-        this.typingUsersSubject.next({
-          ...current,
-          [data.conversationId]: [...users, data.userId]
-        });
+      if (!this.typingUserIdMap.has(data.conversationId)) {
+        this.typingUserIdMap.set(data.conversationId, new Map());
       }
+      this.typingUserIdMap.get(data.conversationId)!.set(data.userId, data.userName);
+      const names = Array.from(this.typingUserIdMap.get(data.conversationId)!.values());
+      this.typingUsersSubject.next({ ...this.typingUsersSubject.value, [data.conversationId]: names });
     });
 
     this.hubConnection.on('DmUserStopTyping', (data: any) => {
-      const current = this.typingUsersSubject.value;
-
-      const users = current[data.conversationId] ?? [];
-
-      this.typingUsersSubject.next({
-        ...current,
-        [data.conversationId]: users.filter(u => u !== data.userId)
-      });
+      const map = this.typingUserIdMap.get(data.conversationId);
+      if (map) {
+        map.delete(data.userId);
+        const names = Array.from(map.values());
+        this.typingUsersSubject.next({ ...this.typingUsersSubject.value, [data.conversationId]: names });
+      }
     });
 
     this.hubConnection.onreconnected(() => {

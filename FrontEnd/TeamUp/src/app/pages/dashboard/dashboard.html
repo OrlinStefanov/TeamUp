@@ -1,4 +1,4 @@
-  <div class="dashboard-layout" [ngClass]="{'light-mode': !(isDarkMode$ | async), 'dark-mode': isDarkMode$ | async}">
+﻿  <div class="dashboard-layout" [ngClass]="{'light-mode': !(isDarkMode$ | async), 'dark-mode': isDarkMode$ | async}">
 
     <!-- HEADER -->
     <header class="dashboard-header">
@@ -128,33 +128,8 @@
 
     <!-- Templete for workspace card -->
 
- <!-- Template for workspace card -->
 <ng-template #workspacecard let-workspace="workspace">
   <div class="workspace-card" style="position: relative; overflow: visible;" [routerLink]="['/workspace', workspace.publicId, 'tasks']">
-
-    <div class="workspace-card-top">
-      <span class="workspace-icon">
-        {{ workspace.title.charAt(0) }}
-      </span>
-      <div class="workspace-card-tools">
-        <button type="button" class="workspace-tool-btn notification-btn" title="Notifications" (click)="$event.stopPropagation()">
-          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
-            <path d="M18 8a6 6 0 1 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M10 21h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          </svg>
-          <span class="notification-count" [class.is-zero]="inboxUnreadCount(workspace) === 0">
-            {{ inboxUnreadCount(workspace) > 9 ? '9+' : inboxUnreadCount(workspace) }}
-          </span>
-        </button>
-
-        <button type="button" class="workspace-tool-btn" title="Settings" (click)="openSettings(workspace); $event.stopPropagation()">
-    <!-- Unread badge -->
-    @if (inboxUnreadCount(workspace) > 0) {
-      <span class="badge bg-danger rounded-pill" 
-            style="position: absolute; top: -10px; right: -10px; z-index: 10; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 11px;">
-        {{ inboxUnreadCount(workspace) > 9 ? '9+' : inboxUnreadCount(workspace) }}
-      </span>
-    }
 
     <!-- Top row: icon + action buttons -->
     <div class="d-flex justify-content-between">
@@ -170,50 +145,52 @@
         </button>
       </div>  <!-- /.footer -->
     </div>
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h3 style="margin-bottom: 2px;">{{ workspace.title }}</h3>
+            <p style="color: #999; margin: 0;">{{ workspace.description }}</p>
+          </div>
+          <div class="members d-flex align-items-center">
+            
+            @for (member of workspace.members.slice(0, 3); track member) {
+              
+              @if (member.profilePictureUrl) {
+                <img [src]="member.profilePictureUrl" 
+                    style="width: 30px; height: 30px; border-radius: 50%; margin-right: 5px; object-fit: cover;" 
+                    [title]="member.userName">
+              } @else {
+                <span class="badge" 
+                      style="display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; color: #fff; background-color: #999; border-radius: 50%; font-size: 14px; margin-right: 5px;" 
+                      [title]="member.userName">
+                  {{ member.userName.charAt(0) }}
+                </span>
+              }
 
-    <!-- Title -->
-    <h3>{{ workspace.title }}</h3>
+            }
 
-    <!-- Description + members -->
-    <div class="d-flex justify-content-between">
-      <p style="color: #999;">{{ workspace.description }}</p>
-      <div class="members d-flex align-items-center">
-        @for (member of workspace.members.slice(0, 3); track member) {
-          @if (member.profilePictureUrl) {
-            <img [src]="member.profilePictureUrl" 
-                style="width: 30px; height: 30px; border-radius: 50%; margin-right: 5px; object-fit: cover;" 
-                [title]="member.userName">
-          } @else {
-            <span class="badge" 
-                  style="display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; color: #fff; background-color: #999; border-radius: 50%; font-size: 14px; margin-right: 5px;" 
-                  [title]="member.userName">
-              {{ member.userName.charAt(0) }}
-            </span>
-          }
-        }
-        @if (workspace.members.length > 3) {
-          <span class="extra-members" style="font-size: 14px; color: #666; font-weight: bold; margin-left: 2px;">
-            +{{ workspace.members.length - 3 }}
-          </span>
-        }
-      </div>
-    </div>
+            @if (workspace.members.length > 3) {
+              <span class="extra-members" 
+                    style="font-size: 14px; color: #666; font-weight: bold; margin-left: 2px;">
+                +{{ workspace.members.length - 3 }}
+              </span>
+            }
 
-    <!-- Edit/Delete (owner only) -->
-    <div *ngIf="workspace.ownerId == currentUserId" class="footer d-flex justify-content-end mt-auto">
-      <button class="btn btn-sm" title="Edit" (click)="openEditWorkspace(workspace); $event.stopPropagation()">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" style="color: #9333ea;" height="16" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
-          <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
-          <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z"/>
-        </svg>
-      </button>
-      <button class="btn btn-sm" title="Delete" (click)="openDeleteWorkspace(workspace); $event.stopPropagation()">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" style="color: #9333ea;" height="16" fill="currentColor" class="bi bi-trash-fill" viewBox="0 0 16 16">
-          <path d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1zm3 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5M8 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 5m3 .5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 1 0"/>
-        </svg>
-      </button>
-    </div>
+          </div>
+        </div>
 
+        <div *ngIf="workspace.ownerId == currentUserId" class="footer d-flex justify-content-end mt-auto">
+          <button class="btn btn-sm" title="edit" (click)="openEditWorkspace(workspace); $event.stopPropagation()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" style="color: #9333ea;" height="16" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
+              <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
+              <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z"/>
+            </svg>
+          </button>
+          <button class="btn btn-sm" title="delete" (click)="openDeleteWorkspace(workspace); $event.stopPropagation()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" style="color: #9333ea;" height="16" fill="currentColor" class="bi bi-trash-fill" viewBox="0 0 16 16">
+              <path d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1zm3 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5M8 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 5m3 .5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 1 0"/>
+            </svg>
+          </button>
+        </div>
   </div>
 </ng-template>
   <!--==================Settings Modal===========================-->
