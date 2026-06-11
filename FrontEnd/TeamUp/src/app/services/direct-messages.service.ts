@@ -36,7 +36,16 @@ export interface DmMessage {
   };
 }
 
+export interface UserSearchResult {
+  id: string;
+  userName: string;
+  email?: string;
+  phoneNumber?: string;
+  profilePictureUrl?: string;
+}
+
 @Injectable({ providedIn: 'root' })
+
 export class DirectMessagesService {
   private apiUrl = 'https://localhost:7094';
   private hubConnection!: signalR.HubConnection;
@@ -48,20 +57,10 @@ export class DirectMessagesService {
   incomingMessage$ = this.incomingMessageSubject.asObservable();
 
   private unreadSubject = new BehaviorSubject<Record<string, number>>({});
-  unread$ = this.unreadSubject.asObservable();
-
-<<<<<<< Updated upstream
-=======
-  private totalUnreadSubject = new BehaviorSubject<number>(0);
-  totalUnread$ = this.totalUnreadSubject.asObservable();
-
+  unread$ = this.unreadSubject.asObservable(
+    
   private typingUsersSubject = new BehaviorSubject<Record<string, string[]>>({});
   typingUsers$ = this.typingUsersSubject.asObservable();
-
-  private connectionPromise: Promise<void> | null = null;
-  private joinedConversationIds = new Set<string>();
-
->>>>>>> Stashed changes
   constructor(private http: HttpClient) {}
 
   getConversations(): Observable<DmConversation[]> {
@@ -105,11 +104,35 @@ export class DirectMessagesService {
     );
   }
 
-  addMember(conversationPublicId: string, identifier: string) {
-    return this.http.post<any>(`${this.apiUrl}/api/direct-messages/${conversationPublicId}/add-member`, { identifier }, {
-      withCredentials: true,
-      headers: { 'Content-Type': 'application/json' }
-    });
+  addMember(conversationPublicId: string, userId: string) {
+    return this.http.post<any>(
+      `${this.apiUrl}/api/direct-messages/${conversationPublicId}/add-member`,
+      { userId },
+      {
+        withCredentials: true,
+        headers: { 'Content-Type': 'application/json' }
+      }
+    );
+  }
+
+  searchUsers(
+    conversationPublicId: string,
+    query: string
+  ): Observable<UserSearchResult[]> {
+
+    if (!query.trim()) {
+      return of([]);
+    }
+
+    return this.http.get<UserSearchResult[]>(
+      `${this.apiUrl}/api/direct-messages/${conversationPublicId}/search-users`,
+      {
+        params: {
+          q: query
+        },
+        withCredentials: true
+      }
+    );
   }
 
   leaveConversationApi(conversationPublicId: string) {
@@ -162,8 +185,29 @@ export class DirectMessagesService {
       this.totalUnreadSubject.next(this.totalUnreadSubject.value + 1);
     });
 
-    this.hubConnection.on('DmUserTyping', () => {});
-    this.hubConnection.on('DmUserStopTyping', () => {});
+    this.hubConnection.on('DmUserTyping', (data: any) => {
+      const current = this.typingUsersSubject.value;
+
+      const users = current[data.conversationId] ?? [];
+
+      if (!users.includes(data.userId)) {
+        this.typingUsersSubject.next({
+          ...current,
+          [data.conversationId]: [...users, data.userId]
+        });
+      }
+    });
+
+    this.hubConnection.on('DmUserStopTyping', (data: any) => {
+      const current = this.typingUsersSubject.value;
+
+      const users = current[data.conversationId] ?? [];
+
+      this.typingUsersSubject.next({
+        ...current,
+        [data.conversationId]: users.filter(u => u !== data.userId)
+      });
+    });
 
     this.hubConnection.onreconnected(() => {
       this.joinedConversationIds.forEach(id =>
@@ -176,6 +220,10 @@ export class DirectMessagesService {
       throw err;
     });
     return this.connectionPromise;
+  }
+
+  getTypingUsers(conversationId: string): string[] {
+    return this.typingUsersSubject.value[conversationId] ?? [];
   }
 
   joinConversation(conversationPublicId: string) {
