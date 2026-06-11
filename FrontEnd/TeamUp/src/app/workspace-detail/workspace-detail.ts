@@ -23,6 +23,7 @@ export class WorkspaceDetail implements OnInit, OnDestroy {
   activeLink: string = '';
   isInboxOpen = false;
   inboxUnreadCount = 0;
+  pendingInvitationsCount = 0;
 
   private destroy$ = new Subject<void>();
 
@@ -40,15 +41,14 @@ export class WorkspaceDetail implements OnInit, OnDestroy {
         this.workspaceId = id;
         this.inboxService.setWorkspace(id);
 
-        // Try cached short workspace first
+        // Try cached workspace for instant display
         this.workspace_info = this.auth.getCachedWorkspaceById(id);
 
-        // If more details needed, fetch full workspace info
-        if (!this.workspace_info) { 
-          this.auth.getWorkspaceInfo(id).subscribe(ws => {
-            this.workspace_info = ws;
-          });
-        }
+        // Always fetch full info — only owner receives the invitations array
+        this.auth.getWorkspaceInfo(id).subscribe(ws => {
+          this.workspace_info = ws;
+          this.pendingInvitationsCount = ws.invitations?.length ?? 0;
+        });
 
         // Load initial inbox messages
         this.inboxService.getInboxMessages(1).subscribe();

@@ -49,7 +49,6 @@ export interface UserSearchResult {
 export class DirectMessagesService {
   private apiUrl = 'https://localhost:7094';
   private hubConnection!: signalR.HubConnection;
-  private isConnected = false;
 
   private messageCache = new Map<string, DmMessage[]>();
   private messageRequests = new Map<string, Observable<DmMessage[]>>();
@@ -58,17 +57,35 @@ export class DirectMessagesService {
   incomingMessage$ = this.incomingMessageSubject.asObservable();
 
   private unreadSubject = new BehaviorSubject<Record<string, number>>({});
-  unread$ = this.unreadSubject.asObservable();
-
+  unread$ = this.unreadSubject.asObservable(
+    
   private typingUsersSubject = new BehaviorSubject<Record<string, string[]>>({});
   typingUsers$ = this.typingUsersSubject.asObservable();
-
   constructor(private http: HttpClient) {}
 
   getConversations(): Observable<DmConversation[]> {
     return this.http.get<DmConversation[]>(`${this.apiUrl}/api/direct-messages/conversations`, {
       withCredentials: true
-    });
+    }).pipe(
+      tap(conversations => {
+        const counts: Record<string, number> = {};
+        let total = 0;
+        conversations.forEach(c => {
+          counts[c.publicId] = c.unreadCount || 0;
+          total += c.unreadCount || 0;
+        });
+        this.unreadSubject.next(counts);
+        this.totalUnreadSubject.next(total);
+      })
+    );
+  }
+
+  resetConversationUnread(conversationId: string) {
+    const current = this.unreadSubject.value;
+    const count = current[conversationId] || 0;
+    if (count === 0) return;
+    this.unreadSubject.next({ ...current, [conversationId]: 0 });
+    this.totalUnreadSubject.next(Math.max(0, this.totalUnreadSubject.value - count));
   }
 
   startDirectMessage(identifiers: string[], title?: string | null, isGroup?: boolean) {
@@ -125,8 +142,8 @@ export class DirectMessagesService {
   }
 
   startConnection(): Promise<void> {
-    if (this.isConnected) {
-      return Promise.resolve();
+    if (this.connectionPromise) {
+      return this.connectionPromise;
     }
 
     const token = localStorage.getItem('token');
@@ -165,6 +182,7 @@ export class DirectMessagesService {
         ...current,
         [data.conversationId]: (current[data.conversationId] || 0) + 1
       });
+      this.totalUnreadSubject.next(this.totalUnreadSubject.value + 1);
     });
 
     this.hubConnection.on('DmUserTyping', (data: any) => {
@@ -191,8 +209,17 @@ export class DirectMessagesService {
       });
     });
 
-    this.isConnected = true;
-    return this.hubConnection.start();
+    this.hubConnection.onreconnected(() => {
+      this.joinedConversationIds.forEach(id =>
+        this.hubConnection.invoke('JoinConversation', id).catch(() => {})
+      );
+    });
+
+    this.connectionPromise = this.hubConnection.start().catch(err => {
+      this.connectionPromise = null;
+      throw err;
+    });
+    return this.connectionPromise;
   }
 
   getTypingUsers(conversationId: string): string[] {
@@ -200,10 +227,12 @@ export class DirectMessagesService {
   }
 
   joinConversation(conversationPublicId: string) {
+    this.joinedConversationIds.add(conversationPublicId);
     return this.hubConnection.invoke('JoinConversation', conversationPublicId);
   }
 
   leaveConversation(conversationPublicId: string) {
+    this.joinedConversationIds.delete(conversationPublicId);
     return this.hubConnection.invoke('LeaveConversation', conversationPublicId);
   }
 

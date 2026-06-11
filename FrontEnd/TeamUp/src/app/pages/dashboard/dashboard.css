@@ -1,5 +1,22 @@
 .accent { color: #7c3aed; }
 
+.ws-notif-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+  pointer-events: none;
+}
+
 .dashboard-layout {
   min-height: 100%;
   color: #1a1a2e;
@@ -975,18 +992,24 @@
 .role-owner {
   background-color: #facc154d;
   border: 1px solid #facc15;
-  color: #1f2937;
 }
 
 .role-admin {
   background-color: #9233ea2d;
   border: 1px solid #7c3aed;
-  color: #1f2937;
 }
 
 .role-member {
   background-color: #6b7280;
   color: #ffffff;
+}
+
+.settings-modal.dark-mode .role-owner, .settings-modal.dark-mode .role-admin, .settings-modal.dark-mode .role-member {
+  color: #f0eeff;
+}
+
+.settings-modal.light-mode .role-owner, .settings-modal.light-mode .role-admin, .settings-modal.light-mode .role-member {
+  color: #1f2937;;
 }
 
 /* Polished dashboard and workspace modal controls */

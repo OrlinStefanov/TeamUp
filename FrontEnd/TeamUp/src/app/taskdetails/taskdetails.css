@@ -12,7 +12,7 @@
 
 .card.dark-mode {
   border: 1px solid #666;
-  background: #111;
+  background: linear-gradient(135deg, #1a1a2e 0%, #0d0d14 100%);
   color: #f0eeff;
   border-radius: 10px;
   padding: 14px;
@@ -462,6 +462,12 @@
   background: rgba(107, 114, 128, 0.2);
 }
 
+/* ── Category Headers ── */
+.d-flex.align-items-center.mb-3 .badge {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
 /* ── Points row ── */
 .tm-points-row {
   display: flex;
@@ -719,15 +725,18 @@
   display: grid !important;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px !important;
-  align-items: start;
+  align-items: stretch;
   width: 100%;
   overflow-x: visible;
 }
 
 .task-board > div {
-  height: 600px;
   display: flex;
   flex-direction: column;
+}
+
+.task-board > div > div:first-child {
+  flex-shrink: 0;
 }
 
 .task-board .card {

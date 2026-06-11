@@ -1,5 +1,4 @@
 .dm-shell {
-  min-height: 100vh;
   height: 100vh;
   display: grid;
   grid-template-columns: minmax(280px, 22vw) 1fr;
@@ -17,6 +16,8 @@
   border-right: 1px solid #dedee8;
   background: #f5f5fa;
   min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .typing-indicator {
@@ -278,10 +279,32 @@
   font-size: 10px;
 }
 
+.chat-aside {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.chat-unread-badge {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #a855f7;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+}
+
 .dm-conversation {
   min-width: 0;
+  min-height: 0;
+  height: 100%;
   display: grid;
-  grid-template-rows: 56px 1fr 68px;
+  grid-template-rows: 56px 1fr auto;
   background: #f6f6fb;
 }
 
@@ -336,6 +359,7 @@
   gap: 12px;
   padding: 24px 16px;
   overflow-y: auto;
+  min-height: 0;
 }
 
 .message-bubble {
@@ -360,11 +384,17 @@
 
 .dark-mode .message-bubble.mine {
   background: #342247;
+  border-color: #5e2e7f;
+}
+
+.dark-mode .message-bubble p {
+  color: #f0eeff;
 }
 
 .message-bubble p {
   margin: 0 0 5px;
   font-size: 14px;
+  color: #26232d;
 }
 
 .message-bubble time {
@@ -397,6 +427,16 @@
 .message-composer input:focus {
   border-color: #a855f7;
   box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.18);
+}
+
+.dark-mode .message-composer input {
+  background: #191922;
+  border-color: #343346;
+  color: #f0eeff;
+}
+
+.dark-mode .message-composer input::placeholder {
+  color: #6b6b8a;
 }
 
 .send-btn {

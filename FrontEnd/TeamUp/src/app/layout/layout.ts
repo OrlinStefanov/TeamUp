@@ -5,6 +5,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { map, Observable } from 'rxjs';
 import { Workspace, WorkspaceMember } from '../services/auth/auth-types';
+import { DirectMessagesService } from '../services/direct-messages.service';
 
 @Component({
   selector: 'app-layout',
@@ -42,13 +43,14 @@ export class Layout implements OnInit {
   invitedMembers: WorkspaceMember[] = [];
   private searchTimeout: ReturnType<typeof setTimeout> | undefined;
 
-  constructor(private auth: Auth, private router: Router) {}
+  constructor(private auth: Auth, private router: Router, private dmService: DirectMessagesService) {}
 
   user$!: Observable<any>;
   workspaces$!: Observable<any[]>;
   myWorkspaces$!: Observable<any[]>;
   sharedWorkspaces$!: Observable<any[]>;
   isDarkMode$!: Observable<boolean>;
+  totalDmUnread$!: Observable<number>;
   currentUserId = '';
 
   ngOnInit() {
@@ -64,6 +66,14 @@ export class Layout implements OnInit {
     );
 
     this.auth.getWorkspaces().subscribe();
+    this.totalDmUnread$ = this.dmService.totalUnread$;
+    this.dmService.startConnection()
+      .then(() => {
+        this.dmService.getConversations().subscribe(conversations => {
+          conversations.forEach(c => this.dmService.joinConversation(c.publicId).catch(() => {}));
+        });
+      })
+      .catch(() => this.dmService.getConversations().subscribe());
   }
 
   toggleSidebar() {

@@ -31,7 +31,14 @@
             <small>{{ chat.preview }}</small>
           </span>
 
-          <time>{{ chat.time }}</time>
+          <span class="chat-aside">
+            <time>{{ chat.time }}</time>
+            @if ((unread$ | async)?.[chat.publicId]; as count) {
+              @if (count > 0) {
+                <span class="chat-unread-badge">{{ count > 9 ? '9+' : count }}</span>
+              }
+            }
+          </span>
         </button>
       }
     </div>
@@ -56,7 +63,7 @@
       </div>
     </header>
 
-    <div class="message-area">
+    <div class="message-area" #messageArea>
       @for (message of messages; track message.publicId) {
         <article class="message-bubble" [class.mine]="message.senderId === auth.getUserId()">
           <p>{{ message.content }}</p>
@@ -72,6 +79,7 @@
     }
 
     <form class="message-composer" (ngSubmit)="sendMessage()">
+      <input type="text" name="dmMessage" [(ngModel)]="messageText" [placeholder]="'Message ' + selectedChat.handle">
       <input
         type="text"
         [(ngModel)]="messageText"
