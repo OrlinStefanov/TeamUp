@@ -14,8 +14,10 @@ import { DirectMessagesService, DmConversation, DmMessage } from '../../services
 })
 export class PersonalDms implements OnInit, OnDestroy {
   @ViewChild('personSearchInput') personSearchInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('messageArea') messageAreaRef?: ElementRef<HTMLDivElement>;
 
   isDarkMode$: Observable<boolean>;
+  unread$!: Observable<Record<string, number>>;
   filterText = '';
   searchText = '';
   messageText = '';
@@ -33,6 +35,7 @@ export class PersonalDms implements OnInit, OnDestroy {
     private dmService: DirectMessagesService
   ) {
     this.isDarkMode$ = this.auth.darkMode$;
+    this.unread$ = this.dmService.unread$;
   }
 
   ngOnInit() {
@@ -47,12 +50,73 @@ export class PersonalDms implements OnInit, OnDestroy {
         if (!message || message.conversationId !== this.selectedConversationId) {
           return;
         }
-
+        // Own messages are added optimistically in sendMessage() — skip server echo
+        if (message.senderId === this.auth.getUserId()) {
+          return;
+        }
         this.messages = [...this.messages, message];
+        this.scrollToBottom();
       })
     );
   }
 
+<<<<<<< Updated upstream
+=======
+  onSearchChange() {
+    const query = this.searchText.trim();
+
+    this.selectedUser = null;
+
+    if (!query) {
+      this.searchResults = [];
+      return;
+    }
+
+    this.isSearching = true;
+
+    const search$ = this.selectedConversationId
+      ? this.dmService.searchUsers(this.selectedConversationId, query)
+      : this.auth.searchUsers(query) as Observable<UserSearchResult[]>;
+
+    search$.subscribe({
+      next: users => {
+        this.searchResults = users;
+        this.isSearching = false;
+      },
+      error: () => {
+        this.searchResults = [];
+        this.isSearching = false;
+      }
+    });
+  }
+
+  selectUser(user: UserSearchResult) {
+    this.selectedUser = user;
+    this.searchText = user.userName;
+    this.searchResults = [];
+  }
+
+  openNewMessage() {
+    this.isNewMessageOpen = true;
+
+    this.searchText = '';
+    this.searchResults = [];
+    this.selectedUser = null;
+
+    setTimeout(() => this.personSearchInput?.nativeElement.focus(), 0);
+  }
+    onTyping() {
+      if (!this.selectedConversationId) return;
+
+      this.dmService.typing(this.selectedConversationId);
+
+      clearTimeout(this.typingTimeout);
+
+      this.typingTimeout = setTimeout(() => {
+        this.dmService.stopTyping(this.selectedConversationId!);
+      }, 1200);
+    }
+>>>>>>> Stashed changes
   ngOnDestroy() {
     this.subscription.unsubscribe();
     if (this.currentConversationId) {
@@ -148,6 +212,7 @@ export class PersonalDms implements OnInit, OnDestroy {
 
     this.loadMessages(conversationId);
     this.dmService.markAsRead(conversationId).catch(() => {});
+    this.dmService.resetConversationUnread(conversationId);
   }
 
   closeMobileChat() {
@@ -156,17 +221,25 @@ export class PersonalDms implements OnInit, OnDestroy {
 
   sendMessage() {
     const text = this.messageText.trim();
-    if (!text || !this.selectedConversationId) {
-      return;
-    }
+    if (!text || !this.selectedConversationId) return;
 
-    this.dmService.sendMessage(this.selectedConversationId, text)
-      .then(() => {
-        this.messageText = '';
-      })
-      .catch(() => {
-        // silently ignore send failure for now
-      });
+    this.messageText = '';
+
+    const optimistic: DmMessage = {
+      publicId: `pending-${Date.now()}`,
+      content: text,
+      sentAt: new Date().toISOString(),
+      senderId: this.auth.getUserId(),
+      conversationId: this.selectedConversationId,
+      sender: { userName: '' },
+    };
+    this.messages = [...this.messages, optimistic];
+    this.scrollToBottom();
+
+    this.dmService.sendMessage(this.selectedConversationId, text).catch(() => {
+      this.messages = this.messages.filter(m => m !== optimistic);
+      this.messageText = text;
+    });
   }
 
   startConversation() {
@@ -205,7 +278,15 @@ export class PersonalDms implements OnInit, OnDestroy {
           ...msg,
           conversationId: response.conversationId
         }));
+        this.scrollToBottom();
       });
+  }
+
+  private scrollToBottom() {
+    setTimeout(() => {
+      const el = this.messageAreaRef?.nativeElement;
+      if (el) el.scrollTop = el.scrollHeight;
+    }, 0);
   }
 
   private formatDate(value: string) {

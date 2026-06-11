@@ -102,12 +102,12 @@ import { takeUntil } from 'rxjs/operators';
     .inbox-drawer {
       position: fixed;
       top: 0;
-      left: 0;
+      right: 0;
       height: 100vh;
       width: 400px;
       background-color: var(--bg-color, white);
-      box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
-      transform: translateX(-100%);
+      box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+      transform: translateX(100%);
       transition: transform 0.3s ease;
       z-index: 1050;
       display: flex;
