@@ -50,8 +50,6 @@ export class DirectMessagesService {
   private unreadSubject = new BehaviorSubject<Record<string, number>>({});
   unread$ = this.unreadSubject.asObservable();
 
-<<<<<<< Updated upstream
-=======
   private totalUnreadSubject = new BehaviorSubject<number>(0);
   totalUnread$ = this.totalUnreadSubject.asObservable();
 
@@ -61,7 +59,6 @@ export class DirectMessagesService {
   private connectionPromise: Promise<void> | null = null;
   private joinedConversationIds = new Set<string>();
 
->>>>>>> Stashed changes
   constructor(private http: HttpClient) {}
 
   getConversations(): Observable<DmConversation[]> {

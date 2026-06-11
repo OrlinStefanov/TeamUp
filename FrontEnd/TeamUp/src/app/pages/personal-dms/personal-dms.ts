@@ -29,6 +29,7 @@ export class PersonalDms implements OnInit, OnDestroy {
 
   private subscription = new Subscription();
   private currentConversationId: string | null = null;
+  private typingTimeout: any;
 
   constructor(
     public auth: Auth,
@@ -59,64 +60,20 @@ export class PersonalDms implements OnInit, OnDestroy {
       })
     );
   }
+  
 
-<<<<<<< Updated upstream
-=======
-  onSearchChange() {
-    const query = this.searchText.trim();
+  onTyping() {
+    if (!this.selectedConversationId) return;
 
-    this.selectedUser = null;
+    this.dmService.typing(this.selectedConversationId);
 
-    if (!query) {
-      this.searchResults = [];
-      return;
-    }
+    clearTimeout(this.typingTimeout);
 
-    this.isSearching = true;
-
-    const search$ = this.selectedConversationId
-      ? this.dmService.searchUsers(this.selectedConversationId, query)
-      : this.auth.searchUsers(query) as Observable<UserSearchResult[]>;
-
-    search$.subscribe({
-      next: users => {
-        this.searchResults = users;
-        this.isSearching = false;
-      },
-      error: () => {
-        this.searchResults = [];
-        this.isSearching = false;
-      }
-    });
+    this.typingTimeout = setTimeout(() => {
+      this.dmService.stopTyping(this.selectedConversationId!);
+    }, 1200);
   }
 
-  selectUser(user: UserSearchResult) {
-    this.selectedUser = user;
-    this.searchText = user.userName;
-    this.searchResults = [];
-  }
-
-  openNewMessage() {
-    this.isNewMessageOpen = true;
-
-    this.searchText = '';
-    this.searchResults = [];
-    this.selectedUser = null;
-
-    setTimeout(() => this.personSearchInput?.nativeElement.focus(), 0);
-  }
-    onTyping() {
-      if (!this.selectedConversationId) return;
-
-      this.dmService.typing(this.selectedConversationId);
-
-      clearTimeout(this.typingTimeout);
-
-      this.typingTimeout = setTimeout(() => {
-        this.dmService.stopTyping(this.selectedConversationId!);
-      }, 1200);
-    }
->>>>>>> Stashed changes
   ngOnDestroy() {
     this.subscription.unsubscribe();
     if (this.currentConversationId) {
