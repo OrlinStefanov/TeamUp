@@ -1,7 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, ElementRef, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { CommonModule, NgIf, NgFor, DatePipe } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { ChatService } from '../services/chat-services/chat-service';
 import { Auth } from '../services/auth/auth';
 import { Observable } from 'rxjs';
@@ -9,11 +9,12 @@ import { Observable } from 'rxjs';
 @Component({
   selector: 'app-chat-component',
   standalone: true,
-  imports: [FormsModule, CommonModule, NgIf, NgFor, DatePipe],
+  imports: [FormsModule, CommonModule, DatePipe],
   templateUrl: './chat-component.html',
   styleUrl: './chat-component.css',
 })
 export class ChatComponent {
+  @ViewChild('messageArea') messageAreaRef?: ElementRef<HTMLDivElement>;
 
   messages: any[] = [];
   currentChannelId = '';
@@ -140,7 +141,9 @@ export class ChatComponent {
   // =========================
 
   scrollToBottom() {
-    const el = document.querySelector('.chat-messages');
-    if (el) el.scrollTop = el.scrollHeight;
+    setTimeout(() => {
+      const el = this.messageAreaRef?.nativeElement;
+      if (el) el.scrollTop = el.scrollHeight;
+    }, 0);
   }
 }

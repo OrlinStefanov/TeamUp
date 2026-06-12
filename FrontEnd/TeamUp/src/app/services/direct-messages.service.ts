@@ -138,7 +138,7 @@ export class DirectMessagesService {
     );
   }
 
-  searchUsers(
+/*  searchUsers(
     conversationPublicId: string,
     query: string
   ): Observable<UserSearchResult[]> {
@@ -156,7 +156,7 @@ export class DirectMessagesService {
         withCredentials: true
       }
     );
-  }
+  }*/
 
   leaveConversationApi(conversationPublicId: string) {
     return this.http.delete<any>(`${this.apiUrl}/api/direct-messages/${conversationPublicId}/leave`, {

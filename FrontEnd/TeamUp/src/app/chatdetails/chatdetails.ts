@@ -4,10 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { Auth } from '../services/auth/auth';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterOutlet, ActivatedRoute, RouterModule } from '@angular/router';
-import { Observable } from 'rxjs';
-import { Subject } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { ɵɵDir } from "@angular/cdk/scrolling";
 
 @Component({
   selector: 'app-chatdetails',
@@ -16,18 +14,18 @@ import { ɵɵDir } from "@angular/cdk/scrolling";
     FormsModule,
     RouterLink,
     RouterModule,
-    RouterOutlet,
-    ɵɵDir
-],
+    RouterOutlet
+  ],
   templateUrl: './chatdetails.html',
   styleUrl: './chatdetails.css',
 })
 export class Chatdetails {
   channels$!: Observable<any[]>;
   isDarkMode$!: Observable<boolean>;
+  channelSearch = '';
 
   workspacePublicId: string = '';
-  workspaceId : number = 0;
+  workspaceId: number = 0;
 
   selectedWorkspaceId: number = 0;
 
@@ -50,29 +48,29 @@ export class Chatdetails {
     this.isDarkMode$ = this.auth.darkMode$;
 
     this.route.parent?.params.subscribe(params => {
-        const publicId = params['id'];
-        if (!publicId) return;
+      const publicId = params['id'];
+      if (!publicId) return;
 
-        this.workspacePublicId = publicId;
+      this.workspacePublicId = publicId;
 
-        const cached = this.auth.getCachedWorkspaceById(publicId);
+      const cached = this.auth.getCachedWorkspaceById(publicId);
 
-        if (cached) {
-          this.workspaceId = cached.id;
+      if (cached) {
+        this.workspaceId = cached.id;
+        this.initChannels();
+      } else {
+        this.auth.getWorkspaceInfo(publicId).subscribe(ws => {
+          this.workspaceId = ws.id;
           this.initChannels();
-        } else {
-          this.auth.getWorkspaceInfo(publicId).subscribe(ws => {
-            this.workspaceId = ws.id;
-            this.initChannels();
-          });
-        }
+        });
+      }
 
-        this.chat.unread$
-          .pipe(takeUntil(this.destroy$))
-          .subscribe(map => {
-            this.unreadMap = map;
-          });
-      });
+      this.chat.unread$
+        .pipe(takeUntil(this.destroy$))
+        .subscribe(map => {
+          this.unreadMap = map;
+        });
+    });
   }
 
   ngOnDestroy() {
@@ -94,17 +92,14 @@ export class Chatdetails {
     this.auth.createChannel(this.workspaceId, this.newChannel)
       .subscribe({
         next: () => {
-          // reset form
           this.newChannel = {
             name: '',
             description: '',
             isPrivate: false
           };
 
-          // refresh channels list (optional but recommended)
           this.chat.loadChannels(this.workspaceId.toString());
 
-          // close modal
           const modalEl = document.getElementById('createChannelModal');
           const modal = (window as any).bootstrap.Modal.getInstance(modalEl);
           modal?.hide();
@@ -118,5 +113,20 @@ export class Chatdetails {
       document.getElementById('createChannelModal')
     );
     modal.show();
+  }
+
+  getFilteredChannels(channels: any[] | null) {
+    const list = channels ?? [];
+    const query = this.channelSearch.trim().toLowerCase();
+
+    if (!query) {
+      return list;
+    }
+
+    return list.filter(channel =>
+      [channel.name, channel.description]
+        .filter(Boolean)
+        .some(value => value.toLowerCase().includes(query))
+    );
   }
 }

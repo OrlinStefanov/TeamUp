@@ -1,93 +1,88 @@
-<div class="chat-container d-flex flex-column h-100 border" [ngClass]="{'dark-mode': isDarkMode$ | async, 'light-mode': !(isDarkMode$ | async)}">
-
-  <!-- HEADER -->
-  <div *ngIf="channel != null" class="chat-header border-bottom p-2">
-    <h5 class="mb-0"># {{channel.name}}</h5>
-    <span class=" font-weight-light ms-2" style="color: #666; font-size: 0.85rem;">{{ channel.memberCount }} members</span>
-  </div>
-
-  <!-- ✅ SCROLLABLE MESSAGES CONTAINER -->
-  <div class="chat-messages flex-grow-1 overflow-auto p-3">
-
-    <div *ngFor="let msg of messages" 
-         class="message d-flex mb-3"
-         [ngClass]="{
-           'justify-content-end text-end': msg.senderId === currentUserId,
-           'justify-content-start': msg.senderId !== currentUserId
-         }">
-
-      <!-- LEFT avatar -->
-      <ng-container *ngIf="msg.senderId !== currentUserId">
-        <img *ngIf="msg.sender?.profilePictureUrl"
-          [src]="msg.sender.profilePictureUrl"
-          class="rounded-circle me-3"
-          style="width:40px;height:40px;object-fit:cover;">
-        
-        <div *ngIf="!msg.sender?.profilePictureUrl"
-          class="rounded-circle me-3 text-center"
-          style="width:40px;height:40px;background-color:#ccc;">
-          <span class="text-white" style="line-height:40px;">
-            {{ msg.sender?.userName?.charAt(0) }}
-          </span>
-        </div>
-      </ng-container>
-
-      <!-- message -->
-      <div class="bg-light p-2 rounded msg-box" [ngClass]="{
-        'my-msg': msg.senderId === currentUserId, }">
-
-        <div class="d-flex align-items-center">
-          <strong class="me-2" [style.color]="
-            msg.sender?.role === 'owner' ? '#facc15' :
-            msg.sender?.role === 'admin' ? '#9933ea' :
-            msg.sender?.role === 'member' ? '#6c757d' :
-            'gray'
-          ">{{ msg.sender?.userName }}</strong>
-        </div>
-
-        <div class="message-content align-items-start justify-content-start d-flex flex-column ">
-          {{ msg.content }}
-
-          <small style="color: #666; font-size: 0.75rem;" class="d-block mt-1 align-self-end">
-            {{ msg.sentAt | date:'shortTime' }}
-          </small>
-        </div>
-
+<section class="workspace-conversation" [ngClass]="{'dark-mode': isDarkMode$ | async, 'light-mode': !(isDarkMode$ | async)}">
+  @if (channel != null) {
+    <header class="conversation-header">
+      <span class="channel-mark">#</span>
+      <div class="channel-heading">
+        <h1>{{ channel.name }}</h1>
+        <p>{{ channel.memberCount || 0 }} members</p>
       </div>
-      
+    </header>
+  } @else {
+    <header class="conversation-header empty-header">
+      <span class="channel-mark">#</span>
+      <div class="channel-heading">
+        <h1>Select a channel</h1>
+        <p>Choose a workspace channel to start messaging.</p>
+      </div>
+    </header>
+  }
+
+  <div class="message-area" #messageArea>
+    @if (channel == null) {
+      <div class="empty-state">
+        <span class="channel-mark large">#</span>
+        <h2>No channel selected</h2>
+        <p>Select a channel from the list to view messages.</p>
+      </div>
+    }
+
+    @for (msg of messages; track msg.publicId || msg.id || $index) {
+      <article
+        class="message-row"
+        [class.mine]="msg.senderId === currentUserId">
+
+        @if (msg.senderId !== currentUserId) {
+          <span class="avatar">
+            @if (msg.sender?.profilePictureUrl) {
+              <img [src]="msg.sender.profilePictureUrl" alt="">
+            } @else {
+              {{ msg.sender?.userName?.charAt(0)?.toUpperCase() || '?' }}
+            }
+          </span>
+        }
+
+        <div class="message-bubble" [class.mine]="msg.senderId === currentUserId">
+          <div class="message-meta">
+            <strong [style.color]="
+              msg.sender?.role === 'owner' ? '#facc15' :
+              msg.sender?.role === 'admin' ? '#9933ea' :
+              msg.sender?.role === 'member' ? '#6c757d' :
+              'inherit'
+            ">
+              {{ msg.senderId === currentUserId ? 'You' : msg.sender?.userName }}
+            </strong>
+          </div>
+
+          <p>{{ msg.content }}</p>
+          <time>{{ msg.sentAt | date:'shortTime' }}</time>
+        </div>
+      </article>
+    }
+  </div>
+
+  @if (typingUsers.length > 0) {
+    <div class="typing-indicator">
+      <span>{{ typingUsers[0]?.userName || 'Someone' }} is typing</span>
+      <span class="typing-dots" aria-hidden="true">
+        <span></span>
+        <span></span>
+        <span></span>
+      </span>
     </div>
+  }
 
-  </div>
- 
-  <div *ngIf="typingUsers.length > 0" class="typing">
-    <span class="typing-text">
-      {{ typingUsers[0]?.userName || 'Someone' }} is typing
-    </span>
-
-    <span class="typing-dots">
-      <span></span>
-      <span></span>
-      <span></span>
-    </span>
-  </div>
-
-  <!-- INPUT (always bottom) -->
-  <div class="chat-input border-top p-3 bg-white">
-    <div class="input-group">
-      <input
-        type="text"
-        class="form-control"
-        placeholder="Message..."
-        [(ngModel)]="messageInput"
-        (input)="onTyping()"
-        (keyup.enter)="sendMessage()"
-      />
-      <button class="btn btn-send" (click)="sendMessage()">
-        <svg xmlns="http://www.w3.org/2000/svg" style="color: white;" width="16" height="16" fill="currentColor" class="bi bi-send" viewBox="0 0 16 16">
-          <path d="M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124l-3.178-4.995L.643 7.184a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11ZM6.636 10.07l2.761 4.338L14.13 2.576zm6.787-8.201L1.591 6.602l4.339 2.76z"/>
-        </svg>
-      </button>
-    </div>
-  </div>
-
-</div>
+  <form class="message-composer" (ngSubmit)="sendMessage()">
+    <input
+      type="text"
+      name="workspaceMessage"
+      [disabled]="channel == null"
+      [placeholder]="channel ? 'Message #' + channel.name : 'Select a channel first'"
+      [(ngModel)]="messageInput"
+      (input)="onTyping()">
+    <button class="send-btn" type="submit" aria-label="Send message" [disabled]="channel == null || !messageInput.trim()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" fill="currentColor" viewBox="0 0 16 16">
+        <path d="M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124L6.12 10.923 1.685 8.227a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11ZM6.636 10.07l2.761 4.338L14.13 2.576zm6.787-8.201L1.591 6.602l4.339 2.76z"/>
+      </svg>
+    </button>
+  </form>
+</section>
