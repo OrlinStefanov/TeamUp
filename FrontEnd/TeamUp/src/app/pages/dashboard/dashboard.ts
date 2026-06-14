@@ -104,6 +104,10 @@ export class Dashboard implements OnInit {
     return this.inboxUnreadCounts.get(workspace.publicId) ?? 0;
   }
 
+  inboxUnreadCount(workspace: any): number {
+    return workspace?.unreadCount || workspace?.inboxCount || 0;
+  }
+
   totalUnreadCount(workspaces: any[]): number {
     return (workspaces || []).reduce((total, workspace) => total + this.inboxUnreadCount(workspace), 0);
   }
