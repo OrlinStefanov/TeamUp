@@ -785,6 +785,25 @@
   flex-shrink: 0;
 }
 
+.ws-notif-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.15);
+}
+
 .dashboard-layout.dark-mode .workspace-card {
   border-color: rgba(124, 58, 237, 0.15);
   background: rgba(255, 255, 255, 0.04);
@@ -1203,9 +1222,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(124, 58, 237, 0.2);
+  border: none;
   border-radius: 6px;
-  background: rgba(124, 58, 237, 0.06);
+  background: transparent;
   color: #7c3aed;
   padding: 0;
   cursor: pointer;
@@ -1214,19 +1233,19 @@
 
 .workspace-tool-btn:hover,
 .workspace-action-card-btn:hover {
-  background: rgba(124, 58, 237, 0.12);
-  border-color: rgba(124, 58, 237, 0.35);
+  background: transparent;
+  border-color: transparent;
 }
 
 .dashboard-layout.dark-mode .workspace-tool-btn,
 .dashboard-layout.dark-mode .workspace-action-card-btn {
-  border-color: rgba(124, 58, 237, 0.25);
-  background: rgba(124, 58, 237, 0.08);
+  border-color: transparent;
+  background: transparent;
 }
 
 .dashboard-layout.dark-mode .workspace-tool-btn:hover,
 .dashboard-layout.dark-mode .workspace-action-card-btn:hover {
-  background: rgba(124, 58, 237, 0.15);
+  background: transparent;
 }
 
 .notification-btn {
@@ -1235,20 +1254,22 @@
 
 .notification-count {
   position: absolute;
-  top: -7px;
-  right: -7px;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
-  border-radius: 999px;
+  top: 0px;
+  right: 0px;
+  border-radius: 50%;
   background: #ef4444;
   color: #fff;
+  border: 2px solid #fff;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 10px;
-  font-weight: 800;
-  border: 2px solid #16161d;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 0 5px;
+}
+
+.dashboard-layout.dark-mode .notification-count {
+  border-color: #16161d;
 }
 
 .notification-count.is-zero {
@@ -1277,13 +1298,13 @@
 
 .workspace-action-card-btn.danger {
   color: #ef4444;
-  border-color: rgba(239, 68, 68, 0.28);
-  background: rgba(239, 68, 68, 0.08);
+  border-color: transparent;
+  background: transparent;
 }
 
 .workspace-action-card-btn.danger:hover {
-  border-color: rgba(239, 68, 68, 0.55);
-  background: rgba(239, 68, 68, 0.15);
+  border-color: transparent;
+  background: transparent;
 }
 
 .workspace-card .footer {
