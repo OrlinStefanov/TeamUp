@@ -1,9 +1,12 @@
-import { Component } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { Auth } from '../services/auth/auth';
+import { Taskhub } from '../services/taskhub';
 import { ActivatedRoute, RouterLink } from "@angular/router";
 import { FormsModule } from '@angular/forms';
-import { Observable } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
+import { BreakpointObserver } from '@angular/cdk/layout';
 import {
   DragDropModule,
   CdkDragDrop,
@@ -19,17 +22,26 @@ import {
   styleUrl: './taskdetails.css',
 })
 
-export class Taskdetails {
+export class Taskdetails implements OnInit, OnDestroy, AfterViewInit {
+
+  @ViewChild('taskBoard') taskBoardRef?: ElementRef<HTMLDivElement>;
 
   selectedRole: string = 'all';
   roleMenuOpen: boolean = false;
   filtersOpen: boolean = false;
+
+  boardSections = ['To Do', 'In Progress', 'Done', 'Overdue'];
+  activeSectionIndex = 0;
+  isMobileView = false;
 
   worksapce_info: any = null;
   tasks: any[] = [];
   user_data: any = null;
   isDarkMode$!: Observable<boolean>;
   activeMenuTaskId: string | null = null;
+  extendingTaskId: string | null = null;
+  isEditingTask = false;
+  editingTaskPublicId: string | null = null;
 
   tasksToDo: any[] = [];
   tasksInProgress: any[] = [];
@@ -79,14 +91,36 @@ export class Taskdetails {
   tagMenuOpen: boolean = false;
   difficultyMenuOpen: boolean = false;
 
-  private boundCloseDropdown!: () => void;
+  private boundCloseDropdown!: (event: Event) => void;
+  private boardScrollTimeout: any;
+  private destroy$ = new Subject<void>();
+  private tasksInitialized = false;
+  private workspaceId: string | null = null;
 
-  constructor(private auth: Auth, private route: ActivatedRoute) {}
+  constructor(
+    private auth: Auth,
+    private taskhub: Taskhub,
+    private route: ActivatedRoute,
+    private breakpointObserver: BreakpointObserver
+  ) {}
 
   ngOnInit() {
+    this.taskhub.tasks$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(tasks => {
+        if (!this.tasksInitialized || this.extendingTaskId) return;
+
+        this.tasks = tasks.map((task: any) => this.normalizeTask(task));
+        this.refreshAvailableTags();
+        this.filterTasksStatus();
+      });
+
     this.route.parent?.paramMap.subscribe(params => {
       const workspaceId = params.get('id');
       if (!workspaceId) return;
+
+      this.workspaceId = workspaceId;
+      this.tasksInitialized = false;
 
       this.auth.getWorkspaceInfo(workspaceId).subscribe((res: any) => {
         this.worksapce_info = res;
@@ -102,8 +136,10 @@ export class Taskdetails {
           this.tasks = this.generateSampleTasks();
         }
 
+        this.taskhub.setInitialTasks(workspaceId, this.tasks);
+        this.tasksInitialized = true;
         this.refreshAvailableTags();
-        this.filterTasksStatus();
+        this.filterTasksStatus(true);
       });
     });
 
@@ -111,13 +147,60 @@ export class Taskdetails {
     this.user_data = this.auth.getCurrentUser();
 
     // Close dropdowns and menus when clicking outside
-    this.boundCloseDropdown = () => {
+    this.boundCloseDropdown = (event: Event) => {
+      const target = event.target as HTMLElement | null;
+      if (target?.closest('.task-menu') || target?.closest('.menu-trigger')) {
+        return;
+      }
+
       this.roleMenuOpen = false;
       this.tagMenuOpen = false;
       this.difficultyMenuOpen = false;
       this.activeMenuTaskId = null;
     };
     document.addEventListener('click', this.boundCloseDropdown);
+
+    this.breakpointObserver.observe(['(max-width: 768px)']).subscribe(result => {
+      this.isMobileView = result.matches;
+      if (result.matches) {
+        setTimeout(() => this.resetBoardScroll(), 0);
+      }
+    });
+  }
+
+  ngAfterViewInit() {
+    this.resetBoardScroll();
+  }
+
+  onBoardScroll() {
+    if (!this.isMobileView || !this.taskBoardRef?.nativeElement) return;
+
+    clearTimeout(this.boardScrollTimeout);
+    this.boardScrollTimeout = setTimeout(() => {
+      const board = this.taskBoardRef!.nativeElement;
+      const sectionWidth = board.clientWidth || 1;
+      this.activeSectionIndex = Math.round(board.scrollLeft / sectionWidth);
+    }, 80);
+  }
+
+  scrollToSection(index: number) {
+    const board = this.taskBoardRef?.nativeElement;
+    if (!board) return;
+
+    const sectionWidth = board.clientWidth;
+    board.scrollTo({
+      left: sectionWidth * index,
+      behavior: 'smooth'
+    });
+    this.activeSectionIndex = index;
+  }
+
+  private resetBoardScroll() {
+    const board = this.taskBoardRef?.nativeElement;
+    if (!board) return;
+
+    board.scrollLeft = 0;
+    this.activeSectionIndex = 0;
   }
 
   private generateSampleTasks(): any[] {
@@ -152,10 +235,12 @@ export class Taskdetails {
 
   ngOnDestroy() {
     document.removeEventListener('click', this.boundCloseDropdown);
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   // FILTER TASKS
-  filterTasksStatus() {
+  filterTasksStatus(resetScroll = false) {
     this.tasksToDo = [];
     this.tasksInProgress = [];
     this.tasksCompleted = [];
@@ -164,13 +249,14 @@ export class Taskdetails {
     const filtered = this.applyFilters();
 
     filtered.forEach(task => {
-
       if (this.isOverdue(task)) {
         this.tasksOverdue.push(task);
         return;
       }
 
-      switch (task.status) {
+      const boardStatus = this.resolveBoardStatus(task);
+
+      switch (boardStatus) {
         case 'ToDo':
           this.tasksToDo.push(task);
           break;
@@ -180,8 +266,23 @@ export class Taskdetails {
         case 'Done':
           this.tasksCompleted.push(task);
           break;
+        default:
+          this.tasksToDo.push(task);
+          break;
       }
     });
+
+    if (resetScroll) {
+      this.resetBoardScroll();
+    }
+  }
+
+  private resolveBoardStatus(task: any): string {
+    const status = task.status ?? task.Status ?? 'ToDo';
+    if (status === 'Overdue') {
+      return 'ToDo';
+    }
+    return status;
   }
 
   // TAGS
@@ -266,16 +367,19 @@ export class Taskdetails {
       movedTask.status = 'Overdue';
     }
 
-    const index = this.tasks.findIndex(t => t.id === movedTask.id);
+    const index = this.findTaskIndex(movedTask);
     if (index !== -1) {
-      this.tasks[index] = movedTask;
+      this.tasks[index] = { ...this.tasks[index], status: movedTask.status };
     }
 
     console.log('Moved task to:', movedTask.status);
 
     this.auth.updateTaskStatus(movedTask.publicId, this.statusReverseMap[movedTask.status])
       .subscribe({
-        next: () => console.log('Status updated'),
+        next: () => {
+          this.syncTasksToHub();
+          console.log('Status updated');
+        },
         error: (err) => {
           console.error('Update failed', err);
           this.filterTasksStatus();
@@ -286,6 +390,118 @@ export class Taskdetails {
   // OVERDUE
   isOverdue(task: any): boolean {
     return new Date(task.dueDate) < new Date() && task.status !== 'Done';
+  }
+
+  canExtendOverdue(task: any): boolean {
+    if (!this.isOverdue(task)) return false;
+
+    const currentUserId = this.user_data?.id;
+    if (!currentUserId || !this.worksapce_info) return false;
+
+    if (this.worksapce_info.owner?.id === currentUserId) return true;
+
+    const userEmail = this.user_data?.email?.toLowerCase();
+    const userName = this.user_data?.userName?.toLowerCase();
+
+    return (task.assignedUsers ?? []).some((u: any) => {
+      const email = (u.email ?? u.Email ?? '').toLowerCase();
+      const name = (u.userName ?? u.UserName ?? '').toLowerCase();
+      return (userEmail && email === userEmail) || (userName && name === userName);
+    });
+  }
+
+  extendOverdueTask(task: any, event?: Event) {
+    event?.preventDefault();
+    event?.stopPropagation();
+
+    const publicId = String(task.publicId ?? task.PublicId ?? '');
+    if (!publicId || this.extendingTaskId === publicId) return;
+
+    const index = this.findTaskIndex(task);
+    if (index === -1) return;
+
+    const previousTask = { ...this.tasks[index] };
+    const extendedDueDate = new Date(this.tasks[index].dueDate);
+    extendedDueDate.setDate(extendedDueDate.getDate() + 3);
+
+    this.extendingTaskId = publicId;
+    this.activeMenuTaskId = null;
+
+    this.applyTaskPatch(index, {
+      dueDate: extendedDueDate.toISOString(),
+      status: 'ToDo'
+    });
+
+    this.auth.extendOverdueTask(publicId).subscribe({
+      next: (res: any) => {
+        const serverDueDate = res?.dueDate ?? res?.DueDate;
+        if (serverDueDate) {
+          const idx = this.findTaskIndex({ publicId });
+          if (idx !== -1) {
+            this.applyTaskPatch(idx, {
+              dueDate: serverDueDate,
+              status: res?.status ?? res?.Status ?? 'ToDo'
+            });
+          }
+        }
+        this.extendingTaskId = null;
+      },
+      error: (err) => {
+        console.error('Extend overdue task failed', err);
+        const idx = this.findTaskIndex({ publicId });
+        if (idx !== -1) {
+          this.tasks[idx] = previousTask;
+          this.tasks = [...this.tasks];
+          this.filterTasksStatus();
+          this.syncTasksToHub();
+        }
+        this.extendingTaskId = null;
+      }
+    });
+  }
+
+  private applyTaskPatch(index: number, patch: Partial<{ dueDate: string; status: string }>) {
+    this.tasks[index] = {
+      ...this.tasks[index],
+      ...patch
+    };
+    this.tasks = [...this.tasks];
+    this.filterTasksStatus();
+    this.syncTasksToHub();
+  }
+
+  getDifficultyLevel(task: any): number {
+    const raw = task?.difficulty ?? task?.Difficulty;
+    if (typeof raw === 'number') return raw;
+
+    const map: Record<string, number> = {
+      Easy: 0,
+      Medium: 1,
+      Hard: 2,
+      VeryHard: 3,
+      'Very Hard': 3
+    };
+
+    return map[String(raw)] ?? 0;
+  }
+
+  getDifficultyLabel(task: any): string {
+    return ['Easy', 'Medium', 'Hard', 'Very Hard'][this.getDifficultyLevel(task)] ?? 'Easy';
+  }
+
+  getDifficultyClass(task: any): string {
+    return ['easy', 'medium', 'hard', 'vhard'][this.getDifficultyLevel(task)] ?? 'easy';
+  }
+
+  private findTaskIndex(task: any): number {
+    const id = String(task.publicId ?? task.PublicId ?? '');
+    if (!id) return -1;
+
+    return this.tasks.findIndex(t => String(t.publicId) === id);
+  }
+
+  onMenuAction(event: Event) {
+    event.stopPropagation();
   }
 
   // CREATE TASK
@@ -317,30 +533,26 @@ export class Taskdetails {
 
     this.auth.createTask(payload).subscribe({
       next: (res: any) => {
-        this.tasks.push(this.normalizeTask(res));
+        const newTask = this.normalizeTask(res);
+        if (!this.tasks.some(t => t.publicId === newTask.publicId)) {
+          this.tasks = [newTask, ...this.tasks];
+        }
+        this.syncTasksToHub();
         this.refreshAvailableTags();
         this.filterTasksStatus();
-
-        this.newTask = {
-          title: '',
-          description: '',
-          dueDate: '',
-          startDate: '',
-          status: 0,
-          difficulty: null,
-          points: null,
-          assignedUserIds: [],
-          tagIds: [],
-          newTags: [],
-          workspaceId: 0
-        };
-
-        this.selectedUsers = [];
+        this.closeTaskModal();
+        this.resetTaskForm();
       },
       error: (err) => {
         console.error('Create task failed:', err?.error ?? err);
       }
     });
+  }
+
+  private syncTasksToHub() {
+    if (this.workspaceId) {
+      this.taskhub.setInitialTasks(this.workspaceId, [...this.tasks]);
+    }
   }
 
   private normalizeTask(task: any) {
@@ -355,7 +567,7 @@ export class Taskdetails {
 
     return {
       ...task,
-      publicId: task.publicId ?? task.PublicId,
+      publicId: String(task.publicId ?? task.PublicId ?? ''),
       title: task.title ?? task.Title,
       description: task.description ?? task.Description,
       dueDate: task.dueDate ?? task.DueDate,
@@ -364,13 +576,18 @@ export class Taskdetails {
       status: task.status ?? task.Status,
       difficulty: typeof rawDifficulty === 'number'
         ? rawDifficulty
-        : difficultyMap[task.difficulty ?? task.Difficulty] ?? 0,
+        : difficultyMap[String(task.difficulty ?? task.Difficulty)] ?? 0,
       tags: (task.tags ?? task.Tags ?? []).map((tag: any) =>
         typeof tag === 'string' ? { name: tag } : {
           id: tag.id ?? tag.Id,
           name: tag.name ?? tag.Name
         }
-      )
+      ),
+      assignedUsers: (task.assignedUsers ?? task.AssignedUsers ?? []).map((u: any) => ({
+        userName: u.userName ?? u.UserName,
+        email: u.email ?? u.Email,
+        profilePictureUrl: u.profilePictureUrl ?? u.ProfilePictureUrl
+      }))
     };
   }
 
@@ -404,35 +621,195 @@ export class Taskdetails {
   }
 
   openTaskModal() {
+    this.isEditingTask = false;
+    this.editingTaskPublicId = null;
+    this.resetTaskForm();
+
     const modal = new (window as any).bootstrap.Modal(
       document.getElementById('createTaskModal')
     );
     modal.show();
   }
 
-  moveTask(task: any, status: string) {
-    task.status = status;
+  openEditTaskModal(task: any) {
+    this.isEditingTask = true;
+    this.editingTaskPublicId = task.publicId;
+    this.activeMenuTaskId = null;
 
-    const index = this.tasks.findIndex(t => t.id === task.id);
+    const statusValue = typeof task.status === 'number'
+      ? task.status
+      : this.statusReverseMap[task.status] ?? 0;
+
+    this.newTask = {
+      title: task.title ?? '',
+      description: task.description ?? '',
+      dueDate: this.formatDateForInput(task.dueDate),
+      startDate: this.formatDateForInput(task.startDate),
+      status: statusValue,
+      difficulty: task.difficulty ?? null,
+      points: task.points ?? null,
+      assignedUserIds: [],
+      tagIds: [],
+      newTags: [],
+      workspaceId: this.worksapce_info?.id ?? 0
+    };
+
+    this.selectedUsers = (task.assignedUsers ?? task.AssignedUsers ?? []).map((user: any) => ({
+      id: user.id ?? user.userId ?? user.userName ?? user.UserName,
+      userName: user.userName ?? user.UserName,
+      email: user.email ?? user.Email,
+      profilePictureUrl: user.profilePictureUrl ?? user.ProfilePictureUrl
+    }));
+
+    const modal = new (window as any).bootstrap.Modal(
+      document.getElementById('createTaskModal')
+    );
+    modal.show();
+  }
+
+  saveTask() {
+    if (this.isEditingTask) {
+      this.updateTask();
+      return;
+    }
+
+    this.createTask();
+  }
+
+  updateTask() {
+    if (!this.editingTaskPublicId) {
+      return;
+    }
+
+    const points =
+      this.newTask.points === null || this.newTask.points === ''
+        ? 0
+        : Number(this.newTask.points);
+
+    const payload = {
+      title: this.newTask.title,
+      description: this.newTask.description,
+      startDate: this.newTask.startDate,
+      dueDate: this.newTask.dueDate,
+      status: this.newTask.status,
+      difficulty: this.newTask.difficulty,
+      points,
+      assignedUsers: this.selectedUsers.map((user: any) => user.userName || user.email)
+    };
+
+    this.auth.editTask(this.editingTaskPublicId, payload).subscribe({
+      next: () => {
+        const index = this.tasks.findIndex(t => t.publicId === this.editingTaskPublicId);
+        if (index !== -1) {
+          this.tasks[index] = this.normalizeTask({
+            ...this.tasks[index],
+            ...payload,
+            publicId: this.editingTaskPublicId,
+            status: this.statusMap[payload.status] ?? payload.status,
+            assignedUsers: [...this.selectedUsers]
+          });
+        }
+
+        this.syncTasksToHub();
+        this.filterTasksStatus();
+        this.closeTaskModal();
+        this.resetTaskForm();
+      },
+      error: (err) => {
+        console.error('Update task failed:', err?.error ?? err);
+      }
+    });
+  }
+
+  private closeTaskModal() {
+    const modalEl = document.getElementById('createTaskModal');
+    const modalInstance = (window as any).bootstrap.Modal.getInstance(modalEl);
+    modalInstance?.hide();
+  }
+
+  private resetTaskForm() {
+    this.isEditingTask = false;
+    this.editingTaskPublicId = null;
+    this.newTask = {
+      title: '',
+      description: '',
+      dueDate: '',
+      startDate: '',
+      status: 0,
+      difficulty: null,
+      points: null,
+      assignedUserIds: [],
+      tagIds: [],
+      newTags: [],
+      workspaceId: 0
+    };
+    this.selectedUsers = [];
+    this.newTag = '';
+  }
+
+  private formatDateForInput(value: string | Date | null | undefined): string {
+    if (!value) {
+      return '';
+    }
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return '';
+    }
+
+    return date.toISOString().split('T')[0];
+  }
+
+  canEditTask(): boolean {
+    const role = this.getCurrentUserRole();
+    return role === 1 || role === 2;
+  }
+
+  canDeleteTask(): boolean {
+    return this.getCurrentUserRole() === 2;
+  }
+
+  private getCurrentUserRole(): number {
+    const currentUserId = this.user_data?.id;
+    if (!currentUserId || !this.worksapce_info) {
+      return 0;
+    }
+
+    if (this.worksapce_info.owner?.id === currentUserId) {
+      return 2;
+    }
+
+    const member = (this.worksapce_info.members ?? []).find((m: any) => m.id === currentUserId);
+    return member?.role ?? 0;
+  }
+
+  moveTask(task: any, status: string, event?: Event) {
+    event?.stopPropagation();
+    this.activeMenuTaskId = null;
+
+    const index = this.findTaskIndex(task);
     if (index !== -1) {
-      this.tasks[index] = task;
+      this.tasks[index] = { ...this.tasks[index], status };
     }
 
     this.filterTasksStatus();
 
     this.auth.updateTaskStatus(task.publicId, this.statusReverseMap[status])
       .subscribe({
-        next: () => console.log('Task moved'),
+        next: () => {
+          this.syncTasksToHub();
+          console.log('Task moved');
+        },
         error: (err) => {
           console.error(err);
           this.filterTasksStatus();
         }
       });
-
-    this.activeMenuTaskId = null;
   }
 
-  deleteTask(task: any) {
+  deleteTask(task: any, event?: Event) {
+    event?.stopPropagation();
+    this.activeMenuTaskId = null;
     if (!task.publicId) {
       console.error('Delete task failed: missing task public id', task);
       return;
@@ -442,6 +819,7 @@ export class Taskdetails {
       .subscribe({
         next: () => {
           this.tasks = this.tasks.filter(t => t.publicId !== task.publicId);
+          this.syncTasksToHub();
           this.filterTasksStatus();
           this.activeMenuTaskId = null;
         },

@@ -44,6 +44,8 @@ describe('InboxService', () => {
         page: 1,
         pageSize: 20,
         unreadCount: 2,
+        taskUnreadCount: 1,
+        memberUnreadCount: 0,
         messages: [
           {
             publicId: 'msg-1',
@@ -87,6 +89,8 @@ describe('InboxService', () => {
         page: 1,
         pageSize: 20,
         unreadCount: 3,
+        taskUnreadCount: 2,
+        memberUnreadCount: 1,
         messages: [
           {
             publicId: 'msg-1',
@@ -135,6 +139,8 @@ describe('InboxService', () => {
         page: 1,
         pageSize: 20,
         unreadCount: 1,
+        taskUnreadCount: 1,
+        memberUnreadCount: 0,
         messages: [
           {
             publicId: 'msg-1',
@@ -177,6 +183,8 @@ describe('InboxService', () => {
         page: 1,
         pageSize: 20,
         unreadCount: 2,
+        taskUnreadCount: 1,
+        memberUnreadCount: 0,
         messages: [
           {
             publicId: 'msg-1',
@@ -201,6 +209,8 @@ describe('InboxService', () => {
           page: 2,
           pageSize: 20,
           unreadCount: 2,
+          taskUnreadCount: 1,
+          memberUnreadCount: 0,
           messages: [
             {
               publicId: 'msg-2',
@@ -242,6 +252,8 @@ describe('InboxService', () => {
         page: 1,
         pageSize: 20,
         unreadCount: 2,
+        taskUnreadCount: 1,
+        memberUnreadCount: 0,
         messages: [
           {
             publicId: 'msg-1',
@@ -375,6 +387,100 @@ describe('InboxService', () => {
     });
   });
 
+  describe('discardMessage', () => {
+    it('should throw error if workspace not set', () => {
+      expect(() => service.discardMessage('msg-1')).toThrowError('Workspace not set. Call setWorkspace() first.');
+    });
+
+    it('should discard a message and update state', (done) => {
+      service.setWorkspace('workspace-123');
+
+      const mockResponse: InboxResponse = {
+        page: 1,
+        pageSize: 20,
+        unreadCount: 1,
+        taskUnreadCount: 1,
+        memberUnreadCount: 0,
+        messages: [
+          {
+            publicId: 'msg-1',
+            title: 'Message 1',
+            body: 'Body 1',
+            type: InboxMessageType.TaskCreated,
+            channelPublicId: null,
+            createdAt: new Date().toISOString(),
+            isRead: false,
+          },
+        ],
+      };
+
+      service.getInboxMessages(1).subscribe();
+
+      const req1 = httpMock.expectOne('https://localhost:7094/api/workspace/workspace-123/inbox?page=1');
+      req1.flush(mockResponse);
+
+      service.discardMessage('msg-1').subscribe();
+
+      const req2 = httpMock.expectOne('https://localhost:7094/api/workspace/workspace-123/inbox/discard/msg-1');
+      expect(req2.request.method).toBe('POST');
+      req2.flush(null);
+
+      service.inboxState$.subscribe((state) => {
+        expect(state.messages.length).toBe(0);
+        expect(state.unreadCount).toBe(0);
+        done();
+      });
+    });
+  });
+
+  describe('discardAllMessages', () => {
+    it('should throw error if workspace not set', () => {
+      expect(() => service.discardAllMessages()).toThrowError('Workspace not set. Call setWorkspace() first.');
+    });
+
+    it('should discard all messages and clear state', (done) => {
+      service.setWorkspace('workspace-123');
+
+      const mockResponse: InboxResponse = {
+        page: 1,
+        pageSize: 20,
+        unreadCount: 2,
+        taskUnreadCount: 1,
+        memberUnreadCount: 1,
+        messages: [
+          {
+            publicId: 'msg-1',
+            title: 'Message 1',
+            body: 'Body 1',
+            type: InboxMessageType.TaskCreated,
+            channelPublicId: null,
+            createdAt: new Date().toISOString(),
+            isRead: false,
+          },
+        ],
+      };
+
+      service.getInboxMessages(1).subscribe();
+
+      const req1 = httpMock.expectOne('https://localhost:7094/api/workspace/workspace-123/inbox?page=1');
+      req1.flush(mockResponse);
+
+      service.discardAllMessages().subscribe((response) => {
+        expect(response.dismissedCount).toBe(1);
+      });
+
+      const req2 = httpMock.expectOne('https://localhost:7094/api/workspace/workspace-123/inbox/discard-all');
+      expect(req2.request.method).toBe('POST');
+      req2.flush({ dismissedCount: 1 });
+
+      service.inboxState$.subscribe((state) => {
+        expect(state.messages.length).toBe(0);
+        expect(state.unreadCount).toBe(0);
+        done();
+      });
+    });
+  });
+
   describe('Polling', () => {
     it('should start polling on startPolling()', (done) => {
       service.setWorkspace('workspace-123');
@@ -388,6 +494,8 @@ describe('InboxService', () => {
           page: 1,
           pageSize: 20,
           unreadCount: 0,
+          taskUnreadCount: 0,
+          memberUnreadCount: 0,
           messages: [],
         });
 

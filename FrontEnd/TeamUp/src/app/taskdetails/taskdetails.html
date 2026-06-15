@@ -195,103 +195,127 @@
   <!-- BOARD -->
   <div class="row">
     <div class="col-12 px-3">
+      <div class="board-section-nav" aria-label="Task board sections">
+        @for (section of boardSections; track section; let i = $index) {
+          <button
+            type="button"
+            class="board-section-pill"
+            [class.active]="activeSectionIndex === i"
+            (click)="scrollToSection(i)">
+            {{ section }}
+          </button>
+        }
+      </div>
+
       <div class="row mt-2">
-        <div class="col-12 d-flex flex-row gap-3 task-board">
+        <div #taskBoard class="col-12 task-board" (scroll)="onBoardScroll()">
 
           <!-- TO DO -->
-          <div class="flex-fill"
+          <div class="task-board-section"
             cdkDropList
             id="todoList"
             [cdkDropListData]="tasksToDo"
-            [cdkDropListConnectedTo]="['inProgressList','doneList']"
+            [cdkDropListConnectedTo]="isMobileView ? [] : ['inProgressList','doneList']"
             (cdkDropListDropped)="drop($event, 0)">
 
-            <div class="d-flex align-items-center mb-3"
-              style="border-bottom: 2px solid rgb(209, 209, 209); height: 60px;">
+            <div class="task-section-header task-section-header-todo">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-circle mt-1"
                 viewBox="0 0 16 16">
                 <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16" />
               </svg>
-              <h4 style="margin-left: 10px;" class="mb-0">To Do</h4>
+              <h4 class="mb-0">To Do</h4>
               <span class="badge bg-secondary ms-auto mt-2">{{ tasksToDo.length }}</span>
             </div>
 
-            <div *ngFor="let task of tasksToDo" cdkDrag class="mb-3">
-              <ng-container *ngTemplateOutlet="taskCard; context:{task: task}"></ng-container>
+            <div class="task-drop-zone">
+              <div *ngFor="let task of tasksToDo" cdkDrag
+                [cdkDragDisabled]="isMobileView || activeMenuTaskId === task.publicId"
+                class="mb-3" [class.task-menu-active]="activeMenuTaskId === task.publicId">
+                <ng-container *ngTemplateOutlet="taskCard; context:{task: task}"></ng-container>
+              </div>
             </div>
           </div>
 
           <!-- IN PROGRESS -->
-          <div class="flex-fill"
+          <div class="task-board-section"
             cdkDropList
             id="inProgressList"
             [cdkDropListData]="tasksInProgress"
-            [cdkDropListConnectedTo]="['todoList','doneList']"
+            [cdkDropListConnectedTo]="isMobileView ? [] : ['todoList','doneList']"
             (cdkDropListDropped)="drop($event, 1)">
 
-            <div class="d-flex align-items-center mb-3"
-              style="border-bottom: 2px solid rgb(3, 255, 255); height: 60px;">
+            <div class="task-section-header task-section-header-progress">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" style="color: rgb(3, 255, 255);"
                 fill="currentColor" class="bi bi-clock mt-1" viewBox="0 0 16 16">
                 <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71z" />
                 <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0" />
               </svg>
-              <h4 style="margin-left: 10px;" class="mb-0">In Progress</h4>
+              <h4 class="mb-0">In Progress</h4>
               <span class="badge bg-secondary ms-auto mt-2">{{ tasksInProgress.length }}</span>
             </div>
 
-            <div *ngFor="let task of tasksInProgress" cdkDrag class="mb-3">
-              <ng-container *ngTemplateOutlet="taskCard; context:{task: task}"></ng-container>
+            <div class="task-drop-zone">
+              <div *ngFor="let task of tasksInProgress" cdkDrag
+                [cdkDragDisabled]="isMobileView || activeMenuTaskId === task.publicId"
+                class="mb-3" [class.task-menu-active]="activeMenuTaskId === task.publicId">
+                <ng-container *ngTemplateOutlet="taskCard; context:{task: task}"></ng-container>
+              </div>
             </div>
           </div>
 
           <!-- DONE -->
-          <div class="flex-fill"
+          <div class="task-board-section"
             cdkDropList
             id="doneList"
             [cdkDropListData]="tasksCompleted"
-            [cdkDropListConnectedTo]="['todoList','inProgressList']"
+            [cdkDropListConnectedTo]="isMobileView ? [] : ['todoList','inProgressList']"
             (cdkDropListDropped)="drop($event, 2)">
 
-            <div class="d-flex align-items-center mb-3"
-              style="border-bottom: 2px solid rgb(0, 255, 0); height: 60px;">
+            <div class="task-section-header task-section-header-done">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" style="color: rgb(0, 255, 0);"
                 fill="currentColor" class="bi bi-check-circle mt-1" viewBox="0 0 16 16">
                 <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16" />
                 <path
                   d="M10.97 6.97a.75.75 0 0 0-1.08-1.04L7.477 8.417l-1.384-1.384a.75.75 0 1 0-1.06 1.06l2 2a.75.75 0 0 0 1.08 0l3-3z" />
               </svg>
-              <h4 style="margin-left: 10px;" class="mb-0">Done</h4>
+              <h4 class="mb-0">Done</h4>
               <span class="badge bg-secondary ms-auto mt-2">{{ tasksCompleted.length }}</span>
             </div>
 
-            <div *ngFor="let task of tasksCompleted" cdkDrag class="mb-3">
-              <ng-container *ngTemplateOutlet="taskCard; context:{task: task}"></ng-container>
+            <div class="task-drop-zone">
+              <div *ngFor="let task of tasksCompleted" cdkDrag
+                [cdkDragDisabled]="isMobileView || activeMenuTaskId === task.publicId"
+                class="mb-3" [class.task-menu-active]="activeMenuTaskId === task.publicId">
+                <ng-container *ngTemplateOutlet="taskCard; context:{task: task}"></ng-container>
+              </div>
             </div>
           </div>
 
           <!-- OVERDUE -->
-          <div class="flex-fill"
+          <div class="task-board-section"
             cdkDropList
             id="overdueList"
             [cdkDropListData]="tasksOverdue"
             [cdkDropListConnectedTo]="[]"
             (cdkDropListDropped)="drop($event, 3)">
 
-            <div class="d-flex align-items-center mb-3"
-              style="border-bottom: 2px solid rgb(255, 0, 0); height: 60px;">
+            <div class="task-section-header task-section-header-overdue">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" style="color: rgb(255, 0, 0);"
                 fill="currentColor" class="bi bi-exclamation-circle mt-1" viewBox="0 0 16 16">
                 <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16" />
                 <path
                   d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0M7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0z" />
               </svg>
-              <h4 style="margin-left: 10px;" class="mb-0">Overdue</h4>
+              <h4 class="mb-0">Overdue</h4>
               <span class="badge bg-secondary ms-auto mt-2">{{ tasksOverdue.length }}</span>
             </div>
 
-            <div *ngFor="let task of tasksOverdue" cdkDrag class="mb-3">
-              <ng-container *ngTemplateOutlet="taskCard; context:{task: task}"></ng-container>
+            <div class="task-drop-zone">
+              <div *ngFor="let task of tasksOverdue" cdkDrag
+                [cdkDragDisabled]="isMobileView || activeMenuTaskId === task.publicId"
+                class="mb-3" [class.task-menu-active]="activeMenuTaskId === task.publicId">
+                <ng-container *ngTemplateOutlet="taskCard; context:{task: task}"></ng-container>
+              </div>
             </div>
           </div>
 
@@ -305,21 +329,24 @@
     <div class="card h-100" [ngClass]="{'dark-mode': isDarkMode$ | async, 'light-mode': !(isDarkMode$ | async)}">
 
       <div class="card-body">
-        <div class="d-flex align-items-center justify-content-between gap-2 mb-0">
+        <div class="d-flex align-items-center justify-content-between gap-2 mb-0 task-card-header">
           <h5 class="card-title mb-0">{{ task.title }}</h5>
           <span class="menu-trigger" (click)="toggleMenu($event, task.publicId)">...</span>
 
-          <div *ngIf="activeMenuTaskId === task.publicId" class="task-menu" (click)="$event.stopPropagation()">
+          <div *ngIf="activeMenuTaskId === task.publicId" class="task-menu"
+            (click)="$event.stopPropagation()"
+            (mousedown)="$event.stopPropagation()"
+            (pointerdown)="$event.stopPropagation()">
             <div class="menu-title mb-2 border-bottom p-2">Move to:</div>
 
-            <div class="menu-item d-flex gap-2" (click)="moveTask(task, 'ToDo')">
+            <div class="menu-item d-flex gap-2" (click)="moveTask(task, 'ToDo', $event)">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-circle mt-1"
                 viewBox="0 0 16 16">
                 <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16" />
               </svg>
               To Do
             </div>
-            <div class="menu-item d-flex gap-2" (click)="moveTask(task, 'InProgress')">
+            <div class="menu-item d-flex gap-2" (click)="moveTask(task, 'InProgress', $event)">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" style="color: rgb(3, 255, 255);"
                 fill="currentColor" class="bi bi-clock mt-1" viewBox="0 0 16 16">
                 <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71z" />
@@ -327,7 +354,7 @@
               </svg>
               In Progress
             </div>
-            <div class="menu-item d-flex gap-2" (click)="moveTask(task, 'Done')">
+            <div class="menu-item d-flex gap-2" (click)="moveTask(task, 'Done', $event)">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" style="color: rgb(0, 255, 0);"
                 fill="currentColor" class="bi bi-check-circle mt-1" viewBox="0 0 16 16">
                 <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16" />
@@ -336,8 +363,28 @@
               </svg>
               Done
             </div>
+            <div *ngIf="canExtendOverdue(task)" class="menu-divider"></div>
+            <div *ngIf="canExtendOverdue(task)" class="menu-item d-flex gap-2"
+              [class.menu-item-disabled]="extendingTaskId === task.publicId"
+              (mousedown)="extendOverdueTask(task, $event)">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor"
+                class="bi bi-calendar-plus mt-1" viewBox="0 0 16 16">
+                <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5M1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4z" />
+                <path d="M8 7a.5.5 0 0 1 .5.5V9H10a.5.5 0 0 1 0 1H8.5v1.5a.5.5 0 0 1-1 0V10H6a.5.5 0 0 1 0-1h1.5V7.5A.5.5 0 0 1 8 7" />
+              </svg>
+              {{ extendingTaskId === task.publicId ? 'Extending...' : 'Add 3 days' }}
+            </div>
             <div class="menu-divider"></div>
-            <div class="menu-item menu-item-danger d-flex gap-2" (click)="deleteTask(task)">
+            <div *ngIf="canEditTask() || canDeleteTask()" class="menu-title mb-2 border-bottom p-2">Actions:</div>
+
+            <div *ngIf="canEditTask()" class="menu-item d-flex gap-2" (click)="onMenuAction($event); openEditTaskModal(task)">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor"
+                class="bi bi-pencil mt-1" viewBox="0 0 16 16">
+                <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325" />
+              </svg>
+              Edit
+            </div>
+            <div *ngIf="canDeleteTask()" class="menu-item menu-item-danger d-flex gap-2" (click)="deleteTask(task, $event)">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor"
                 class="bi bi-trash mt-1" viewBox="0 0 16 16">
                 <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z" />
@@ -356,39 +403,30 @@
           </span>
         </div>
 
-        <div class="d-flex align-items-center justify-content-between">
-          <span class="difficulty-badge"
-            [ngClass]="{
-              'easy': task.difficulty === 0,
-              'medium': task.difficulty === 1,
-              'hard': task.difficulty === 2,
-              'vhard': task.difficulty === 3
-            }">
-            {{ ['EASY','MEDIUM','HARD','VERY HARD'][task.difficulty] }}
+        <div class="task-card-meta">
+          <span class="difficulty-badge" [ngClass]="getDifficultyClass(task)">
+            <span class="difficulty-dot" aria-hidden="true"></span>
+            <span class="difficulty-label">{{ getDifficultyLabel(task) }}</span>
           </span>
 
-          <div class="d-flex align-items-center gap-2 ms-auto">
-            <span class="points" style="color: rgb(3, 255, 255);">
+          <div class="task-card-assignees">
+            <span class="points-badge" *ngIf="task.points != null">
               +{{ task.points }} pts
             </span>
 
             <ng-container *ngIf="task.assignedUsers?.length; else noUser">
               <ng-container *ngFor="let user of task.assignedUsers">
-                <img *ngIf="user.profilePictureUrl" [src]="user.profilePictureUrl" class="rounded-circle" width="28"
-                  height="28">
+                <img *ngIf="user.profilePictureUrl" [src]="user.profilePictureUrl" class="assignee-avatar" width="28"
+                  height="28" [alt]="user.userName || 'Assignee'">
                 <div *ngIf="!user.profilePictureUrl"
-                  class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center"
-                  style="width:28px;height:28px;font-size:12px;">
-                  {{ user.userName.charAt(0) }}
+                  class="assignee-avatar assignee-avatar-fallback">
+                  {{ (user.userName || user.email || '?').charAt(0) }}
                 </div>
               </ng-container>
             </ng-container>
 
             <ng-template #noUser>
-              <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center"
-                style="width:28px;height:28px;font-size:12px;">
-                ?
-              </div>
+              <div class="assignee-avatar assignee-avatar-fallback">?</div>
             </ng-template>
           </div>
         </div>
@@ -413,7 +451,7 @@
               </svg>
             </div>
             <div>
-              <p class="tm-title">New Task</p>
+              <p class="tm-title">{{ isEditingTask ? 'Edit Task' : 'New Task' }}</p>
               <p class="tm-subtitle">workspace / board</p>
             </div>
           </div>
@@ -555,7 +593,7 @@
               </ul>
             </div>
           </div>
-          <div class="mb-3">
+          <div class="mb-3" *ngIf="!isEditingTask">
             <label class="tm-label">Tags</label>
             <div class="d-flex align-items-center gap-2 flex-wrap">
               <input class="tm-input tm-tag-input" type="text" name="newTag" [(ngModel)]="newTag"
@@ -582,11 +620,11 @@
           <div class="tm-footer">
             <div class="tm-footer-actions">
               <button class="btn-cancel-tm" data-bs-dismiss="modal">Cancel</button>
-              <button class="btn-create" (click)="createTask()">
+              <button class="btn-create" (click)="saveTask()">
                 <svg width="14" height="14" fill="none" viewBox="0 0 24 24">
                   <path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2.5" stroke-linecap="round" />
                 </svg>
-                Create Task
+                {{ isEditingTask ? 'Save Task' : 'Create Task' }}
               </button>
             </div>
           </div>

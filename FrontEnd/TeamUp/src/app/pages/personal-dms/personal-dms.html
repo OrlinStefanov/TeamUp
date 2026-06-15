@@ -18,11 +18,11 @@
 
     <div class="chat-list">
       @for (chat of filteredChats; track chat.publicId) {
-        <button class="chat-row" type="button" [class.active]="chat.publicId === selectedConversationId" (click)="selectChat(chat.publicId)">
+        <button class="chat-row" type="button" [class.active]="chat.publicId === selectedConversationId" (click)="selectChat(chat.publicId!)">
           <span class="avatar" [style.--avatar-color]="chat.accent">
             {{ chat.initials }}
             @if (chat.status === 'online') {
-              <span class="status-dot"></span> 
+              <span class="status-dot"></span>
             }
           </span>
 
@@ -33,7 +33,7 @@
 
           <span class="chat-aside">
             <time>{{ chat.time }}</time>
-            @if ((unread$ | async)?.[chat.publicId]; as count) {
+            @if ((unread$ | async)?.[chat.publicId!]; as count) {
               @if (count > 0) {
                 <span class="chat-unread-badge">{{ count > 9 ? '9+' : count }}</span>
               }
@@ -43,7 +43,7 @@
       }
     </div>
   </aside>
-
+ 
   <main class="dm-conversation" [class.mobile-open]="isMobileChatOpen">
     <header class="conversation-header">
       <button class="mobile-back-btn" type="button" aria-label="Back to direct messages" (click)="closeMobileChat()">
@@ -57,13 +57,27 @@
           <span class="status-dot"></span>
         }
       </span>
-      <div>
+      <div class="conversation-title">
         <h1>{{ selectedChat.name }}</h1>
         <p>{{ selectedChat.handle }} · {{ selectedChat.status }}</p>
       </div>
+      @if (selectedChat.isGroup) {
+        <div class="conversation-actions">
+          <button type="button" class="header-action-btn" (click)="openAddMember()">Add member</button>
+          <button type="button" class="header-action-btn danger" (click)="leaveConversation()">Leave</button>
+        </div>
+      }
     </header>
 
-    <div class="message-area" #messageArea>
+    <div class="message-area" #messageArea (scroll)="onMessageAreaScroll()">
+      @if (isLoadingOlderMessages) {
+        <div class="load-older-indicator">Loading older messages...</div>
+      }
+      @if (messages.length === 0) {
+        <div class="message-area-empty">
+          <span>No messages yet. Say hello to start the conversation.</span>
+        </div>
+      }
       @for (message of messages; track message.publicId) {
         <article class="message-bubble" [class.mine]="message.senderId === auth.getUserId()">
           <p>{{ message.content }}</p>
@@ -71,7 +85,7 @@
         </article>
       }
     </div>
-    
+
     @if (typingUsers.length > 0) {
       <div class="typing-indicator">
         {{ typingUsers.join(', ') }} {{ typingUsers.length === 1 ? 'is' : 'are' }} typing...
@@ -81,6 +95,7 @@
     <form class="message-composer" (ngSubmit)="sendMessage()">
       <input
         type="text"
+        name="messageText"
         [(ngModel)]="messageText"
         (ngModelChange)="onTyping()"
         [placeholder]="'Message ' + selectedChat.handle">
@@ -91,13 +106,36 @@
       </button>
     </form>
   </main>
-<!--Random nigga-->
+
   @if (isNewMessageOpen) {
     <div class="dm-modal-backdrop" (click)="closeNewMessage()">
       <form class="dm-modal" (ngSubmit)="startConversation()" (click)="$event.stopPropagation()">
         <button class="modal-close" type="button" aria-label="Close" (click)="closeNewMessage()">×</button>
-        <h2>New direct message</h2>
+        <h2>New message</h2>
         <p>Search by username, email, or phone number.</p>
+
+        <div class="dm-mode-toggle">
+          <button type="button" [class.active]="newMessageMode === 'direct'" (click)="setNewMessageMode('direct')">Direct message</button>
+          <button type="button" [class.active]="newMessageMode === 'group'" (click)="setNewMessageMode('group')">Group chat</button>
+        </div>
+
+        @if (newMessageMode === 'group') {
+          <label class="group-title-field">
+            <span>Group name</span>
+            <input type="text" name="groupTitle" [(ngModel)]="groupTitle" placeholder="Team chat name">
+          </label>
+
+          @if (selectedGroupMembers.length > 0) {
+            <div class="selected-members">
+              @for (member of selectedGroupMembers; track member.userName) {
+                <span class="member-chip">
+                  {{ member.userName }}
+                  <button type="button" aria-label="Remove member" (click)="removeGroupMember(member)">×</button>
+                </span>
+              }
+            </div>
+          }
+        }
 
         <label class="person-search">
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
@@ -118,21 +156,17 @@
           <span>⌕ phone</span>
         </div>
 
-        @if (selectedUser) {
+        @if (newMessageMode === 'direct' && selectedUser) {
           <div class="selected-user">
-            <span>
-              Selected:
-              <strong>{{ selectedUser.userName }}</strong>
-            </span>
+            <span>Selected: <strong>{{ selectedUser.userName }}</strong></span>
           </div>
         }
 
         <button
-          class="send-btn"
+          class="send-btn modal-submit-btn"
           type="submit"
-          [disabled]="!selectedUser">
-
-          Start conversation
+          [disabled]="newMessageMode === 'direct' ? !selectedUser : (!groupTitle.trim() || selectedGroupMembers.length < 2)">
+          {{ newMessageMode === 'group' ? 'Create group' : 'Start conversation' }}
         </button>
 
         @if (isSearching) {
@@ -141,7 +175,7 @@
           </div>
         }
 
-        @if (!isSearching && searchText.trim() && searchResults.length === 0) {
+        @if (!isSearching && searchText.trim().length >= 2 && searchResults.length === 0) {
           <div class="empty-results">
             <span>No users found</span>
           </div>
@@ -149,44 +183,94 @@
 
         @if (searchResults.length > 0) {
           <div class="search-results">
-
-            @for (user of searchResults; track user.id) {
+            @for (user of searchResults; track getUserTrackKey(user)) {
               <button
                 type="button"
                 class="user-row"
                 (click)="selectUser(user)"
-                [class.active]="selectedUser?.id === user.id">
+                [class.active]="isSelectedUser(user)">
 
                 <span class="avatar small">
                   @if (user.profilePictureUrl) {
-                    <img [src]="user.profilePictureUrl" alt="">
+                    <img [src]="user.profilePictureUrl" [alt]="user.userName">
                   } @else {
                     {{ user.userName.charAt(0).toUpperCase() }}
                   }
                 </span>
 
-                <div class="user-copy d-flex justify-content-between align-items-center">
-                  <div class="d-flex flex-column">
-                    <strong>{{ user.userName }}</strong>
-
-                    <small>
-                      {{ user.email || 'No contact info' }}
-                    </small>
-                  </div>
-                  <div class="d-flex flex-column text-center justify-content-center align-items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" style="color: #2dd4bf;" width="18" height="18" fill="currentColor" class="bi bi-telephone" viewBox="0 0 16 16">
-                      <path d="M3.654 1.328a.678.678 0 0 0-1.015-.063L1.605 2.3c-.483.484-.661 1.169-.45 1.77a17.6 17.6 0 0 0 4.168 6.608 17.6 17.6 0 0 0 6.608 4.168c.601.211 1.286.033 1.77-.45l1.034-1.034a.678.678 0 0 0-.063-1.015l-2.307-1.794a.68.68 0 0 0-.58-.122l-2.19.547a1.75 1.75 0 0 1-1.657-.459L5.482 8.062a1.75 1.75 0 0 1-.46-1.657l.548-2.19a.68.68 0 0 0-.122-.58zM1.884.511a1.745 1.745 0 0 1 2.612.163L6.29 2.98c.329.423.445.974.315 1.494l-.547 2.19a.68.68 0 0 0 .178.643l2.457 2.457a.68.68 0 0 0 .644.178l2.189-.547a1.75 1.75 0 0 1 1.494.315l2.306 1.794c.829.645.905 1.87.163 2.611l-1.034 1.034c-.74.74-1.846 1.065-2.877.702a18.6 18.6 0 0 1-7.01-4.42 18.6 18.6 0 0 1-4.42-7.009c-.362-1.03-.037-2.137.703-2.877z"/>
-                    </svg>
-                    <small>
-                      {{ user.phoneNumber || '' }}
-                    </small>
-                  </div>
-
+                <div class="user-copy">
+                  <strong>{{ user.userName }}</strong>
+                  <small>{{ user.email || 'No email on file' }}</small>
+                  @if (user.phoneNumber) {
+                    <span class="user-meta-line">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="phone-icon" viewBox="0 0 16 16">
+                        <path d="M3.654 1.328a.678.678 0 0 0-1.015-.063L1.605 2.3c-.483.484-.661 1.169-.45 1.77a17.6 17.6 0 0 0 4.168 6.608 17.6 17.6 0 0 0 6.608 4.168c.601.211 1.286.033 1.77-.45l1.034-1.034a.678.678 0 0 0-.063-1.015l-2.307-1.794a.68.68 0 0 0-.58-.122l-2.19.547a1.75 1.75 0 0 1-1.657-.459L5.482 8.062a1.75 1.75 0 0 1-.46-1.657l.548-2.19a.68.68 0 0 0-.122-.58zM1.884.511a1.745 1.745 0 0 1 2.612.163L6.29 2.98c.329.423.445.974.315 1.494l-.547 2.19a.68.68 0 0 0 .178.643l2.457 2.457a.68.68 0 0 0 .644.178l2.189-.547a1.75 1.75 0 0 1 1.494.315l2.306 1.794c.829.645.905 1.87.163 2.611l-1.034 1.034c-.74.74-1.846 1.065-2.877.702a18.6 18.6 0 0 1-7.01-4.42 18.6 18.6 0 0 1-4.42-7.009c-.362-1.03-.037-2.137.703-2.877z"/>
+                      </svg>
+                      {{ user.phoneNumber }}
+                    </span>
+                  }
                 </div>
-
               </button>
             }
+          </div>
+        }
+      </form>
+    </div>
+  }
 
+  @if (isAddMemberOpen) {
+    <div class="dm-modal-backdrop" (click)="closeNewMessage()">
+      <form class="dm-modal" (ngSubmit)="addMemberToGroup()" (click)="$event.stopPropagation()">
+        <button class="modal-close" type="button" aria-label="Close" (click)="closeNewMessage()">×</button>
+        <h2>Add member</h2>
+        <p>Search users to add to this group (min 3 characters).</p>
+
+        <label class="person-search">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
+          </svg>
+          <input
+            #personSearchInput
+            type="text"
+            name="addMemberSearch"
+            placeholder="Search users..."
+            [(ngModel)]="searchText"
+            (ngModelChange)="onSearchChange()">
+        </label>
+
+        @if (selectedUser) {
+          <div class="selected-user">
+            <span>Selected: <strong>{{ selectedUser.userName }}</strong></span>
+          </div>
+        }
+
+        <button class="send-btn modal-submit-btn" type="submit" [disabled]="!selectedUser">Add to group</button>
+
+        @if (isSearching) {
+          <div class="empty-results"><span>Searching...</span></div>
+        }
+
+        @if (!isSearching && searchText.trim().length >= 3 && searchResults.length === 0) {
+          <div class="empty-results"><span>No users found</span></div>
+        }
+
+        @if (searchResults.length > 0) {
+          <div class="search-results">
+            @for (user of searchResults; track getUserTrackKey(user)) {
+              <button type="button" class="user-row" (click)="selectUser(user)" [class.active]="isSelectedUser(user)">
+                <span class="avatar small">
+                  @if (user.profilePictureUrl) {
+                    <img [src]="user.profilePictureUrl" [alt]="user.userName">
+                  } @else {
+                    {{ user.userName.charAt(0).toUpperCase() }}
+                  }
+                </span>
+                <div class="user-copy">
+                  <strong>{{ user.userName }}</strong>
+                  <small>{{ user.email || 'No email on file' }}</small>
+                </div>
+              </button>
+            }
           </div>
         }
       </form>

@@ -2,19 +2,25 @@
 
 .ws-notif-badge {
   position: absolute;
-  top: 2px;
-  right: 2px;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
+  top: -6px;
+  right: -6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
   border-radius: 999px;
   background: #ef4444;
   color: #fff;
   font-size: 10px;
   font-weight: 700;
-  line-height: 16px;
+  line-height: 18px;
   text-align: center;
   pointer-events: none;
+  border: 2px solid #fff;
+  z-index: 2;
+}
+
+.dashboard-layout.dark-mode .ws-notif-badge {
+  border-color: #16161d;
 }
 
 .dashboard-layout {
@@ -313,8 +319,12 @@
 .workspace-card h3 {
   font-size: 15px;
   font-weight: 700;
-  margin: 0;
+  margin: 0 0 4px;
   color: inherit;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .workspace-card .d-flex {
@@ -335,12 +345,24 @@
   gap: 6px;
 }
 
-.members img {
+.members img,
+.member-avatar {
   width: 28px;
   height: 28px;
   border-radius: 50%;
   object-fit: cover;
   border: 1px solid rgba(124, 58, 237, 0.2);
+  flex-shrink: 0;
+}
+
+.member-avatar-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  background-color: #999;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .extra-members {
@@ -588,16 +610,31 @@
   color: inherit;
 }
 
-.workspace-card {
-  overflow: visible; /* allows badge to render outside card bounds */
-}
-
 .workspaces-grid {
-  padding: 10px; /* prevents badge from being clipped at grid edges */
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 28px;
+  align-items: stretch;
+  padding: 10px;
   overflow: visible;
 }
 
-/*badge css*/
+.workspace-card {
+  position: relative;
+  overflow: visible;
+  border: 1px solid rgba(124, 58, 237, 0.15);
+  border-radius: 10px;
+  padding: 20px;
+  min-height: 220px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  background: #ffffff;
+}
 .badge-msg {
   display: inline-block;
   padding: 0.25em 0.4em;
@@ -711,26 +748,6 @@
   background: #333;
 }
 
-.workspaces-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-  gap: 28px;
-  align-items: stretch;
-}
-
-.workspace-card {
-  border: 1px solid rgba(124, 58, 237, 0.15);
-  border-radius: 10px;
-  padding: 28px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  cursor: pointer;
-  transition: all 0.25s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  background: #ffffff;
-}
-
 .workspace-card:hover {
   border-color: rgba(124, 58, 237, 0.3);
   box-shadow: 0 8px 24px rgba(124, 58, 237, 0.12);
@@ -739,11 +756,33 @@
 
 .workspace-card p {
   display: -webkit-box;
+  -webkit-line-clamp: 2;
   line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   color: #9ca3af;
   font-size: 13px;
+  margin: 0;
+  min-height: 2.6em;
+}
+
+.workspace-card-body {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex: 1;
+}
+
+.workspace-card-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.workspace-icon-wrap {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
 }
 
 .dashboard-layout.dark-mode .workspace-card {
@@ -1022,11 +1061,6 @@
   font-weight: 750;
 }
 
-.workspace-card {
-  padding: 16px;
-  border-color: rgba(147, 51, 234, 0.18);
-}
-
 .workspace-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 14px 30px rgba(0, 0, 0, 0.16);
@@ -1229,6 +1263,12 @@
   overflow: visible;
   padding-top: 12px;
   border-top: 1px solid rgba(124, 58, 237, 0.1);
+  min-height: 44px;
+}
+
+.workspace-card-actions.is-hidden {
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .dashboard-layout.dark-mode .workspace-card-actions {

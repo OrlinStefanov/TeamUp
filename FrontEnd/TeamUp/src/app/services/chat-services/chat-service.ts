@@ -84,6 +84,12 @@ export class ChatService {
       );
     });
 
+    this.hubConnection.on('IncrementUnread', (data: { channelId: string }) => {
+      if (data?.channelId) {
+        this.increaseUnread(data.channelId);
+      }
+    });
+
     this.isConnected = true;
 
     return this.hubConnection.start();
@@ -110,7 +116,11 @@ export class ChatService {
       [channelId]: 0
     });
 
-    this.hubConnection.invoke('MarkAsRead', channelId);
+    if (!this.isConnected || !this.hubConnection) return;
+
+    this.hubConnection.invoke('MarkAsRead', channelId).catch(() => {
+      // Hub may still be connecting; JoinChannel also updates LastSeen.
+    });
   }
 
   // =========================
@@ -118,6 +128,10 @@ export class ChatService {
   // =========================
 
   joinChannel(channelId: string) {
+    if (!this.isConnected || !this.hubConnection) {
+      return Promise.resolve();
+    }
+
     return this.hubConnection.invoke('JoinChannel', channelId);
   }
 
@@ -130,8 +144,21 @@ export class ChatService {
   // =========================
 
   loadChannels(workspaceId: string) {
-    this.http.get<any[]>(`${this.apiUrl}/workspace/${workspaceId}/get/channels`)
-      .subscribe(res => this.channelsSubject.next(res));
+    this.http.get<any[]>(`${this.apiUrl}/workspace/${workspaceId}/get/channels`, {
+      withCredentials: true
+    }).subscribe(res => {
+      this.channelsSubject.next(res);
+
+      const counts: { [channelId: string]: number } = {};
+      res.forEach(channel => {
+        counts[channel.publicId] = channel.unreadCount || 0;
+      });
+      this.unreadSubject.next(counts);
+    });
+  }
+
+  getTotalUnread(): number {
+    return Object.values(this.unreadSubject.value).reduce((sum, count) => sum + count, 0);
   }
 
   // =========================

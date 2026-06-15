@@ -1,5 +1,5 @@
-import { Component, ElementRef, ViewChild } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Component, ElementRef, ViewChild, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule, DatePipe } from '@angular/common';
 import { ChatService } from '../services/chat-services/chat-service';
@@ -13,12 +13,13 @@ import { Observable } from 'rxjs';
   templateUrl: './chat-component.html',
   styleUrl: './chat-component.css',
 })
-export class ChatComponent {
+export class ChatComponent implements OnInit {
   @ViewChild('messageArea') messageAreaRef?: ElementRef<HTMLDivElement>;
 
   messages: any[] = [];
   currentChannelId = '';
   messageInput = '';
+  workspacePublicId = '';
 
   channels: any[] = [];
   channel: any;
@@ -30,10 +31,11 @@ export class ChatComponent {
   typingTimeout: any;
 
   isDarkMode$!: Observable<boolean>;
-  
+
   constructor(
     private chat: ChatService,
     private route: ActivatedRoute,
+    private router: Router,
     private auth: Auth
   ) {}
 
@@ -41,14 +43,19 @@ export class ChatComponent {
     this.currentUserId = this.auth.getUserId();
     this.isDarkMode$ = this.auth.darkMode$;
 
+    this.route.parent?.parent?.paramMap.subscribe(params => {
+      this.workspacePublicId = params.get('id') || '';
+    });
+
     this.chat.startConnection().then(() => {
 
-      // CHANNELS
       this.chat.channels$.subscribe(ch => {
         this.channels = ch;
+        if (this.currentChannelId) {
+          this.channel = this.channels.find(c => c.publicId === this.currentChannelId);
+        }
       });
 
-      // UNREAD
       this.chat.unread$.subscribe(map => {
         this.unreadMap = map;
       });
@@ -59,7 +66,6 @@ export class ChatComponent {
         );
       });
 
-      // INCOMING MESSAGES
       this.chat.incomingMessage$.subscribe((msg: any) => {
         if (!msg) return;
 
@@ -75,17 +81,21 @@ export class ChatComponent {
         }
 
         this.messages.push(msg);
-        console.log('New message:', msg);
+        this.chat.resetUnread(this.currentChannelId);
         this.scrollToBottom();
       });
 
-      // ROUTE
       this.route.params.subscribe(params => {
         const channelId = params['channelId'];
         if (channelId) this.loadChannel(channelId);
       });
 
     });
+  }
+
+  closeMobileChat(): void {
+    if (!this.workspacePublicId) return;
+    this.router.navigate(['/workspace', this.workspacePublicId, 'chat']);
   }
 
   onTyping() {
@@ -98,24 +108,15 @@ export class ChatComponent {
     }, 1000);
   }
 
-  // =========================
-  // LOAD CHANNEL
-  // =========================
-
   loadChannel(channelId: string) {
-
     this.messages = [];
     this.currentChannelId = channelId;
-
-    this.chat.joinChannel(channelId);
-
-    // reset unread
-    this.chat.resetUnread(channelId);
-
-    // set channel
     this.channel = this.channels.find(c => c.publicId === channelId);
 
-    // load messages (cached)
+    this.chat.joinChannel(channelId).finally(() => {
+      this.chat.resetUnread(channelId);
+    });
+
     this.chat.getMessages(channelId).subscribe((msgs: any) => {
       const cached = this.chat.getCachedMessages?.(channelId);
 
@@ -125,20 +126,16 @@ export class ChatComponent {
     });
   }
 
-  // =========================
-  // SEND MESSAGE
-  // =========================
-
   sendMessage() {
     if (!this.messageInput.trim()) return;
 
-    this.chat.sendMessage(this.currentChannelId, this.messageInput);
+    const content = this.messageInput;
     this.messageInput = '';
-  }
 
-  // =========================
-  // UI HELPERS
-  // =========================
+    this.chat.sendMessage(this.currentChannelId, content).finally(() => {
+      this.chat.resetUnread(this.currentChannelId);
+    });
+  }
 
   scrollToBottom() {
     setTimeout(() => {

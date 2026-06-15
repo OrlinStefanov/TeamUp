@@ -33,6 +33,11 @@ namespace TeamUpBackEnd.Extensions
 
 			if (!channel.IsPrivate)
 			{
+				var isWorkspaceMember = await _db.WorkspaceMembers
+					.AnyAsync(m => m.WorkspaceId == channel.WorkspaceId && m.UserId == userId);
+
+				if (!isWorkspaceMember) return;
+
 				await Groups.AddToGroupAsync(Context.ConnectionId, channelId);
 			}
 			else
@@ -43,16 +48,7 @@ namespace TeamUpBackEnd.Extensions
 				await Groups.AddToGroupAsync(Context.ConnectionId, channelId);
 			}
 
-			var member = await _db.ChannelMembers
-				.FirstOrDefaultAsync(m =>
-					m.ChannelId == channel.Id &&
-					m.UserId == userId);
-
-			if (member != null)
-			{
-				member.LastSeen = DateTime.UtcNow;
-				await _db.SaveChangesAsync();
-			}
+			await UpsertChannelLastSeenAsync(channel, userId);
 		}
 
 		// LEAVE CHANNEL
@@ -166,16 +162,47 @@ namespace TeamUpBackEnd.Extensions
 
 			if (channel == null) return;
 
+			if (channel.IsPrivate)
+			{
+				var isChannelMember = await _db.ChannelMembers
+					.AnyAsync(m => m.ChannelId == channel.Id && m.UserId == userId);
+
+				if (!isChannelMember) return;
+			}
+			else
+			{
+				var isWorkspaceMember = await _db.WorkspaceMembers
+					.AnyAsync(m => m.WorkspaceId == channel.WorkspaceId && m.UserId == userId);
+
+				if (!isWorkspaceMember) return;
+			}
+
+			await UpsertChannelLastSeenAsync(channel, userId);
+		}
+
+		private async Task UpsertChannelLastSeenAsync(Channel channel, string userId)
+		{
 			var member = await _db.ChannelMembers
 				.FirstOrDefaultAsync(m =>
 					m.ChannelId == channel.Id &&
 					m.UserId == userId);
 
-			if (member != null)
+			if (member == null)
+			{
+				member = new ChannelMember
+				{
+					ChannelId = channel.Id,
+					UserId = userId,
+					LastSeen = DateTime.UtcNow
+				};
+				_db.ChannelMembers.Add(member);
+			}
+			else
 			{
 				member.LastSeen = DateTime.UtcNow;
-				await _db.SaveChangesAsync();
 			}
+
+			await _db.SaveChangesAsync();
 		}
 	}
 }

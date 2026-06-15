@@ -24,12 +24,16 @@ export interface InboxResponse {
   page: number;
   pageSize: number;
   unreadCount: number;
+  taskUnreadCount: number;
+  memberUnreadCount: number;
   messages: InboxMessage[];
 }
 
 export interface InboxState {
   messages: InboxMessage[];
   unreadCount: number;
+  taskUnreadCount: number;
+  memberUnreadCount: number;
   currentPage: number;
   isLoading: boolean;
   error: string | null;
@@ -50,6 +54,27 @@ export const getMessageTypeIcon = (type: InboxMessageType): string => {
   };
   return iconMap[type] || 'bell';
 };
+
+export const TASK_INBOX_TYPES: InboxMessageType[] = [
+  InboxMessageType.TaskCreated,
+  InboxMessageType.TaskUpdated,
+  InboxMessageType.TaskDeleted,
+  InboxMessageType.TaskStatusChanged,
+  InboxMessageType.TaskAssigned,
+  InboxMessageType.TaskUnassigned,
+];
+
+export const MEMBER_INBOX_TYPES: InboxMessageType[] = [
+  InboxMessageType.MemberAdded,
+  InboxMessageType.MemberRemoved,
+];
+
+export function countUnreadByTypes(
+  messages: InboxMessage[],
+  types: InboxMessageType[]
+): number {
+  return messages.filter((m) => !m.isRead && types.includes(m.type)).length;
+}
 
 export const getMessageTypeColor = (type: InboxMessageType): string => {
   const colorMap: Record<InboxMessageType, string> = {

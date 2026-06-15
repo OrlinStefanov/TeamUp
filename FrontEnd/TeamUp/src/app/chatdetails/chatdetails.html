@@ -1,5 +1,5 @@
 <section class="workspace-chat-shell" [ngClass]="{'dark-mode': isDarkMode$ | async, 'light-mode': !(isDarkMode$ | async)}">
-  <aside class="channel-list-panel">
+  <aside class="channel-list-panel" [class.mobile-hidden]="isMobileChatOpen">
     <div class="channel-list-header">
       <p>Channels</p>
       <button class="icon-btn add-channel-btn" type="button" aria-label="Create channel" (click)="openCreateChannelModal()">
@@ -48,7 +48,7 @@
     </nav>
   </aside>
 
-  <main class="workspace-chat-content">
+  <main class="workspace-chat-content" [class.mobile-open]="isMobileChatOpen">
     <router-outlet></router-outlet>
   </main>
 </section>

@@ -204,3 +204,72 @@
   color: #7c3aed;
   min-width: 30px;
 }
+
+@media (max-width: 767.98px) {
+  .container-fluid {
+    padding: 0 12px;
+  }
+
+  .leaderboard-stats .col-md-4 {
+    flex: 0 0 100%;
+    max-width: 100%;
+    margin-bottom: 12px;
+  }
+
+  .podium-container {
+    min-height: 320px;
+    padding: 24px 12px 16px;
+    gap: 12px;
+    overflow-x: auto;
+    justify-content: flex-start;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .podium-first .podium-card {
+    width: 160px;
+    min-height: 260px;
+  }
+
+  .podium-second .podium-card,
+  .podium-third .podium-card {
+    width: 130px;
+    min-height: 220px;
+  }
+
+  .podium-avatar,
+  .podium-avatar-placeholder {
+    width: 64px;
+    height: 64px;
+    font-size: 22px;
+  }
+
+  .podium-medal {
+    font-size: 28px;
+  }
+
+  .podium-name {
+    font-size: 14px;
+  }
+
+  .podium-points {
+    font-size: 17px;
+  }
+}
+
+@media (max-width: 480px) {
+  .podium-container {
+    min-height: 280px;
+    gap: 8px;
+  }
+
+  .podium-first .podium-card {
+    width: 140px;
+    min-height: 230px;
+  }
+
+  .podium-second .podium-card,
+  .podium-third .podium-card {
+    width: 115px;
+    min-height: 200px;
+  }
+}

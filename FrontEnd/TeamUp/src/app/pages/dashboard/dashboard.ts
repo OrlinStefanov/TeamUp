@@ -1,11 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { Auth } from '../../services/auth/auth';
 import { FormsModule } from '@angular/forms';
 import { Workspace, WorkspaceMember } from '../../services/auth/auth-types';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { map, Observable } from 'rxjs';
-import { CdkDragPlaceholder } from "@angular/cdk/drag-drop";
+import { forkJoin, map, Observable } from 'rxjs';
 import { InboxService } from '../../services/inbox.service';
 
 @Component({
@@ -61,10 +60,13 @@ export class Dashboard implements OnInit {
   editInviteInput = '';
   editMembers: any[] = [];
   
-  //inbox messages
-  inboxUnreadCounts = new Map<string, number>(); 
+  inboxUnreadCounts: Record<string, number> = {};
 
-  constructor(private auth: Auth, private inboxService: InboxService) {}
+  constructor(
+    private auth: Auth,
+    private inboxService: InboxService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   myWorkspaces$!: Observable<any[]>;
   otherWorkspaces$!: Observable<any[]>;
@@ -88,24 +90,31 @@ export class Dashboard implements OnInit {
       map(workspaces => (workspaces || []).filter(w => w.ownerId !== this.currentUserId))
     );
 
-  this.auth.getWorkspaces().subscribe(workspaces => {
-      if (!workspaces) return;
+    this.auth.getWorkspaces().subscribe(workspaces => {
+      if (!workspaces?.length) return;
+      this.loadInboxUnreadCounts(workspaces);
+    });
+  }
 
-      for (const workspace of workspaces) {
-        this.inboxService.setWorkspace(workspace.publicId);
-        this.inboxService.getInboxMessages(1).subscribe(response => {
-          this.inboxUnreadCounts.set(workspace.publicId, response.unreadCount);
-        });
-      }
-    });      
+  private loadInboxUnreadCounts(workspaces: any[]) {
+    const requests = workspaces.map(workspace =>
+      this.inboxService.getInboxMessagesForWorkspace(workspace.publicId, 1).pipe(
+        map(response => ({ publicId: workspace.publicId, unreadCount: response.unreadCount }))
+      )
+    );
+
+    forkJoin(requests).subscribe(results => {
+      const counts: Record<string, number> = {};
+      results.forEach(result => {
+        counts[result.publicId] = result.unreadCount;
+      });
+      this.inboxUnreadCounts = counts;
+      this.cdr.markForCheck();
+    });
   }
 
   inboxUnreadCount(workspace: any): number {
-    return this.inboxUnreadCounts.get(workspace.publicId) ?? 0;
-  }
-
-  inboxUnreadCount(workspace: any): number {
-    return workspace?.unreadCount || workspace?.inboxCount || 0;
+    return this.inboxUnreadCounts[workspace.publicId] ?? 0;
   }
 
   totalUnreadCount(workspaces: any[]): number {

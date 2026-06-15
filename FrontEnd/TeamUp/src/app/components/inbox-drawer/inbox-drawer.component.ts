@@ -14,11 +14,18 @@ import { takeUntil } from 'rxjs/operators';
     <div class="inbox-drawer" [class.open]="isOpen">
       <div class="inbox-drawer-header">
         <h5 class="mb-0">Workspace Inbox</h5>
-        <button class="btn-close" type="button" (click)="closeDrawer()">
+        <div class="inbox-header-actions">
+          @if (state.messages.length > 0) {
+            <button class="btn-clear-all" type="button" title="Clear all" (click)="discardAll()">
+              Clear all
+            </button>
+          }
+          <button class="btn-close" type="button" (click)="closeDrawer()">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
             <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
           </svg>
         </button>
+        </div>
       </div>
 
       <div class="inbox-drawer-content">
@@ -51,6 +58,13 @@ import { takeUntil } from 'rxjs/operators';
                   <p class="message-body">{{ message.body }}</p>
                   <small class="message-time">{{ formatTime(message.createdAt) }}</small>
                 </div>
+                <button
+                  class="btn-discard"
+                  type="button"
+                  title="Discard"
+                  (click)="discardMessage(message, $event)">
+                  ×
+                </button>
                 @if (!message.isRead) {
                   <div class="unread-indicator"></div>
                 }
@@ -133,6 +147,26 @@ import { takeUntil } from 'rxjs/operators';
       flex-shrink: 0;
     }
 
+    .inbox-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .btn-clear-all {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      font-size: 0.8rem;
+      color: var(--text-muted, #6c757d);
+      transition: color 0.2s ease;
+    }
+
+    .btn-clear-all:hover {
+      color: var(--text-danger, #dc3545);
+    }
+
     .inbox-drawer-header h5 {
       font-weight: 600;
       margin: 0;
@@ -193,7 +227,7 @@ import { takeUntil } from 'rxjs/operators';
       background-color: var(--bg-light, #f8f9fa);
       border-left: 3px solid transparent;
       transition: background-color 0.2s ease, border-color 0.2s ease;
-      cursor: pointer;
+      position: relative;
     }
 
     .message-item:hover {
@@ -280,6 +314,29 @@ import { takeUntil } from 'rxjs/operators';
       margin-top: 0.5rem;
     }
 
+    .btn-discard {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      width: 20px;
+      height: 20px;
+      line-height: 1;
+      font-size: 1.1rem;
+      color: var(--text-muted, #999);
+      flex-shrink: 0;
+      opacity: 0;
+      transition: opacity 0.2s ease, color 0.2s ease;
+    }
+
+    .message-item:hover .btn-discard {
+      opacity: 1;
+    }
+
+    .btn-discard:hover {
+      color: var(--text-danger, #dc3545);
+    }
+
     .alert-sm {
       padding: 0.5rem 0.75rem;
       font-size: 0.85rem;
@@ -317,6 +374,8 @@ export class InboxDrawerComponent implements OnInit, OnDestroy {
   state: InboxState = {
     messages: [],
     unreadCount: 0,
+    taskUnreadCount: 0,
+    memberUnreadCount: 0,
     currentPage: 1,
     isLoading: false,
     error: null,
@@ -347,6 +406,15 @@ export class InboxDrawerComponent implements OnInit, OnDestroy {
   loadMore(): void {
     const nextPage = this.state.currentPage + 1;
     this.inboxService.getInboxMessages(nextPage).subscribe();
+  }
+
+  discardMessage(message: InboxMessage, event: Event): void {
+    event.stopPropagation();
+    this.inboxService.discardMessage(message.publicId).subscribe();
+  }
+
+  discardAll(): void {
+    this.inboxService.discardAllMessages().subscribe();
   }
 
   formatTime(createdAt: string): string {

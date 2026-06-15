@@ -1543,7 +1543,7 @@ namespace TeamUpBackEnd.Extensions
 				Console.WriteLine("🔥 Sending taskCreated event");
 
 				await hb.Clients
-					.Group(task.WorkSpace!.PublicId.ToString())
+					.Group(workspace.PublicId.ToString())
 					.SendAsync("taskCreated", new
 					{
 						task.PublicId,
@@ -1683,6 +1683,7 @@ namespace TeamUpBackEnd.Extensions
 					task.Description = dto.Description;
 
 				task.StartDate = dto.StartDate;
+				task.DueDate = dto.DueDate;
 				task.Points = dto.Points;
 
 				if (task.Points == 0)
@@ -1772,6 +1773,20 @@ namespace TeamUpBackEnd.Extensions
 					);
 				}
 
+				await hub.Clients
+					.Group(task.WorkSpace.PublicId.ToString())
+					.SendAsync("taskUpdated", new
+					{
+						task.PublicId,
+						task.Title,
+						task.Description,
+						task.DueDate,
+						task.StartDate,
+						task.Points,
+						status = task.Status.ToString(),
+						Difficulty = task.Difficulty
+					});
+
 				return Results.Ok(new
 				{
 					message = "Task updated successfully",
@@ -1857,7 +1872,7 @@ namespace TeamUpBackEnd.Extensions
 						.SendAsync("taskStatusChanged", new
 						{
 							task.PublicId,
-							Status = task.Status.ToString()
+							status = task.Status.ToString()
 						});
 
 					await InboxHelper.SendInboxMessageAsync(
@@ -1877,6 +1892,59 @@ namespace TeamUpBackEnd.Extensions
 				}
 
 			}).RequireAuthorization().WithSummary("Change task status").WithTags("Task Management");
+
+			//give a few days more to a overdue task
+			app.MapPut("/task/status/overdue/{taskId}", async (AppDbContext db, ClaimsPrincipal userClaims, string taskId, IHubContext<TaskHub> hub) =>
+			{
+				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
+
+				if (userId is null) return Results.BadRequest("User id not found");
+
+				var task = await db.Tasks
+					.Include(t => t.Assignments)
+					.Include(t => t.WorkSpace)
+					.FirstOrDefaultAsync(t => t.PublicId.ToString() == taskId && t.IsDeleted == false);
+
+				if (task is null) return Results.BadRequest("Task not found");
+
+				if (task.WorkSpace!.OwnerId != userId && !task.Assignments!.Any(t => t.UserId == userId))
+					return Results.Forbid();
+
+				var isOverdue = task.DueDate < DateTime.UtcNow && task.Status != TasksStatus.Done;
+				if (!isOverdue)
+					return Results.BadRequest("Task is not overdue");
+
+				task.DueDate = task.DueDate!.Value.AddDays(3);
+				task.Status = TasksStatus.ToDo;
+
+				await db.SaveChangesAsync();
+
+				await hub.Clients
+					.Group(task.WorkSpace.PublicId.ToString())
+					.SendAsync("taskUpdated", new
+					{
+						task.PublicId,
+						DueDate = task.DueDate,
+						status = "ToDo"
+					});
+
+				await InboxHelper.SendInboxMessageAsync(
+					db, hub,
+					task.WorkSpaceId,
+					task.WorkSpace.PublicId.ToString(),
+					InboxMessageType.TaskUpdated,
+					"Task Extended",
+					$"Task \"{task.Title}\" due date was extended by 3 days"
+				);
+
+				return Results.Ok(new
+				{
+					task.PublicId,
+					task.DueDate,
+					status = "ToDo"
+				});
+
+			}).RequireAuthorization().WithSummary("Give a few days more to a overdue task").WithTags("Task Management");
 		}
 
 		private const string DefaultPointsWebhookUrl = "http://localhost:5678/webhook/e5d4d98f-879e-474d-9a7b-0d4ccf91d728";

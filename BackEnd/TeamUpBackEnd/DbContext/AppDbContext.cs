@@ -39,6 +39,7 @@ namespace TeamUpBackEnd.DbContext
 		// Add these two DbSets alongside the other workspace-related ones
 		public DbSet<WorkspaceInboxMessage> WorkspaceInboxMessages { get; set; }
 		public DbSet<WorkspaceInboxLastSeen> WorkspaceInboxLastSeen { get; set; }
+		public DbSet<WorkspaceInboxDismissed> WorkspaceInboxDismissed { get; set; }
 
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
 		{
@@ -261,6 +262,31 @@ namespace TeamUpBackEnd.DbContext
 				.WithMany()
 				.HasForeignKey(ls => ls.UserId)
 				.OnDelete(DeleteBehavior.Cascade);
+
+			// WorkspaceInboxDismissed
+			modelBuilder.Entity<WorkspaceInboxDismissed>()
+				.HasKey(d => new { d.WorkspaceId, d.UserId, d.MessageId });
+
+			modelBuilder.Entity<WorkspaceInboxDismissed>()
+				.HasOne(d => d.WorkSpace)
+				.WithMany()
+				.HasForeignKey(d => d.WorkspaceId)
+				.OnDelete(DeleteBehavior.Cascade);
+
+			modelBuilder.Entity<WorkspaceInboxDismissed>()
+				.HasOne(d => d.User)
+				.WithMany()
+				.HasForeignKey(d => d.UserId)
+				.OnDelete(DeleteBehavior.Cascade);
+
+			modelBuilder.Entity<WorkspaceInboxDismissed>()
+				.HasOne(d => d.Message)
+				.WithMany()
+				.HasForeignKey(d => d.MessageId)
+				.OnDelete(DeleteBehavior.Cascade);
+
+			modelBuilder.Entity<WorkspaceInboxDismissed>()
+				.HasIndex(d => new { d.WorkspaceId, d.UserId });
 		}
 	}
 }

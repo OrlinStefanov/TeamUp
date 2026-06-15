@@ -67,7 +67,8 @@ builder.Services.AddAuthentication(options =>
 
 			if (!string.IsNullOrEmpty(accessToken) &&
 				(path.StartsWithSegments("/chathub") ||
-				 path.StartsWithSegments("/dmhub")))
+				 path.StartsWithSegments("/dmhub") ||
+				 path.StartsWithSegments("/taskhub")))
 			{
 				context.Token = accessToken;
 			}

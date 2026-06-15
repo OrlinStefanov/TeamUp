@@ -1,11 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ChatService } from '../services/chat-services/chat-service';
 import { FormsModule } from '@angular/forms';
 import { Auth } from '../services/auth/auth';
 import { CommonModule } from '@angular/common';
-import { RouterLink, RouterOutlet, ActivatedRoute, RouterModule } from '@angular/router';
+import { RouterLink, RouterOutlet, ActivatedRoute, RouterModule, Router, NavigationEnd } from '@angular/router';
 import { Observable, Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { filter, takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'app-chatdetails',
@@ -19,15 +19,14 @@ import { takeUntil } from 'rxjs/operators';
   templateUrl: './chatdetails.html',
   styleUrl: './chatdetails.css',
 })
-export class Chatdetails {
+export class Chatdetails implements OnInit, OnDestroy {
   channels$!: Observable<any[]>;
   isDarkMode$!: Observable<boolean>;
   channelSearch = '';
+  isMobileChatOpen = false;
 
   workspacePublicId: string = '';
   workspaceId: number = 0;
-
-  selectedWorkspaceId: number = 0;
 
   newChannel = {
     name: '',
@@ -41,11 +40,19 @@ export class Chatdetails {
   constructor(
     private chat: ChatService,
     private auth: Auth,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private router: Router
   ) {}
 
   ngOnInit() {
     this.isDarkMode$ = this.auth.darkMode$;
+
+    this.router.events
+      .pipe(
+        filter((event) => event instanceof NavigationEnd),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(() => this.updateMobileChatState());
 
     this.route.parent?.params.subscribe(params => {
       const publicId = params['id'];
@@ -71,11 +78,17 @@ export class Chatdetails {
           this.unreadMap = map;
         });
     });
+
+    this.updateMobileChatState();
   }
 
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  private updateMobileChatState(): void {
+    this.isMobileChatOpen = /\/chat\/[^/]+/.test(this.router.url);
   }
 
   initChannels() {

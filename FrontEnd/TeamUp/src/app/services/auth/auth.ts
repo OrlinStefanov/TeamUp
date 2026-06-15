@@ -275,6 +275,25 @@ export class Auth {
     })
   }
 
+  editTask(taskId: string, payload: any) {
+    return this.http.put(`${this.apiUrl}/edit/tasks/${taskId}`, payload, {
+      withCredentials: true,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+
+  extendOverdueTask(taskId: string) {
+    return this.http.put(`${this.apiUrl}/task/status/overdue/${taskId}`, {}, {
+      withCredentials: true,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+
+  invalidateWorkspaceTasks(workspaceId: string) {
+    this.tasksCache.delete(workspaceId);
+    this.taskRequests.delete(workspaceId);
+  }
+
   getLeaderboard(workspaceId : string)
   {
     return this.http.get(`${this.apiUrl}/leaderboard/${workspaceId}`, {

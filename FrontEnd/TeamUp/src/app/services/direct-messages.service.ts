@@ -44,14 +44,6 @@ export interface DmMessage {
   };
 }
 
-export interface UserSearchResult {
-  id: string;
-  userName: string;
-  email?: string;
-  phoneNumber?: string;
-  profilePictureUrl?: string;
-}
-
 @Injectable({ providedIn: 'root' })
 
 export class DirectMessagesService {
@@ -96,19 +88,12 @@ export class DirectMessagesService {
     );
   }
 
-  resetConversationUnread(conversationId: string) {
+  resetConversationUnread(conversationPublicId: string) {
     const current = this.unreadSubject.value;
-    const count = current[conversationId] || 0;
+    const count = current[conversationPublicId] || 0;
     if (count === 0) return;
-    this.unreadSubject.next({ ...current, [conversationId]: 0 });
+    this.unreadSubject.next({ ...current, [conversationPublicId]: 0 });
     this.totalUnreadSubject.next(Math.max(0, this.totalUnreadSubject.value - count));
-  }
-
-  searchUsers(query: string): Observable<UserSearchResult[]> {
-    return this.http.get<UserSearchResult[]>(
-      `${this.apiUrl}/api/users/search?q=${encodeURIComponent(query)}`,
-      { withCredentials: true }
-    );
   }
 
   startDirectMessage(identifiers: string[], title?: string | null, isGroup?: boolean) {
@@ -138,25 +123,22 @@ export class DirectMessagesService {
     );
   }
 
-/*  searchUsers(
+  searchUsersInConversation(
     conversationPublicId: string,
     query: string
   ): Observable<UserSearchResult[]> {
-
-    if (!query.trim()) {
+    if (!query.trim() || query.trim().length < 3) {
       return of([]);
     }
 
     return this.http.get<UserSearchResult[]>(
       `${this.apiUrl}/api/direct-messages/${conversationPublicId}/search-users`,
       {
-        params: {
-          q: query
-        },
+        params: { q: query },
         withCredentials: true
       }
     );
-  }*/
+  }
 
   leaveConversationApi(conversationPublicId: string) {
     return this.http.delete<any>(`${this.apiUrl}/api/direct-messages/${conversationPublicId}/leave`, {

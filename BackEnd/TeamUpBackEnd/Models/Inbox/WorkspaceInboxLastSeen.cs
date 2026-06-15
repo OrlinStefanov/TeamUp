@@ -11,5 +11,9 @@ namespace TeamUpBackEnd.Models.Inbox
 		public ApplicationUser? User { get; set; }
 
 		public DateTime LastSeen { get; set; } = DateTime.UtcNow;
+
+		public DateTime TaskLastSeen { get; set; } = DateTime.MinValue;
+
+		public DateTime MemberLastSeen { get; set; } = DateTime.MinValue;
 	}
 }

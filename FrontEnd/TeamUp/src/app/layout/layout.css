@@ -273,6 +273,69 @@
 .content.dark-mode { background: #0f0f14; color: #f5f5f5; }
 .content.light-mode { background: #f5f5f5; color: #111; }
 
+.content-wrapper:has(app-personal-dms) {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.content:has(app-personal-dms) {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+app-personal-dms {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.content-wrapper:has(app-workspace-detail.workspace-chat-route) {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.content:has(app-workspace-detail.workspace-chat-route) {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+app-workspace-detail.workspace-chat-route {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+app-workspace-detail.workspace-chat-route .workspace-content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0;
+}
+
+app-chatdetails {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
 .desktop-menu-btn,
 .menu-toggle,
 .close-btn {
@@ -395,10 +458,6 @@
     padding: 16px;
   }
 
-  .menu-toggle {
-    margin-left: 0;
-  }
-
   /* on mobile the row should not be height-locked */
   .row.g-0 {
     height: auto;
@@ -408,6 +467,34 @@
   .content-wrapper {
     height: auto;
     overflow-y: visible;
+  }
+
+  .content-wrapper:has(app-personal-dms) {
+    height: 100dvh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .content:has(app-personal-dms) {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    padding: 0;
+  }
+
+  .content-wrapper:has(app-workspace-detail.workspace-chat-route) {
+    height: 100dvh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .content:has(app-workspace-detail.workspace-chat-route) {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    padding: 0;
   }
 }
 

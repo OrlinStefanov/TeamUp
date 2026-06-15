@@ -1,12 +1,16 @@
 :host {
-  display: block;
-  height: calc(100vh - 132px);
-  min-height: 420px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
 }
 
 .workspace-chat-shell {
-  height: 100%;
+  flex: 1;
   min-height: 0;
+  height: 100%;
   display: grid;
   grid-template-columns: minmax(280px, 22vw) minmax(0, 1fr);
   overflow: hidden;
@@ -22,7 +26,10 @@
 .channel-list-panel {
   min-width: 0;
   min-height: 0;
-  overflow-y: auto;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   border-right: 1px solid #dedee8;
   background: #f5f5fa;
 }
@@ -38,6 +45,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 14px 12px 8px;
+  flex-shrink: 0;
 }
 
 .channel-list-header p {
@@ -80,6 +88,7 @@
   border-radius: 9px;
   background: #f2f1f8;
   color: #7d7a8c;
+  flex-shrink: 0;
 }
 
 .dark-mode .channel-filter {
@@ -100,6 +109,9 @@
 .channel-list {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .channel-row {
@@ -187,8 +199,19 @@
 .workspace-chat-content {
   min-width: 0;
   min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
   background: #f6f6fb;
+}
+
+.workspace-chat-content > app-chat-component {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .dark-mode .workspace-chat-content {
@@ -297,79 +320,51 @@
 }
 
 @media (max-width: 900px) {
-  :host {
-    height: calc(100vh - 132px);
-    min-height: 420px;
-  }
-
   .workspace-chat-shell {
-    grid-template-columns: minmax(128px, 36vw) minmax(0, 1fr);
-  }
-
-  .channel-list-header {
-    padding-left: 10px;
-    padding-right: 10px;
-  }
-
-  .channel-filter {
-    margin: 0 10px 12px;
-  }
-
-  .channel-row {
-    grid-template-columns: 30px minmax(0, 1fr);
-    gap: 8px;
-    min-height: 52px;
-    padding: 8px 9px;
-  }
-
-  .channel-avatar {
-    width: 30px;
-    height: 30px;
-    font-size: 14px;
-  }
-
-  .channel-copy small {
-    display: none;
-  }
-
-  .channel-unread-badge {
-    grid-column: 2;
-    justify-self: start;
-  }
-}
-
-@media (max-width: 560px) {
-  :host {
-    height: calc(100vh - 214px);
-    min-height: 360px;
-  }
-
-  .workspace-chat-shell {
-    grid-template-columns: 96px minmax(0, 1fr);
-  }
-
-  .channel-list-header p,
-  .channel-filter input,
-  .channel-copy strong {
-    font-size: 11px;
-  }
-
-  .channel-filter {
-    padding: 0 8px;
-  }
-
-  .channel-filter svg {
-    display: none;
-  }
-
-  .channel-row {
+    height: 100%;
+    min-height: 0;
     grid-template-columns: 1fr;
-    justify-items: center;
-    text-align: center;
+    overflow: hidden;
   }
 
-  .channel-copy {
-    width: 100%;
-    align-items: center;
+  .channel-list-panel {
+    border-right: 0;
+    height: 100%;
+    overflow: hidden;
+    background: #f5f5fa;
+  }
+
+  .workspace-chat-shell.dark-mode .channel-list-panel {
+    background: #14141b;
+  }
+
+  .workspace-chat-content {
+    display: none;
+    min-height: 0;
+    height: 100%;
+    overflow: hidden;
+    background: #f6f6fb;
+  }
+
+  .workspace-chat-shell.dark-mode .workspace-chat-content {
+    background: #101018;
+  }
+
+  .channel-row.active-channel {
+    background: transparent;
+    border-left-color: transparent;
+  }
+
+  .dark-mode .channel-row.active-channel {
+    background: transparent;
+  }
+
+  .channel-list-panel.mobile-hidden {
+    display: none;
+  }
+
+  .workspace-chat-content.mobile-open {
+    display: flex;
+    flex-direction: column;
   }
 }
