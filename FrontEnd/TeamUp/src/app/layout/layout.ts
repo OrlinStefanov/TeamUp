@@ -25,6 +25,7 @@ export class Layout implements OnInit {
 
   showCreateWorkspace = false;
   showJoinWorkspace = false;
+  createModalMode: 'create' | 'join' = 'create';
 
   workspace: Workspace = {
     title: '',
@@ -130,10 +131,12 @@ export class Layout implements OnInit {
 
   openCreateWorkspace() {
     this.showCreateWorkspace = true;
+    this.createModalMode = 'create';
   }
 
   closeCreateWorkspace() {
     this.showCreateWorkspace = false;
+    this.createModalMode = 'create';
     this.workspace = { title: '', description: '', ownerId: '', members: [] };
     this.invitedMembers = [];
     this.inviteInput = '';
@@ -162,7 +165,8 @@ export class Layout implements OnInit {
   }
 
   openJoinWorkspace() {
-    this.showJoinWorkspace = true;
+    this.showCreateWorkspace = true;
+    this.createModalMode = 'join';
   }
 
   closeJoinWorkspace() {
@@ -218,7 +222,7 @@ export class Layout implements OnInit {
       workspaceLink: '',
     };
 
-    this.closeJoinWorkspace();
+    this.closeCreateWorkspace();
   }
 
   onInviteInputChange(value: string) {

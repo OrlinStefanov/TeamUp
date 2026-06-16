@@ -655,7 +655,7 @@ button.workspace-item.workspace-action-btn {
 .joinWorkspace-box {
   width: 100%;
   max-width: 460px;
-  border-radius: 14px;
+  border-radius: 12px;
   overflow: hidden;
 }
 
@@ -712,18 +712,16 @@ button.workspace-item.workspace-action-btn {
 
 .createWorkspace-overlay.light-mode .createWorkspace-box,
 .joinWorkspace-overlay.light-mode .joinWorkspace-box {
-  background:
-    linear-gradient(rgba(168, 85, 247, 0.5) 0px, #f7f7f7 0px),
-    linear-gradient(90deg, rgba(168, 85, 247, 0.5) 0px, #f7f7f7 0px);
-  background-size: 50px 50px;
-  color: #1a1a2e;
+  background: #fbfbfd;
+  border: 1px solid #dcd9e7;
+  color: #26232d;
 }
 
 .createWorkspace-overlay.dark-mode .createWorkspace-box,
 .joinWorkspace-overlay.dark-mode .joinWorkspace-box {
-  background: #111;
-  color: #f0eeff;
-  border: 1px solid #2a2a3a;
+  background: #17171f;
+  color: #f5f2ff;
+  border: 1px solid #363345;
 }
 
 .header-row,
@@ -739,7 +737,7 @@ button.workspace-item.workspace-action-btn {
 .joinWorkspace-overlay.dark-mode .header-row,
 .createWorkspace-overlay.dark-mode .join-header,
 .joinWorkspace-overlay.dark-mode .join-header {
-  border-bottom: 1px solid #1e1e2e;
+  border-bottom: 1px solid #363345;
 }
 
 .createWorkspace-overlay.light-mode .header-row,
@@ -789,11 +787,13 @@ button.workspace-item.workspace-action-btn {
 }
 
 .createWorkspace-overlay.dark-mode .createWorkspace-actions,
+.createWorkspace-overlay.dark-mode .joinWorkspace-actions,
 .joinWorkspace-overlay.dark-mode .joinWorkspace-actions {
-  border-top: 1px solid #1e1e2e;
+  border-top: 1px solid #363345;
 }
 
 .createWorkspace-overlay.light-mode .createWorkspace-actions,
+.createWorkspace-overlay.light-mode .joinWorkspace-actions,
 .joinWorkspace-overlay.light-mode .joinWorkspace-actions {
   border-top: 1px solid #ebebf5;
 }
@@ -808,6 +808,108 @@ button.workspace-item.workspace-action-btn {
 
 .btn-cancel:hover {
   color: red;
+}
+
+.createWorkspace-overlay.light-mode .form-control,
+.createWorkspace-overlay.light-mode .tm-input,
+.joinWorkspace-overlay.light-mode .form-control,
+.joinWorkspace-overlay.light-mode .tm-input {
+  background: #fff;
+  border-color: rgba(124, 58, 237, 0.28);
+  color: #26232d;
+}
+
+.createWorkspace-overlay.dark-mode .form-control,
+.createWorkspace-overlay.dark-mode .tm-input,
+.joinWorkspace-overlay.dark-mode .form-control,
+.joinWorkspace-overlay.dark-mode .tm-input {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: #3a3a4e;
+  color: #f5f2ff;
+}
+
+.tm-field label,
+.tm-label {
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  display: block;
+}
+
+.create-workspace-modal .tm-title {
+  font-size: 26px;
+}
+
+/* Combined create/join modal tabs */
+.workspace-mode-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 16px 30px 0;
+}
+
+.workspace-mode-tabs button {
+  min-height: 42px;
+  border: 1px solid rgba(166, 75, 251, 0.25);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  font-weight: 700;
+  font-family: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.workspace-mode-tabs button.active {
+  background: rgba(166, 75, 251, 0.18);
+  border-color: #7c3aed;
+  color: #7c3aed;
+}
+
+.createWorkspace-overlay.light-mode .workspace-mode-tabs button {
+  background: rgba(124, 58, 237, 0.04);
+  color: #5a5670;
+}
+
+.createWorkspace-overlay.light-mode .workspace-mode-tabs button.active {
+  background: rgba(124, 58, 237, 0.12);
+  border-color: #7c3aed;
+  color: #7c3aed;
+}
+
+.create-workspace-join-section {
+  padding: 16px 30px 24px;
+  flex: 0 0 auto;
+}
+
+.create-workspace-join-section .form-group {
+  margin-bottom: 12px;
+}
+
+.create-workspace-join-section .joinWorkspace-actions {
+  padding: 14px 0 0;
+}
+
+.create-workspace-join-section .separator-line {
+  flex: 1;
+  height: 1px;
+  background-color: #7c3aed;
+  opacity: 0.9;
+}
+
+.create-workspace-join-section .separator-text {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* Width override for the wider combined modal */
+.create-workspace-modal form {
+  width: min(576px, 100%);
+}
+
+.create-workspace-modal .createWorkspace-box {
+  max-width: 576px;
 }
 
 .createWorkspace-overlay .suggestions-dropdown {

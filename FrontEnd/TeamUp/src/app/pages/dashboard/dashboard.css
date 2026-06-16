@@ -463,7 +463,7 @@
   width: 100%;
   max-width: 460px;
   max-height: calc(100vh - 32px);
-  border-radius: 14px;
+  border-radius: 12px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -531,18 +531,16 @@
 
 .createWorkspace-overlay.light-mode .createWorkspace-box,
 .joinWorkspace-overlay.light-mode .joinWorkspace-box {
-  background:
-    linear-gradient(rgba(168,85,247,0.5) 0px, #f7f7f7 0px),
-    linear-gradient(90deg, rgba(168,85,247,0.5) 0px, #f7f7f7 0px);
-  background-size: 50px 50px;
-  color: #1a1a2e;
+  background: #fbfbfd;
+  color: #26232d;
+  border: 1px solid #dcd9e7;
 }
 
 .createWorkspace-overlay.dark-mode .createWorkspace-box,
 .joinWorkspace-overlay.dark-mode .joinWorkspace-box {
-  background: #111;
-  color: #f0eeff;
-  border: 1px solid #2a2a3a;
+  background: #17171f;
+  color: #f5f2ff;
+  border: 1px solid #363345;
 }
 
 .header-row,
@@ -570,7 +568,7 @@
 
 .dark-mode .header-row,
 .dark-mode .join-header {
-  border-bottom: 1px solid #1e1e2e;
+  border-bottom: 1px solid #363345;
 }
 
 .tm-body {
@@ -699,7 +697,7 @@
 
 .dark-mode .createWorkspace-actions,
 .dark-mode .joinWorkspace-actions {
-  border-top: 1px solid #1e1e2e;
+  border-top: 1px solid #363345;
 }
 
 .create-workspace-join-section {
@@ -933,12 +931,6 @@
 
 .dropdown-menu {
   color: #333;
-}
-
-.createWorkspace-overlay.dark-mode .dropdown-menu {
-  background: #222;
-  color: #f0eeff;
-  cursor: pointer;
 }
 
 .bi-shield {
@@ -1565,14 +1557,6 @@
   color: #fff;
 }
 
-.createWorkspace-overlay.light-mode .suggestions-dropdown {
-  background: #fff;
-  color: #1a1a2e;
-}
-
-.createWorkspace-overlay.light-mode .suggestions-dropdown li:hover {
-  background: #f3eefc;
-}
 
 .createWorkspace-actions .btn-primary,
 .joinWorkspace-actions .btn-primary {
@@ -1720,7 +1704,7 @@
 
 .deleteWorkspace-box,
 .createWorkspace-overlay .createWorkspace-box {
-  border-radius: 8px;
+  border-radius: 12px;
 }
 
 @media (max-width: 768px) {
@@ -1901,4 +1885,132 @@
     width: 23px;
     height: 23px;
   }
+}
+
+/* ── Form control theming for workspace overlay modals ── */
+.createWorkspace-overlay.light-mode .form-control,
+.createWorkspace-overlay.light-mode .tm-input,
+.joinWorkspace-overlay.light-mode .form-control,
+.joinWorkspace-overlay.light-mode .tm-input {
+  background: #fff;
+  border-color: rgba(124, 58, 237, 0.28);
+  color: #26232d;
+}
+
+.createWorkspace-overlay.light-mode .form-control::placeholder,
+.createWorkspace-overlay.light-mode .tm-input::placeholder,
+.joinWorkspace-overlay.light-mode .form-control::placeholder,
+.joinWorkspace-overlay.light-mode .tm-input::placeholder {
+  color: #9898b8;
+  opacity: 1;
+}
+
+.createWorkspace-overlay.dark-mode .form-control,
+.createWorkspace-overlay.dark-mode .tm-input,
+.joinWorkspace-overlay.dark-mode .form-control,
+.joinWorkspace-overlay.dark-mode .tm-input {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: #3a3a4e;
+  color: #f5f2ff;
+}
+
+.createWorkspace-overlay.dark-mode .form-control::placeholder,
+.createWorkspace-overlay.dark-mode .tm-input::placeholder,
+.joinWorkspace-overlay.dark-mode .form-control::placeholder,
+.joinWorkspace-overlay.dark-mode .tm-input::placeholder {
+  color: #6b6b8a;
+  opacity: 1;
+}
+
+/* Suggestions dropdown */
+.createWorkspace-overlay.dark-mode .suggestions-dropdown {
+  background: #1e1e2a;
+  border-color: #363345;
+  color: #f5f2ff;
+}
+
+.createWorkspace-overlay.dark-mode .suggestions-dropdown li:hover {
+  background: rgba(124, 58, 237, 0.14);
+}
+
+.createWorkspace-overlay.light-mode .suggestions-dropdown {
+  background: #fff;
+  border-color: rgba(124, 58, 237, 0.2);
+  color: #26232d;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.createWorkspace-overlay.light-mode .suggestions-dropdown li:hover {
+  background: #f3eefc;
+}
+
+/* Dropdown menu (role selector) */
+.createWorkspace-overlay.dark-mode .dropdown-menu {
+  background: #1e1e2a;
+  border-color: #363345;
+  color: #f5f2ff;
+}
+
+/* Workspace mode tabs (light mode) */
+.createWorkspace-overlay.light-mode .workspace-mode-tabs button {
+  background: rgba(124, 58, 237, 0.04);
+  color: #5a5670;
+}
+
+.createWorkspace-overlay.light-mode .workspace-mode-tabs button.active {
+  background: rgba(124, 58, 237, 0.1);
+  border-color: #7c3aed;
+  color: #7c3aed;
+}
+
+/* ── Danger button (delete modal) ── */
+.btn-danger {
+  padding: 10px 20px;
+  border: 1px solid rgba(239, 68, 68, 0.45);
+  border-radius: 8px;
+  background: transparent;
+  color: #ef4444;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.btn-danger:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: #ef4444;
+}
+
+/* ── Edit workspace modal ── */
+.edit-workspace-modal form {
+  width: min(520px, 100%);
+}
+
+.edit-workspace-modal .createWorkspace-box {
+  max-width: 520px;
+  border: 1px solid #dcd9e7;
+  border-radius: 12px;
+}
+
+.edit-workspace-modal.light-mode .createWorkspace-box {
+  background: #fbfbfd;
+  color: #26232d;
+}
+
+.edit-workspace-modal.dark-mode .createWorkspace-box {
+  background: #17171f;
+  border-color: #363345;
+  color: #f5f2ff;
+}
+
+.edit-workspace-modal.dark-mode .header-row {
+  border-bottom-color: #363345;
+}
+
+.edit-workspace-modal .createWorkspace-actions,
+.delete-workspace-modal .createWorkspace-actions {
+  justify-content: flex-end;
 }

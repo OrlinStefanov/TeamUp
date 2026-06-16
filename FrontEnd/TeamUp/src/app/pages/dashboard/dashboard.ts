@@ -342,7 +342,8 @@ export class Dashboard implements OnInit, OnDestroy {
   }
 
   openJoinWorkspace() {
-    this.showJoinWorkspace = true;
+    this.showCreateWorkspace = true;
+    this.createModalMode = 'join';
   }
 
   closeJoinWorkspace() {
@@ -399,7 +400,7 @@ export class Dashboard implements OnInit, OnDestroy {
       workspaceLink: ''
     };
 
-    this.closeJoinWorkspace();
+    this.closeCreateWorkspace();
   }
 
   onInviteInputChange(value: string) {
