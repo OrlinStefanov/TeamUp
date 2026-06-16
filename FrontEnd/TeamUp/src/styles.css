@@ -2,6 +2,19 @@ body {
     font-family: "JetBrains Mono", monospace;
 }
 
+/* ── Global page scrollbar ── */
+html:has(.page.dark-mode) { scrollbar-width: thin; scrollbar-color: #2a2a3a transparent; }
+html:has(.page.dark-mode)::-webkit-scrollbar { width: 6px; }
+html:has(.page.dark-mode)::-webkit-scrollbar-track { background: transparent; }
+html:has(.page.dark-mode)::-webkit-scrollbar-thumb { background: #2a2a3a; border-radius: 999px; }
+html:has(.page.dark-mode)::-webkit-scrollbar-thumb:hover { background: #3a3a4e; }
+
+html:has(.page.light-mode) { scrollbar-width: thin; scrollbar-color: #c4b5fd transparent; }
+html:has(.page.light-mode)::-webkit-scrollbar { width: 6px; }
+html:has(.page.light-mode)::-webkit-scrollbar-track { background: transparent; }
+html:has(.page.light-mode)::-webkit-scrollbar-thumb { background: #c4b5fd; border-radius: 999px; }
+html:has(.page.light-mode)::-webkit-scrollbar-thumb:hover { background: #a78bfa; }
+
 .bg-secondary {
     background-color: #3333339a !important;
 }
@@ -116,6 +129,17 @@ body {
 
 /* ── TeamUp unified modals ───────────────────────────────────── */
 
+/* ── Modal entry animations ── */
+@keyframes tuOverlayFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes tuBoxSlideIn {
+  from { opacity: 0; transform: scale(0.97) translateY(-8px); }
+  to   { opacity: 1; transform: none; }
+}
+
 .tu-modal-backdrop,
 .tu-modal-overlay {
   position: fixed;
@@ -127,6 +151,14 @@ body {
   padding: 16px;
   background: rgba(0, 0, 0, 0.72);
   overflow-y: auto;
+  animation: tuOverlayFadeIn 0.18s ease both;
+}
+
+.tu-modal,
+.createWorkspace-box,
+.joinWorkspace-box,
+.confirm-box {
+  animation: tuBoxSlideIn 0.25s cubic-bezier(0.34, 1.15, 0.64, 1) both;
 }
 
 .tu-modal {
@@ -309,6 +341,9 @@ body {
   color: #26232d;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.32);
   overflow: hidden;
+  opacity: 0;
+  transform: scale(0.97) translateY(-6px);
+  transition: opacity 0.2s ease, transform 0.26s cubic-bezier(0.34, 1.15, 0.64, 1);
 }
 
 .modal.tu-modal-shell.dark-mode .modal-content,
@@ -316,6 +351,11 @@ body {
   background: #17171f;
   color: #f5f2ff;
   border-color: #363345;
+}
+
+.modal.tu-modal-shell.show .modal-content {
+  opacity: 1;
+  transform: none;
 }
 
 .modal.tu-modal-shell .modal-header {
@@ -340,6 +380,12 @@ body {
   max-height: min(60vh, 520px);
   overflow-y: auto;
 }
+
+.modal.tu-modal-shell .modal-body::-webkit-scrollbar { width: 4px; }
+.modal.tu-modal-shell .modal-body::-webkit-scrollbar-track { background: transparent; }
+.modal.tu-modal-shell.dark-mode .modal-body::-webkit-scrollbar-thumb { background: #2a2a3a; border-radius: 4px; }
+.modal.tu-modal-shell.light-mode .modal-body::-webkit-scrollbar-thumb,
+.modal.tu-modal-shell .modal-body::-webkit-scrollbar-thumb { background: #e0dff0; border-radius: 4px; }
 
 .modal.tu-modal-shell .modal-footer {
   padding: 12px 20px 16px;
@@ -418,12 +464,20 @@ body {
   color: #26232d;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.32);
   overflow: hidden;
+  opacity: 0;
+  transform: scale(0.97) translateY(-6px);
+  transition: opacity 0.2s ease, transform 0.26s cubic-bezier(0.34, 1.15, 0.64, 1);
 }
 
 .modal.tu-modal-shell .modal-dialog > .tm-box.dark-mode {
   background: #17171f;
   color: #f5f2ff;
   border-color: #363345;
+}
+
+.modal.tu-modal-shell.show .modal-dialog > .tm-box {
+  opacity: 1;
+  transform: none;
 }
 
 @media (max-width: 575.98px) {

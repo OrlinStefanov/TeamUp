@@ -568,9 +568,14 @@
 
 /* ── Add Member modal (tm-box) ── */
 
+#addMemberModal .modal-dialog {
+  pointer-events: all;
+}
+
 #addMemberModal .tm-box {
   border-radius: 12px;
   overflow: hidden;
+  pointer-events: all;
 }
 
 #addMemberModal .tm-header {

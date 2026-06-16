@@ -111,6 +111,33 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(168, 85, 247, 0.4) transparent;
+}
+
+.channel-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.channel-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.channel-list::-webkit-scrollbar-thumb {
+  background: rgba(168, 85, 247, 0.38);
+  border-radius: 3px;
+}
+
+.channel-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(168, 85, 247, 0.68);
+}
+
+.workspace-chat-shell.dark-mode .channel-list::-webkit-scrollbar-thumb {
+  background: rgba(168, 85, 247, 0.5);
+}
+
+.workspace-chat-shell.dark-mode .channel-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(168, 85, 247, 0.82);
 }
 
 .channel-row {

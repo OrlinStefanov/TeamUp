@@ -120,9 +120,12 @@ export class Layout implements OnInit {
     this.auth.toggleDarkMode();
   }
 
-  logout() {
-    this.auth.logout();
-    this.router.navigate(['/login']);
+  async logout() {
+    await this.dmService.stopConnection();
+    this.auth.logout().subscribe({
+      next: () => this.router.navigate(['/login']),
+      error: () => this.router.navigate(['/login'])
+    });
   }
 
   openCreateWorkspace() {

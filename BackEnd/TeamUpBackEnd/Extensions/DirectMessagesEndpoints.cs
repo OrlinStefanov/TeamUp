@@ -673,6 +673,7 @@ namespace TeamUpBackEnd.Extensions
 			Role = ConversationMemberHelper.RoleToString(m.Role),
 			DisplayName = ConversationMemberHelper.GetDisplayName(m),
 			m.User?.ProfilePictureUrl,
+			IsOnline = DmHub.IsUserOnline(m.UserId),
 			m.JoinedAt
 		};
 
@@ -695,7 +696,8 @@ namespace TeamUpBackEnd.Extensions
 				{
 					m.Sender?.UserName,
 					DisplayName = displayName,
-					m.Sender?.ProfilePictureUrl
+					m.Sender?.ProfilePictureUrl,
+					IsOnline = DmHub.IsUserOnline(m.SenderId)
 				}
 			};
 		}

@@ -43,6 +43,7 @@
             } @else {
               {{ msg.sender?.userName?.charAt(0)?.toUpperCase() || '?' }}
             }
+            <span class="status-dot" [class.online]="isSenderOnline(msg)" [class.offline]="!isSenderOnline(msg)"></span>
           </span>
         }
 

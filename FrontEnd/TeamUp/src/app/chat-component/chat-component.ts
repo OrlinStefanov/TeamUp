@@ -5,6 +5,7 @@ import { CommonModule, DatePipe } from '@angular/common';
 import { ChatService } from '../services/chat-services/chat-service';
 import { Auth } from '../services/auth/auth';
 import { Observable } from 'rxjs';
+import { DirectMessagesService } from '../services/direct-messages.service';
 
 @Component({
   selector: 'app-chat-component',
@@ -29,6 +30,7 @@ export class ChatComponent implements OnInit {
 
   typingUsers: any[] = [];
   typingTimeout: any;
+  onlineUserIds = new Set<string>();
 
   isDarkMode$!: Observable<boolean>;
 
@@ -36,12 +38,24 @@ export class ChatComponent implements OnInit {
     private chat: ChatService,
     private route: ActivatedRoute,
     private router: Router,
-    private auth: Auth
+    private auth: Auth,
+    private dmService: DirectMessagesService
   ) {}
 
   ngOnInit() {
     this.currentUserId = this.auth.getUserId();
     this.isDarkMode$ = this.auth.darkMode$;
+    this.dmService.startConnection().catch(() => {});
+    this.dmService.onlineUserIds$.subscribe(ids => {
+      this.onlineUserIds = ids;
+      this.messages = this.messages.map(msg => ({
+        ...msg,
+        sender: {
+          ...msg.sender,
+          isOnline: ids.has(msg.senderId)
+        }
+      }));
+    });
 
     this.route.parent?.parent?.paramMap.subscribe(params => {
       this.workspacePublicId = params.get('id') || '';
@@ -142,5 +156,9 @@ export class ChatComponent implements OnInit {
       const el = this.messageAreaRef?.nativeElement;
       if (el) el.scrollTop = el.scrollHeight;
     }, 0);
+  }
+
+  isSenderOnline(msg: any): boolean {
+    return !!msg?.senderId && msg.senderId !== this.currentUserId && this.onlineUserIds.has(msg.senderId);
   }
 }

@@ -21,6 +21,7 @@ export interface DmMember {
   displayName?: string;
   role?: DmMemberRole;
   profilePictureUrl?: string;
+  isOnline?: boolean;
   joinedAt?: string;
 }
 
@@ -52,6 +53,7 @@ export interface DmMessage {
     userName: string;
     displayName?: string;
     profilePictureUrl?: string;
+    isOnline?: boolean;
   };
 }
 
@@ -100,6 +102,9 @@ export class DirectMessagesService {
 
   private typingUsersSubject = new BehaviorSubject<Record<string, string[]>>({});
   typingUsers$ = this.typingUsersSubject.asObservable();
+
+  private onlineUserIdsSubject = new BehaviorSubject<Set<string>>(new Set<string>());
+  onlineUserIds$ = this.onlineUserIdsSubject.asObservable();
 
   private memberAddedSubject = new Subject<DmMemberAddedEvent>();
   memberAdded$ = this.memberAddedSubject.asObservable();
@@ -267,6 +272,7 @@ export class DirectMessagesService {
           userName: msg.sender?.userName,
           displayName: msg.sender?.displayName ?? msg.sender?.userName,
           profilePictureUrl: msg.sender?.profilePictureUrl,
+          isOnline: msg.sender?.isOnline ?? this.isUserOnline(msg.senderId),
         }
       };
 
@@ -319,17 +325,52 @@ export class DirectMessagesService {
       this.memberUpdatedSubject.next(data);
     });
 
+    this.hubConnection.on('DmPresenceChanged', (data: any) => {
+      const userId = data?.userId;
+      if (!userId) return;
+
+      const next = new Set(this.onlineUserIdsSubject.value);
+      if (data.isOnline) {
+        next.add(userId);
+      } else {
+        next.delete(userId);
+      }
+      this.onlineUserIdsSubject.next(next);
+    });
+
     this.hubConnection.onreconnected(() => {
       this.joinedConversationIds.forEach(id =>
         this.hubConnection.invoke('JoinConversation', id).catch(() => {})
       );
     });
 
-    this.connectionPromise = this.hubConnection.start().catch(err => {
+    this.connectionPromise = this.hubConnection.start().then(() => {
+      return this.hubConnection.invoke<string[]>('GetOnlineUserIds')
+        .then(ids => this.onlineUserIdsSubject.next(new Set(ids || [])))
+        .catch(() => {});
+    }).catch(err => {
       this.connectionPromise = null;
       throw err;
     });
     return this.connectionPromise;
+  }
+
+  stopConnection(): Promise<void> {
+    this.connectionPromise = null;
+    this.joinedConversationIds.clear();
+    this.typingUserIdMap.clear();
+    this.typingUsersSubject.next({});
+    this.onlineUserIdsSubject.next(new Set<string>());
+
+    if (!this.hubConnection) {
+      return Promise.resolve();
+    }
+
+    return this.hubConnection.stop().catch(() => {});
+  }
+
+  isUserOnline(userId?: string | null): boolean {
+    return !!userId && this.onlineUserIdsSubject.value.has(userId);
   }
 
   getTypingUsers(conversationId: string): string[] {

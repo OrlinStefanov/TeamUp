@@ -805,6 +805,7 @@ namespace TeamUpBackEnd.Extensions
 							m.UserId,
 							m.User!.UserName,
 							m.User.ProfilePictureUrl,
+							IsOnline = DmHub.IsUserOnline(m.UserId),
 							Role = (m.Role == WorkSpaceRole.Member) ? "Member" : (m.Role == WorkSpaceRole.Admin) ? "Admin" : "Owner"
 						})
 					})
@@ -2398,6 +2399,7 @@ namespace TeamUpBackEnd.Extensions
 						c.Name,
 						c.Description,
 						c.IsPrivate,
+						MemberCount = c.Members!.Count(),
 						// unread count for this user on this channel
 						UnreadCount = db.Messages
 							.Count(msg =>

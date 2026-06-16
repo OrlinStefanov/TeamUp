@@ -72,7 +72,10 @@
   flex-wrap: nowrap;
   overflow-x: auto;
   flex-shrink: 0;
+  scrollbar-width: none;
 }
+
+.nav-3items::-webkit-scrollbar { display: none; }
 
 .nav-3items.dark-mode {
   background: rgba(255, 255, 255, 0.04);

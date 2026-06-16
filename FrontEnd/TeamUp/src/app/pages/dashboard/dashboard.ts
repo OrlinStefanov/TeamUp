@@ -1,11 +1,12 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { Auth } from '../../services/auth/auth';
 import { FormsModule } from '@angular/forms';
 import { Workspace, WorkspaceMember } from '../../services/auth/auth-types';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { forkJoin, map, Observable } from 'rxjs';
+import { forkJoin, map, Observable, Subscription } from 'rxjs';
 import { InboxService } from '../../services/inbox.service';
+import { DirectMessagesService } from '../../services/direct-messages.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -18,7 +19,7 @@ import { InboxService } from '../../services/inbox.service';
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
-export class Dashboard implements OnInit {
+export class Dashboard implements OnInit, OnDestroy {
   showDropdown = false;
   showSettingsDropdown = false;
   showCreateWorkspace = false;
@@ -61,10 +62,13 @@ export class Dashboard implements OnInit {
   editMembers: any[] = [];
   
   inboxUnreadCounts: Record<string, number> = {};
+  onlineUserIds = new Set<string>();
+  private presenceSub?: Subscription;
 
   constructor(
     private auth: Auth,
     private inboxService: InboxService,
+    private dmService: DirectMessagesService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -90,10 +94,20 @@ export class Dashboard implements OnInit {
       map(workspaces => (workspaces || []).filter(w => w.ownerId !== this.currentUserId))
     );
 
-    this.auth.getWorkspaces().subscribe(workspaces => {
+    this.auth.getWorkspaces(true).subscribe(workspaces => {
       if (!workspaces?.length) return;
       this.loadInboxUnreadCounts(workspaces);
     });
+
+    this.dmService.startConnection().catch(() => {});
+    this.presenceSub = this.dmService.onlineUserIds$.subscribe(ids => {
+      this.onlineUserIds = ids;
+      this.cdr.markForCheck();
+    });
+  }
+
+  ngOnDestroy() {
+    this.presenceSub?.unsubscribe();
   }
 
   private loadInboxUnreadCounts(workspaces: any[]) {
@@ -119,6 +133,20 @@ export class Dashboard implements OnInit {
 
   totalUnreadCount(workspaces: any[]): number {
     return (workspaces || []).reduce((total, workspace) => total + this.inboxUnreadCount(workspace), 0);
+  }
+
+  activeMemberCount(workspace: any): number {
+    return (workspace?.members || []).filter((member: any) =>
+      member.isOnline || this.onlineUserIds.has(member.userId)
+    ).length;
+  }
+
+  workspaceMemberCount(workspace: any): number {
+    return workspace?.membersCount ?? workspace?.members?.length ?? 0;
+  }
+
+  workspaceHandle(workspace: any): string {
+    return `@${(workspace?.title || 'workspace').toLowerCase().trim().replace(/\s+/g, '-')}`;
   }
 
   ownedWorkspaceCount(workspaces: any[]): number {
@@ -409,7 +437,8 @@ export class Dashboard implements OnInit {
     this.invitedMembers = this.invitedMembers.filter(m => m !== member);
   }
 
-  signOut(){
+  async signOut(){
+    await this.dmService.stopConnection();
     this.auth.logout().subscribe({
       next: () => {
         window.location.href = '/dashboard';

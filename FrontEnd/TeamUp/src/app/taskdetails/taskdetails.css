@@ -941,6 +941,11 @@
   padding-right: 4px;
 }
 
+.task-drop-zone::-webkit-scrollbar { width: 4px; }
+.task-drop-zone::-webkit-scrollbar-track { background: transparent; }
+.dark-mode .task-drop-zone::-webkit-scrollbar-thumb { background: #2a2a3a; border-radius: 4px; }
+.light-mode .task-drop-zone::-webkit-scrollbar-thumb { background: #e0dff0; border-radius: 4px; }
+
 .board-section-nav {
   display: none;
 }
@@ -1214,4 +1219,8 @@
     width: 12px !important;
     height: 12px !important;
   }
+}
+
+.bi-trash-fill{
+  color: #ef4444;
 }

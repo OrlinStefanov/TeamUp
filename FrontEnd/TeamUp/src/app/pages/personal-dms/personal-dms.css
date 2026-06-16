@@ -121,6 +121,25 @@
   gap: 6px;
   max-height: 260px;
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(168, 85, 247, 0.4) transparent;
+}
+
+.search-results::-webkit-scrollbar {
+  width: 5px;
+}
+
+.search-results::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.search-results::-webkit-scrollbar-thumb {
+  background: rgba(168, 85, 247, 0.38);
+  border-radius: 3px;
+}
+
+.search-results::-webkit-scrollbar-thumb:hover {
+  background: rgba(168, 85, 247, 0.68);
 }
 
 /* behaves like chat-row */
@@ -224,6 +243,33 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(168, 85, 247, 0.4) transparent;
+}
+
+.chat-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chat-list::-webkit-scrollbar-thumb {
+  background: rgba(168, 85, 247, 0.38);
+  border-radius: 3px;
+}
+
+.chat-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(168, 85, 247, 0.68);
+}
+
+.dm-shell.dark-mode .chat-list::-webkit-scrollbar-thumb {
+  background: rgba(168, 85, 247, 0.5);
+}
+
+.dm-shell.dark-mode .chat-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(168, 85, 247, 0.82);
 }
 
 .chat-row {
@@ -286,8 +332,16 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #16d3c4;
+  background: #7d7a8c;
   border: 2px solid #f7f7fb;
+}
+
+.status-dot.online {
+  background: #16d3a6;
+}
+
+.status-dot.offline {
+  background: #6f6b7b;
 }
 
 .dark-mode .status-dot {
@@ -457,6 +511,33 @@
   overflow-y: auto;
   min-height: 0;
   height: 100%;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(168, 85, 247, 0.4) transparent;
+}
+
+.message-area::-webkit-scrollbar {
+  width: 6px;
+}
+
+.message-area::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.message-area::-webkit-scrollbar-thumb {
+  background: rgba(168, 85, 247, 0.38);
+  border-radius: 3px;
+}
+
+.message-area::-webkit-scrollbar-thumb:hover {
+  background: rgba(168, 85, 247, 0.68);
+}
+
+.dm-shell.dark-mode .message-area::-webkit-scrollbar-thumb {
+  background: rgba(168, 85, 247, 0.5);
+}
+
+.dm-shell.dark-mode .message-area::-webkit-scrollbar-thumb:hover {
+  background: rgba(168, 85, 247, 0.82);
 }
 
 .message-area-empty {
@@ -822,11 +903,25 @@
 }
 
 .message-sender {
-  display: block;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: 11px;
   font-weight: 600;
   color: #7c3aed;
   margin-bottom: 4px;
+}
+
+.message-status-dot {
+  width: 7px;
+  height: 7px;
+  display: inline-block;
+  border-radius: 50%;
+  background: #6f6b7b;
+}
+
+.message-status-dot.online {
+  background: #16d3a6;
 }
 
 .dark-mode .message-sender {
@@ -837,6 +932,25 @@
   max-width: 520px;
   max-height: 85vh;
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(168, 85, 247, 0.4) transparent;
+}
+
+.group-settings-modal::-webkit-scrollbar {
+  width: 6px;
+}
+
+.group-settings-modal::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.group-settings-modal::-webkit-scrollbar-thumb {
+  background: rgba(168, 85, 247, 0.38);
+  border-radius: 3px;
+}
+
+.group-settings-modal::-webkit-scrollbar-thumb:hover {
+  background: rgba(168, 85, 247, 0.68);
 }
 
 .group-settings-section {

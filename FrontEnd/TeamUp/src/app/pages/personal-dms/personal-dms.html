@@ -21,9 +21,7 @@
         <button class="chat-row" type="button" [class.active]="chat.publicId === selectedConversationId" (click)="selectChat(chat.publicId!)">
           <span class="avatar" [style.--avatar-color]="chat.accent">
             {{ chat.initials }}
-            @if (chat.status === 'online') {
-              <span class="status-dot"></span>
-            }
+            <span class="status-dot" [class.online]="chat.status === 'online'" [class.offline]="chat.status !== 'online'"></span>
           </span>
 
           <span class="chat-copy">
@@ -53,9 +51,7 @@
       </button>
       <span class="avatar large" [style.--avatar-color]="selectedChat.accent">
         {{ selectedChat.initials }}
-        @if (selectedChat.status === 'online') {
-          <span class="status-dot"></span>
-        }
+        <span class="status-dot" [class.online]="selectedChat.status === 'online'" [class.offline]="selectedChat.status !== 'online'"></span>
       </span>
       <div class="conversation-title">
         <h1>{{ selectedChat.name }}</h1>
@@ -86,7 +82,10 @@
       @for (message of messages; track message.publicId) {
         <article class="message-bubble" [class.mine]="message.senderId === auth.getUserId()">
           @if (selectedChat.isGroup && message.senderId !== auth.getUserId() && getMessageSenderLabel(message)) {
-            <span class="message-sender">{{ getMessageSenderLabel(message) }}</span>
+            <span class="message-sender">
+              <span class="message-status-dot" [class.online]="isSenderOnline(message)" [class.offline]="!isSenderOnline(message)"></span>
+              {{ getMessageSenderLabel(message) }}
+            </span>
           }
           <p>{{ message.content }}</p>
           <time>{{ message.sentAt | date:'shortTime' }}</time>

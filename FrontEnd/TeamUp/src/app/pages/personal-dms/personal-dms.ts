@@ -7,7 +7,7 @@ import { DirectMessagesService, DmConversation, DmMember, DmMemberRole, DmMessag
 import { Router } from '@angular/router';
 
 type ChatView = {
-  publicId?: string;
+  publicId: string;
   name: string;
   handle: string;
   preview: string;
@@ -54,6 +54,7 @@ export class PersonalDms implements OnInit, OnDestroy {
   isLoadingOlderMessages = false;
 
   typingUsers: string[] = [];
+  onlineUserIds = new Set<string>();
 
   editGroupTitle = '';
   myNickname = '';
@@ -114,6 +115,12 @@ export class PersonalDms implements OnInit, OnDestroy {
     this.subscription.add(
       this.dmService.memberUpdated$.subscribe(event => this.handleMemberUpdated(event))
     );
+    this.subscription.add(
+      this.dmService.onlineUserIds$.subscribe(ids => {
+        this.onlineUserIds = ids;
+        this.patchMemberOnlineStates();
+      })
+    );
   }
 
   onTyping() {
@@ -159,6 +166,7 @@ export class PersonalDms implements OnInit, OnDestroy {
         name: 'No conversation selected',
         handle: '@direct',
         preview: 'Select a conversation from the list',
+        publicId: '',
         time: '',
         initials: 'DM',
         status: 'offline',
@@ -225,6 +233,8 @@ export class PersonalDms implements OnInit, OnDestroy {
       ? (conversation.title ? this.buildInitials(conversation.title) : 'GR')
       : this.buildInitials(otherMember?.userName ?? 'DM');
 
+    const status = this.isConversationOnline(conversation) ? 'online' : 'offline';
+
     return {
       publicId: conversation.publicId,
       name,
@@ -232,7 +242,7 @@ export class PersonalDms implements OnInit, OnDestroy {
       preview,
       time,
       initials,
-      status: 'online',
+      status,
       accent: this.colorFromId(conversation.publicId),
       isGroup: conversation.isGroup,
     };
@@ -657,6 +667,7 @@ export class PersonalDms implements OnInit, OnDestroy {
       displayName: m.displayName ?? m.DisplayName,
       role: m.role ?? m.Role,
       profilePictureUrl: m.profilePictureUrl ?? m.ProfilePictureUrl,
+      isOnline: m.isOnline ?? m.IsOnline ?? this.onlineUserIds.has(m.userId ?? m.UserId),
       joinedAt: m.joinedAt ?? m.JoinedAt,
     }));
 
@@ -800,6 +811,11 @@ export class PersonalDms implements OnInit, OnDestroy {
   }
 
   private patchConversation(detail: DmConversation) {
+    detail.members = detail.members.map(member => ({
+      ...member,
+      isOnline: member.isOnline || this.onlineUserIds.has(member.userId)
+    }));
+
     const index = this.conversations.findIndex(c => c.publicId === detail.publicId);
     if (index === -1) {
       this.conversations = [detail, ...this.conversations];
@@ -814,7 +830,10 @@ export class PersonalDms implements OnInit, OnDestroy {
     const conversation = this.conversations.find(c => c.publicId === event.conversationId);
     if (!conversation) return;
     if (!conversation.members.some(m => m.userId === event.member.userId)) {
-      conversation.members = [...conversation.members, event.member];
+      conversation.members = [
+        ...conversation.members,
+        { ...event.member, isOnline: event.member.isOnline || this.onlineUserIds.has(event.member.userId) }
+      ];
       this.conversations = [...this.conversations];
     }
   }
@@ -875,6 +894,36 @@ export class PersonalDms implements OnInit, OnDestroy {
     }
 
     this.conversations = [...this.conversations];
+  }
+
+  isSenderOnline(message: DmMessage): boolean {
+    if (!message.senderId || message.senderId === this.auth.getUserId()) return false;
+    return message.sender?.isOnline === true || this.onlineUserIds.has(message.senderId);
+  }
+
+  private isConversationOnline(conversation: DmConversation): boolean {
+    return conversation.members.some(member =>
+      member.userId !== this.auth.getUserId() &&
+      (member.isOnline === true || this.onlineUserIds.has(member.userId))
+    );
+  }
+
+  private patchMemberOnlineStates() {
+    this.conversations = this.conversations.map(conversation => ({
+      ...conversation,
+      members: conversation.members.map(member => ({
+        ...member,
+        isOnline: this.onlineUserIds.has(member.userId)
+      }))
+    }));
+
+    this.messages = this.messages.map(message => ({
+      ...message,
+      sender: {
+        ...message.sender,
+        isOnline: this.onlineUserIds.has(message.senderId)
+      }
+    }));
   }
 
   private removeMemberFromLocal(userId: string, conversationId?: string) {

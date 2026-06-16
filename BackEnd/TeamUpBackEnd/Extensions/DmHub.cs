@@ -4,17 +4,49 @@ using TeamUpBackEnd.DbContext;
 using TeamUpBackEnd.Helpers;
 using TeamUpBackEnd.Models.Chat;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Concurrent;
 
 namespace TeamUpBackEnd.Extensions
 {
 	public class DmHub : Hub
 	{
 		private readonly AppDbContext _db;
+		private static readonly ConcurrentDictionary<string, int> OnlineUsers = new();
 
 		public DmHub(AppDbContext db)
 		{
 			_db = db;
 		}
+
+		public static bool IsUserOnline(string? userId) =>
+			!string.IsNullOrWhiteSpace(userId) && OnlineUsers.ContainsKey(userId);
+
+		public override async Task OnConnectedAsync()
+		{
+			var userId = GetUserId();
+			if (userId is not null)
+			{
+				OnlineUsers.AddOrUpdate(userId, 1, (_, count) => count + 1);
+				await Clients.All.SendAsync("DmPresenceChanged", new { userId, isOnline = true });
+			}
+
+			await base.OnConnectedAsync();
+		}
+
+		public override async Task OnDisconnectedAsync(Exception? exception)
+		{
+			var userId = GetUserId();
+			if (userId is not null && OnlineUsers.AddOrUpdate(userId, 0, (_, count) => Math.Max(0, count - 1)) == 0)
+			{
+				OnlineUsers.TryRemove(userId, out _);
+				await Clients.All.SendAsync("DmPresenceChanged", new { userId, isOnline = false });
+			}
+
+			await base.OnDisconnectedAsync(exception);
+		}
+
+		public Task<string[]> GetOnlineUserIds() =>
+			Task.FromResult(OnlineUsers.Keys.ToArray());
 
 		// ── JOIN ──────────────────────────────────────────────────────────────
 		// Client calls this when they open a conversation window.

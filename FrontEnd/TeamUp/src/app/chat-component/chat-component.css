@@ -105,6 +105,33 @@
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(168, 85, 247, 0.4) transparent;
+}
+
+.message-area::-webkit-scrollbar {
+  width: 6px;
+}
+
+.message-area::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.message-area::-webkit-scrollbar-thumb {
+  background: rgba(168, 85, 247, 0.38);
+  border-radius: 3px;
+}
+
+.message-area::-webkit-scrollbar-thumb:hover {
+  background: rgba(168, 85, 247, 0.68);
+}
+
+.workspace-conversation.dark-mode .message-area::-webkit-scrollbar-thumb {
+  background: rgba(168, 85, 247, 0.5);
+}
+
+.workspace-conversation.dark-mode .message-area::-webkit-scrollbar-thumb:hover {
+  background: rgba(168, 85, 247, 0.82);
 }
 
 .message-row {
@@ -120,6 +147,7 @@
 }
 
 .avatar {
+  position: relative;
   width: 36px;
   height: 36px;
   display: grid;
@@ -132,6 +160,25 @@
   color: #17a99b;
   font-size: 12px;
   font-weight: 800;
+}
+
+.status-dot {
+  position: absolute;
+  right: -1px;
+  bottom: 0;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 2px solid #f6f6fb;
+  background: #6f6b7b;
+}
+
+.status-dot.online {
+  background: #16d3a6;
+}
+
+.workspace-conversation.dark-mode .status-dot {
+  border-color: #101018;
 }
 
 .avatar img {
