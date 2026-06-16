@@ -159,6 +159,12 @@ namespace TeamUpBackEnd.DbContext
 				.HasForeignKey(cm => cm.UserId)
 				.OnDelete(DeleteBehavior.Cascade);
 
+			modelBuilder.Entity<Conversation>()
+				.HasOne(c => c.CreatedBy)
+				.WithMany()
+				.HasForeignKey(c => c.CreatedByUserId)
+				.OnDelete(DeleteBehavior.SetNull);
+
 			// ------------------------
 			// Channel → Workspace
 			// ------------------------

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using System.Security.Claims;
 using TeamUpBackEnd.DbContext;
+using TeamUpBackEnd.Helpers;
 using TeamUpBackEnd.Models.Chat;
 using Microsoft.EntityFrameworkCore;
 
@@ -87,7 +88,15 @@ namespace TeamUpBackEnd.Extensions
 				.Select(u => new { u.UserName, u.ProfilePictureUrl })
 				.FirstOrDefaultAsync();
 
-			// broadcast the new message to everyone in the group
+			string? displayName = sender?.UserName;
+			if (conversation.IsGroup == true)
+			{
+				var senderMember = conversation.Members!
+					.FirstOrDefault(m => m.UserId == userId);
+				if (senderMember is not null)
+					displayName = ConversationMemberHelper.GetDisplayName(senderMember);
+			}
+
 			await Clients.Group(conversationPublicId)
 				.SendAsync("ReceiveDm", new
 				{
@@ -99,6 +108,7 @@ namespace TeamUpBackEnd.Extensions
 					sender = new
 					{
 						userName = sender!.UserName,
+						displayName,
 						profilePictureUrl = sender.ProfilePictureUrl
 					}
 				});
@@ -118,14 +128,27 @@ namespace TeamUpBackEnd.Extensions
 			var userId = GetUserId();
 			if (userId == null) return;
 
-			var userName = Context.User?.Identity?.Name;
+			var conversation = await _db.Conversations
+				.Include(c => c.Members!)
+					.ThenInclude(m => m.User)
+				.FirstOrDefaultAsync(c => c.PublicId.ToString() == conversationPublicId);
+
+			if (conversation is null) return;
+
+			var member = conversation.Members!.FirstOrDefault(m => m.UserId == userId);
+			if (member is null) return;
+
+			var displayName = conversation.IsGroup == true
+				? ConversationMemberHelper.GetDisplayName(member)
+				: Context.User?.Identity?.Name;
 
 			await Clients.OthersInGroup(conversationPublicId)
 				.SendAsync("DmUserTyping", new
 				{
 					conversationId = conversationPublicId,
 					userId,
-					userName
+					userName = Context.User?.Identity?.Name,
+					displayName
 				});
 		}
 

@@ -56,8 +56,7 @@
   text-transform: uppercase;
 }
 
-.icon-btn,
-.modal-close {
+.icon-btn {
   border: 0;
   background: transparent;
   color: inherit;
@@ -219,12 +218,11 @@
 }
 
 .channel-modal {
-  border: 1px solid #dcd9e7;
+  border: none;
   border-radius: 12px;
   overflow: hidden;
   background: #fbfbfd;
   color: #26232d;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.32);
 }
 
 .channel-modal.dark-mode {
@@ -240,6 +238,11 @@
   background: transparent;
 }
 
+.channel-modal-header {
+  position: relative;
+  padding: 16px 48px 16px 20px;
+}
+
 .channel-modal.dark-mode .channel-modal-header,
 .channel-modal.dark-mode .channel-modal-footer {
   border-color: #363345;
@@ -248,19 +251,6 @@
 .channel-modal .modal-title {
   font-size: 16px;
   font-weight: 800;
-}
-
-.modal-close {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  font-size: 24px;
-  line-height: 1;
-  color: #5f5d68;
-}
-
-.modal-close:hover {
-  background: rgba(168, 85, 247, 0.12);
 }
 
 .channel-modal .form-label {

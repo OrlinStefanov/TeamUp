@@ -1,12 +1,14 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using System.Text;
 using TeamUpBackEnd.DbContext;
 using TeamUpBackEnd.Extensions;
+using TeamUpBackEnd.Helpers;
 using TeamUpBackEnd.Interfaces;
 using TeamUpBackEnd.Models;
 using TeamUpBackEnd.Services;
@@ -118,6 +120,7 @@ builder.Services.AddRateLimiter(options =>
 });
 
 builder.Services.AddSignalR();
+builder.Services.AddSingleton<IUserIdProvider, CustomUserIdProvider>();
 
 var app = builder.Build();
 

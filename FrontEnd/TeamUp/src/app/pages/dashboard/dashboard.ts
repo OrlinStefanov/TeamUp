@@ -242,14 +242,14 @@ export class Dashboard implements OnInit {
 
   openSettings(workspace: any)
   {
-    this.selectedWorkspace = { ...workspace};
-
+    this.selectedWorkspace = { ...workspace };
+    this.copied = false;
     this.showSettings = true;
-    console.log(this.selectedWorkspace);
 
     setTimeout(() => {
       const modalEl = document.getElementById('settingsModal');
-      const modal = new (window as any).bootstrap.Modal(modalEl);
+      if (!modalEl) return;
+      const modal = (window as any).bootstrap.Modal.getOrCreateInstance(modalEl);
       modal.show();
     });
   }
@@ -257,6 +257,7 @@ export class Dashboard implements OnInit {
   closeSettings()
   {
     this.showSettings = false;
+    this.copied = false;
   }
 
   get UserRoleFromSelectedWorkspace(): string {

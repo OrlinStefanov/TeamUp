@@ -346,7 +346,7 @@ export class Auth {
 
   updateUserInfo(user : UpdateUser)
   {
-    return this.http.post(`${this.apiUrl}/profile/update`,{ user }, {
+    return this.http.post(`${this.apiUrl}/profile/update`, user, {
       withCredentials: true,
       headers: { 'Content-Type': 'application/json' }
     });

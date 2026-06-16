@@ -63,7 +63,7 @@
   padding: 18px 14px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start;
   background: rgba(255, 255, 255, 0.04);
   backdrop-filter: blur(10px);
   transition: width 0.3s ease, padding 0.3s ease;
@@ -76,7 +76,13 @@
 }
 
 .page.light-mode .side-navbar {
+  background: rgba(255, 255, 255, 0.96);
   border-right: 1px solid #bbb;
+}
+
+.page.light-mode .mobile-topbar {
+  background: rgba(255, 255, 255, 0.96);
+  border-bottom-color: rgba(147, 51, 234, 0.2);
 }
 
 .side-navbar.collapsed {
@@ -114,8 +120,16 @@
 
 .side-navbar.collapsed .nav-footer {
   justify-content: center;
-  display: flex;
-  flex-direction:column-reverse;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.side-navbar.collapsed .nav-footer-user {
+  justify-content: center;
+}
+
+.side-navbar.collapsed .settings-wrapper {
+  margin-left: 0;
 }
 
 .side-navbar.collapsed .desktop-menu-btn {
@@ -125,7 +139,10 @@
 .sidebar-top {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 2px;
 }
 
 .nav-section,
@@ -192,38 +209,69 @@
 }
 
 .nav-footer {
+  flex-shrink: 0;
+  width: 100%;
   margin-top: auto;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 10px;
   border-top: 1px solid #9333ea;
   padding-top: 12px;
-  pointer-events: all;
   position: relative;
-  z-index: 1;
+  z-index: 2;
+}
+
+.nav-footer-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.nav-footer-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.nav-footer-avatar-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(147, 51, 234, 0.2);
+  border: 1px solid rgba(147, 51, 234, 0.45);
+  color: #a64bfb;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
 }
 
 .settings-wrapper {
   position: relative;
-  display: inline-block;
-  align-items: center;   
-  z-index: 667;
+  flex-shrink: 0;
+  margin-left: auto;
+  z-index: 3;
 }
 
 .settings-dropdown {
   position: absolute;
-  right: -40%;
-  bottom: calc(100% + 20px); 
-  
-  z-index: 666; 
-  pointer-events: all;;
-
+  right: 0;
+  bottom: calc(100% + 10px);
+  z-index: 4;
+  pointer-events: all;
   border-radius: 10px;
   padding: 8px;
-  min-width: 150px;
+  min-width: auto;
+  display: flex;
+  gap: 6px;
+  border: 1px solid rgba(147, 51, 234, 0.25);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.35);
   animation: fadeIn 0.15s ease;
-
-  box-shadow: 0 10px 20px rgba(0,0,0,0.35);
 }
 
 .page.dark-mode .settings-dropdown {
@@ -237,8 +285,8 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(5px) translateX(100%); }
-  to { opacity: 1; }
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .nav-footer .userName {
@@ -251,11 +299,11 @@
 }
 
 .nav-footer .settingsBtn {
-  margin-left: auto;
   border: none;
   background: transparent;
   color: #a64bfb;
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 /* ── KEY FIX: lock the row, let only content scroll ── */
@@ -393,9 +441,8 @@ app-chatdetails {
   top: 0;
   left: 0;
   transform: translateX(-100%);
-  width: 260px;
-  max-width: 80vw;
-  height: 100vh;
+  width: min(300px, 86vw);
+  height: 100dvh;
   z-index: 1050;
   padding: 18px 14px;
   display: flex;
@@ -404,7 +451,35 @@ app-chatdetails {
   transition: transform 0.3s ease;
   border-right: 1px solid #333;
   background: #19191d;
+  overflow: hidden;
+}
+
+.mobile-sidebar-body {
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
+  padding-right: 2px;
+}
+
+.mobile-sidebar .nav-footer {
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+}
+
+.mobile-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  z-index: 1040;
+  pointer-events: none;
+}
+
+.mobile-overlay.show {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
 }
 
 .mobile-sidebar-header {
@@ -422,23 +497,12 @@ app-chatdetails {
 
 .page.light-mode .mobile-sidebar {
   background: #fff;
-  border: #bbb 1px solid;
+  border-right: 1px solid #bbb;
 }
 
-.page.dark-mode .mobile-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.35);
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.3s ease, visibility 0.3s ease;
-  z-index: 1040;
-}
-
-.page.dark-mode .mobile-overlay.show,
-.page.light-mode .mobile-overlay.show {
-  opacity: 1;
-  visibility: visible;
+.page.dark-mode .mobile-sidebar {
+  background: #19191d;
+  border-right: 1px solid #333;
 }
 
 .workspace-icon 
@@ -456,6 +520,21 @@ app-chatdetails {
 @media (max-width: 767.98px) {
   .content {
     padding: 16px;
+  }
+
+  .mobile-sidebar-header {
+    flex-shrink: 0;
+  }
+
+  .mobile-sidebar .workspace-title {
+    margin-top: 12px;
+  }
+
+  .mobile-sidebar .nav-link-custom,
+  .mobile-sidebar .workspace-item,
+  .mobile-sidebar .workspace-section-btn {
+    padding: 12px;
+    font-size: 14px;
   }
 
   /* on mobile the row should not be height-locked */
@@ -650,9 +729,9 @@ button.workspace-item.workspace-action-btn {
 .header-row,
 .join-header {
   display: flex;
-  justify-content: space-between;
   align-items: flex-start;
-  padding: 20px 24px 15px;
+  gap: 12px;
+  padding: 20px 48px 15px 24px;
   border-bottom: 1px solid #ebebf5;
 }
 
@@ -889,14 +968,10 @@ button.workspace-item.workspace-action-btn {
   background: rgba(168, 85, 247, 0.12);
 }
 
-.settings-dropdown {
+.side-navbar.collapsed .settings-dropdown {
   right: 0;
-  bottom: calc(100% + 12px);
-  min-width: auto;
-  display: flex;
-  gap: 6px;
-  padding: 8px;
-  border: 1px solid rgba(147, 51, 234, 0.25);
+  left: auto;
+  transform: none;
 }
 
 .icon-dropdown-item {
@@ -928,12 +1003,6 @@ button.workspace-item.workspace-action-btn {
 
 .side-navbar.collapsed .workspace-group-label {
   display: none;
-}
-
-.side-navbar.collapsed .settings-dropdown {
-  right: auto;
-  left: 50%;
-  transform: translateX(-50%);
 }
 
 .createWorkspace-overlay,

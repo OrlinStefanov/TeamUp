@@ -76,6 +76,17 @@
 
 .card.dark-mode .task-menu, .container-fluid.dark-mode .role-filter-dropdown {
   background-color: #16161f;
+  border: 1px solid #2a2a3a;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+}
+
+.card.dark-mode .menu-title {
+  color: #9a98a8;
+  border-color: #2a2a3a !important;
+}
+
+.card.dark-mode .menu-item {
+  color: #e8e4ff;
 }
 
 .container-fluid.dark-mode .dropdown-item {
@@ -233,10 +244,11 @@
 
 /* ── Header ── */
 .tm-header {
-  padding: 20px 24px 16px;
+  position: relative;
+  padding: 20px 48px 16px 24px;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
 }
 
 .tm-box.dark-mode .tm-header  { border-bottom: 1px solid #1e1e2e; }
@@ -277,25 +289,7 @@
 .tm-box.dark-mode .tm-subtitle  { color: #6b6b8a; }
 .tm-box.light-mode .tm-subtitle { color: #9898b8; }
 
-/* ── Close ── */
-.tm-close {
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
-  background: transparent;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  border: none;
-  color: #666;
-  transition: all 0.15s;
-}
-
-.tm-close:hover {
-  color: red;
-}
+/* close button: global .tu-modal-close */
 
 /* ── Body ── */
 .tm-body {
@@ -713,6 +707,12 @@
     color: white;
 }
 
+.container-fluid.light-mode .input-group-text {
+  background-color: #fff;
+  border-color: #ced4da;
+  color: #6c757d;
+}
+
 .container-fluid .input-group-text:hover {
     cursor: pointer;
 }
@@ -726,6 +726,29 @@
 
 .form-control::placeholder {
   color: #666;
+}
+
+.container-fluid.dark-mode .form-control::placeholder {
+  color: #6b6b8a;
+}
+
+.tm-box.dark-mode .tm-tag-available-label {
+  font-size: 12px;
+  color: #6b6b8a;
+}
+
+.tm-box.dark-mode .tag-pick-btn {
+  cursor: pointer;
+  border: 1px solid #2a2a3a !important;
+  background: #16161f !important;
+  color: #b0b0d0 !important;
+}
+
+.tm-box.dark-mode .tag-pick-btn.bg-secondary,
+.tm-box.dark-mode .tag-pick-btn.text-white {
+  background: rgba(124, 58, 237, 0.25) !important;
+  color: #c4b5fd !important;
+  border-color: #7c3aed !important;
 }
 
 /* ── Drag & Drop Improvements ── */
@@ -855,6 +878,28 @@
   height: 100%;
 }
 
+.task-board-header {
+  margin-bottom: 10px;
+}
+
+.task-board-title {
+  font-weight: bold;
+  margin: 0;
+}
+
+.task-board-count {
+  color: #999;
+  font-size: 14px;
+}
+
+.container-fluid.dark-mode .task-board-count {
+  color: #8b8ba8;
+}
+
+.container-fluid.dark-mode .filtersRow .form-label {
+  color: #6b6b8a;
+}
+
 .task-section-header {
   display: flex;
   align-items: center;
@@ -863,6 +908,14 @@
   height: 60px;
   flex-shrink: 0;
   border-bottom: 2px solid rgb(209, 209, 209);
+}
+
+.container-fluid.dark-mode .task-section-header {
+  border-bottom-color: #2a2a3a;
+}
+
+.container-fluid.dark-mode .task-section-header h4 {
+  color: #f0eeff;
 }
 
 .task-section-header h4 {
@@ -1029,6 +1082,11 @@
     background: rgba(124, 58, 237, 0.15);
     border-color: #7c3aed;
     color: #7c3aed;
+  }
+
+  .container-fluid.dark-mode .board-section-pill {
+    border-color: rgba(124, 58, 237, 0.35);
+    color: #9a98a8;
   }
 
   .container-fluid.dark-mode .board-section-pill.active {

@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using TeamUpBackEnd.DbContext;
+using TeamUpBackEnd.Extensions;
 using TeamUpBackEnd.Helpers;
 using TeamUpBackEnd.Models;
 using TeamUpBackEnd.Models.Chat;
@@ -22,11 +24,6 @@ namespace TeamUpBackEnd.Extensions
 				.RequireAuthorization()
 				.WithTags("Direct Messages");
 
-			// ── START / FIND CONVERSATION ─────────────────────────────────────────
-			// Idempotent — if a 1:1 conversation between the two users already
-			// exists it is returned, otherwise a new one is created.
-			// For group DMs pass IsGroup: true and multiple identifiers.
-
 			dm.MapPost("/start", async (
 				AppDbContext db,
 				ClaimsPrincipal userClaims,
@@ -40,7 +37,6 @@ namespace TeamUpBackEnd.Extensions
 				if (dto.Identifiers is null || dto.Identifiers.Count == 0)
 					return Results.BadRequest("At least one identifier is required");
 
-				// resolve every identifier to a real user
 				var resolvedUsers = new List<ApplicationUser>();
 
 				foreach (var identifier in dto.Identifiers)
@@ -54,7 +50,7 @@ namespace TeamUpBackEnd.Extensions
 						return Results.BadRequest("You cannot start a conversation with yourself");
 
 					if (resolvedUsers.Any(u => u.Id == resolved.Id))
-						continue; // silently skip duplicates
+						continue;
 
 					resolvedUsers.Add(resolved);
 				}
@@ -64,13 +60,13 @@ namespace TeamUpBackEnd.Extensions
 
 				var isGroup = dto.IsGroup == true || resolvedUsers.Count > 1;
 
-				// ── for 1:1 DMs check if a conversation already exists ────────────
 				if (!isGroup)
 				{
 					var targetId = resolvedUsers[0].Id;
 
 					var existing = await db.Conversations
-						.Include(c => c.Members)
+						.Include(c => c.Members!)
+							.ThenInclude(m => m.User)
 						.Where(c =>
 							c.IsGroup != true &&
 							c.Members!.Any(m => m.UserId == currentUserId) &&
@@ -79,71 +75,50 @@ namespace TeamUpBackEnd.Extensions
 						.FirstOrDefaultAsync();
 
 					if (existing is not null)
-					{
-						return Results.Ok(new
-						{
-							existing.PublicId,
-							existing.Title,
-							existing.IsGroup,
-							existing.LastMessageAt,
-							Members = existing.Members!.Select(m => new
-							{
-								m.UserId,
-								m.User?.UserName,
-								m.User?.ProfilePictureUrl
-							})
-						});
-					}
+						return Results.Ok(MapConversation(existing, currentUserId));
 				}
 
-				// ── create new conversation ───────────────────────────────────────
+				var now = DateTime.UtcNow;
 				var conversation = new Conversation
 				{
 					PublicId = Guid.NewGuid(),
 					IsGroup = isGroup,
 					Title = isGroup ? dto.Title : null,
+					CreatedByUserId = isGroup ? currentUserId : null,
 					Members = new List<ConversationMember>()
 				};
 
-				// add the initiator
 				conversation.Members.Add(new ConversationMember
 				{
 					UserId = currentUserId,
-					LastSeen = DateTime.UtcNow
+					LastSeen = now,
+					JoinedAt = now,
+					Role = isGroup ? ConversationMemberRole.Owner : ConversationMemberRole.Member
 				});
 
-				// add all resolved recipients
 				foreach (var u in resolvedUsers)
 				{
 					conversation.Members.Add(new ConversationMember
 					{
 						UserId = u.Id,
-						LastSeen = DateTime.UtcNow
+						LastSeen = now,
+						JoinedAt = now,
+						Role = ConversationMemberRole.Member
 					});
 				}
 
 				db.Conversations.Add(conversation);
 				await db.SaveChangesAsync();
 
-				return Results.Ok(new
-				{
-					conversation.PublicId,
-					conversation.Title,
-					conversation.IsGroup,
-					conversation.LastMessageAt,
-					Members = conversation.Members.Select(m => new
-					{
-						m.UserId,
-						m.User?.UserName,
-						m.User?.ProfilePictureUrl
-					})
-				});
-			})
-			.WithSummary("Start or retrieve a DM conversation. Idempotent for 1:1 — returns existing conversation if one already exists between the two users. Pass IsGroup: true and multiple identifiers for a group DM.");
+				await db.Entry(conversation)
+					.Collection(c => c.Members!)
+					.Query()
+					.Include(m => m.User)
+					.LoadAsync();
 
-			// ── LIST CONVERSATIONS ────────────────────────────────────────────────
-			// Returns all conversations for the current user sorted by most recent
-			// activity, with unread count calculated from LastSeen on the member row.
+				return Results.Ok(MapConversation(conversation, currentUserId));
+			})
+			.WithSummary("Start or retrieve a DM conversation.");
 
 			dm.MapGet("/conversations", async (
 				AppDbContext db,
@@ -158,51 +133,125 @@ namespace TeamUpBackEnd.Extensions
 					.Include(c => c.Members!)
 						.ThenInclude(m => m.User)
 					.OrderByDescending(c => c.LastMessageAt)
-					.Select(c => new
+					.ToListAsync();
+
+				var result = new List<object>();
+
+				foreach (var c in conversations)
+				{
+					var actor = c.Members!.FirstOrDefault(m => m.UserId == userId);
+					var lastSeen = actor?.LastSeen ?? DateTime.MinValue;
+
+					var lastMessage = await db.Messages
+						.Where(msg => msg.ConversationId == c.Id)
+						.OrderByDescending(msg => msg.SentAt)
+						.Include(msg => msg.Sender)
+						.FirstOrDefaultAsync();
+
+					string? senderName = null;
+					if (lastMessage?.Sender is not null)
+					{
+						if (c.IsGroup == true && lastMessage.SenderId is not null)
+						{
+							var senderMember = c.Members!
+								.FirstOrDefault(m => m.UserId == lastMessage.SenderId);
+							senderName = senderMember is not null
+								? ConversationMemberHelper.GetDisplayName(senderMember)
+								: lastMessage.Sender.UserName;
+						}
+						else
+						{
+							senderName = lastMessage.Sender.UserName;
+						}
+					}
+
+					var unreadCount = await db.Messages
+						.CountAsync(msg =>
+							msg.ConversationId == c.Id &&
+							msg.SenderId != userId &&
+							msg.SentAt > lastSeen);
+
+					result.Add(new
 					{
 						c.PublicId,
 						c.Title,
 						c.IsGroup,
 						c.LastMessageAt,
-
-						Members = c.Members!.Select(m => new
+						Members = c.Members!.Select(m => MapMember(m)),
+						UnreadCount = unreadCount,
+						CurrentUserRole = actor is null ? null : ConversationMemberHelper.RoleToString(actor.Role),
+						CanManage = actor is not null && ConversationMemberHelper.CanRename(actor),
+						CanChangeRoles = actor is not null && ConversationMemberHelper.CanChangeRole(actor),
+						LastMessage = lastMessage is null ? null : new
 						{
-							m.UserId,
-							m.User!.UserName,
-							m.User.ProfilePictureUrl
-						}),
+							lastMessage.Content,
+							lastMessage.SentAt,
+							SenderName = senderName
+						}
+					});
+				}
 
-						// messages sent after the current user last read this conversation
-						UnreadCount = db.Messages
-							.Count(msg =>
-								msg.ConversationId == c.Id &&
-								msg.SenderId != userId &&
-								msg.SentAt > c.Members!
-									.Where(m => m.UserId == userId)
-									.Select(m => m.LastSeen)
-									.FirstOrDefault()),
-
-						LastMessage = db.Messages
-							.Where(msg => msg.ConversationId == c.Id)
-							.OrderByDescending(msg => msg.SentAt)
-							.Select(msg => new
-							{
-								msg.Content,
-								msg.SentAt,
-								SenderName = msg.Sender!.UserName
-							})
-							.FirstOrDefault()
-					})
-					.ToListAsync();
-
-				return Results.Ok(conversations);
+				return Results.Ok(result);
 			})
-			.WithSummary("Returns all DM conversations for the current user, ordered by most recent message. Each entry includes member list, unread count, and a last message preview.");
+			.WithSummary("Returns all DM conversations for the current user.");
 
-			// ── MESSAGE HISTORY ───────────────────────────────────────────────────
-			// Returns paginated messages for a conversation.
-			// Uses cursor-based pagination — pass ?before=<publicId> to page back.
-			// Automatically marks the conversation as read for the calling user.
+			dm.MapGet("/{conversationPublicId}", async (
+				AppDbContext db,
+				ClaimsPrincipal userClaims,
+				string conversationPublicId) =>
+			{
+				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
+				if (userId is null)
+					return Results.BadRequest("User not found");
+
+				var conversation = await LoadConversation(db, conversationPublicId);
+				if (conversation is null)
+					return Results.NotFound("Conversation not found");
+
+				var actor = conversation.Members!.FirstOrDefault(m => m.UserId == userId);
+				if (actor is null)
+					return Results.Forbid();
+
+				return Results.Ok(MapConversationDetail(conversation, actor));
+			})
+			.WithSummary("Returns full conversation details including member roles and nicknames.");
+
+			dm.MapPatch("/{conversationPublicId}", async (
+				AppDbContext db,
+				ClaimsPrincipal userClaims,
+				IHubContext<DmHub> hub,
+				string conversationPublicId,
+				UpdateConversationDto dto) =>
+			{
+				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
+				if (userId is null)
+					return Results.BadRequest("User not found");
+
+				if (string.IsNullOrWhiteSpace(dto.Title))
+					return Results.BadRequest("Title is required");
+
+				var conversation = await LoadConversation(db, conversationPublicId);
+				if (conversation is null)
+					return Results.NotFound("Conversation not found");
+
+				if (conversation.IsGroup != true)
+					return Results.BadRequest("Only group conversations can be renamed");
+
+				var actor = conversation.Members!.FirstOrDefault(m => m.UserId == userId);
+				if (actor is null)
+					return Results.Forbid();
+
+				if (!ConversationMemberHelper.CanRename(actor))
+					return Results.Forbid();
+
+				conversation.Title = dto.Title.Trim();
+				await db.SaveChangesAsync();
+
+				await DmHubNotifier.NotifyConversationUpdated(hub, conversationPublicId, conversation.Title);
+
+				return Results.Ok(new { conversation.PublicId, conversation.Title });
+			})
+			.WithSummary("Rename a group conversation (Owner/Admin only).");
 
 			dm.MapGet("/{conversationPublicId}/messages", async (
 				AppDbContext db,
@@ -215,7 +264,8 @@ namespace TeamUpBackEnd.Extensions
 					return Results.BadRequest("User not found");
 
 				var conversation = await db.Conversations
-					.Include(c => c.Members)
+					.Include(c => c.Members!)
+						.ThenInclude(m => m.User)
 					.FirstOrDefaultAsync(c => c.PublicId.ToString() == conversationPublicId);
 
 				if (conversation is null)
@@ -224,7 +274,6 @@ namespace TeamUpBackEnd.Extensions
 				if (!conversation.Members!.Any(m => m.UserId == userId))
 					return Results.Forbid();
 
-				// optional cursor — the publicId of the oldest message the client has
 				var beforeParam = httpContext.Request.Query["before"].ToString();
 				var pageSize = 30;
 
@@ -245,21 +294,11 @@ namespace TeamUpBackEnd.Extensions
 				var messages = await query
 					.OrderByDescending(m => m.SentAt)
 					.Take(pageSize)
-					.Select(m => new
-					{
-						m.PublicId,
-						m.Content,
-						m.SentAt,
-						SenderId = m.SenderId,
-						Sender = new
-						{
-							m.Sender!.UserName,
-							m.Sender.ProfilePictureUrl
-						}
-					})
 					.ToListAsync();
 
-				// mark as read — update LastSeen for the calling user
+				var memberMap = conversation.Members!
+					.ToDictionary(m => m.UserId!, m => m);
+
 				var member = conversation.Members!
 					.FirstOrDefault(m => m.UserId == userId);
 
@@ -272,25 +311,21 @@ namespace TeamUpBackEnd.Extensions
 				return Results.Ok(new
 				{
 					conversationId = conversationPublicId,
-					// return in chronological order for the client
-					messages = messages.OrderBy(m => m.SentAt),
+					messages = messages
+						.OrderBy(m => m.SentAt)
+						.Select(m => MapMessage(m, conversation.IsGroup == true, memberMap)),
 					hasMore = messages.Count == pageSize
 				});
 			})
-			.WithSummary("Returns paginated message history for a conversation (30 per page). Pass ?before=<messagePublicId> to load older messages. Automatically marks the conversation as read for the calling user.");
-
-			// ── ADD MEMBER ────────────────────────────────────────────────────────
-			// Adds a new participant to an existing conversation by email,
-			// username, or phone number. Any existing member can add someone —
-			// restrict to group conversations only to avoid turning 1:1 DMs
-			// into groups silently.
+			.WithSummary("Returns paginated message history for a conversation.");
 
 			dm.MapPost("/{conversationPublicId}/add-member", async (
-			AppDbContext db,
-			ClaimsPrincipal userClaims,
-			UserManager<ApplicationUser> userManager,
-			string conversationPublicId,
-			AddConversationMemberDto dto) =>
+				AppDbContext db,
+				ClaimsPrincipal userClaims,
+				UserManager<ApplicationUser> userManager,
+				IHubContext<DmHub> hub,
+				string conversationPublicId,
+				AddConversationMemberDto dto) =>
 			{
 				var currentUserId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -300,18 +335,13 @@ namespace TeamUpBackEnd.Extensions
 				if (string.IsNullOrWhiteSpace(dto.UserId))
 					return Results.BadRequest("UserId is required");
 
-				var conversation = await db.Conversations
-					.Include(c => c.Members)
-					.FirstOrDefaultAsync(c => c.PublicId.ToString() == conversationPublicId);
-
+				var conversation = await LoadConversation(db, conversationPublicId);
 				if (conversation is null)
 					return Results.NotFound("Conversation not found");
 
-				// Only existing members can add new members
 				if (!conversation.Members!.Any(m => m.UserId == currentUserId))
 					return Results.Forbid();
 
-				// Prevent converting a 1:1 DM into a group
 				if (conversation.IsGroup != true)
 					return Results.BadRequest(
 						"Cannot add members to a 1:1 conversation. Start a new group DM instead.");
@@ -327,36 +357,35 @@ namespace TeamUpBackEnd.Extensions
 				if (conversation.Members!.Any(m => m.UserId == targetUser.Id))
 					return Results.BadRequest("User is already a member of this conversation");
 
+				var now = DateTime.UtcNow;
 				var member = new ConversationMember
 				{
 					UserId = targetUser.Id,
 					ConversationId = conversation.Id,
-					LastSeen = DateTime.UtcNow
+					LastSeen = now,
+					JoinedAt = now,
+					Role = ConversationMemberRole.Member
 				};
 
 				conversation.Members!.Add(member);
-
 				await db.SaveChangesAsync();
+
+				member.User = targetUser;
+
+				await DmHubNotifier.NotifyMemberAdded(hub, conversationPublicId, member);
 
 				return Results.Ok(new
 				{
 					message = $"{targetUser.UserName} added to the conversation",
-					addedUser = new
-					{
-						targetUser.Id,
-						targetUser.UserName,
-						targetUser.Email,
-						targetUser.ProfilePictureUrl
-					}
+					addedUser = MapMember(member)
 				});
 			}).WithSummary("Adds a selected user to an existing group DM.");
 
-			//search for users to add to a conversation — excludes existing members
 			dm.MapGet("/{conversationPublicId}/search-users", async (
-			AppDbContext db,
-			ClaimsPrincipal userClaims,
-			string conversationPublicId,
-			string q) =>
+				AppDbContext db,
+				ClaimsPrincipal userClaims,
+				string conversationPublicId,
+				string q) =>
 			{
 				var currentUserId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -373,7 +402,6 @@ namespace TeamUpBackEnd.Extensions
 				if (conversation is null)
 					return Results.NotFound("Conversation not found");
 
-				// Only members can search for people to add
 				if (!conversation.Members!.Any(m => m.UserId == currentUserId))
 					return Results.Forbid();
 
@@ -405,25 +433,187 @@ namespace TeamUpBackEnd.Extensions
 
 				return Results.Ok(users);
 			})
-			.WithSummary("Search users by username, email, or phone number for adding to a group conversation.");
+			.WithSummary("Search users for adding to a group conversation.");
 
-			// ── LEAVE CONVERSATION ────────────────────────────────────────────────
-			// Removes the calling user from a group DM.
-			// 1:1 conversations are not deleted — they stay in history.
+			dm.MapPatch("/{conversationPublicId}/members/me", async (
+				AppDbContext db,
+				ClaimsPrincipal userClaims,
+				IHubContext<DmHub> hub,
+				string conversationPublicId,
+				UpdateNicknameDto dto) =>
+			{
+				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
+				if (userId is null)
+					return Results.BadRequest("User not found");
+
+				var conversation = await LoadConversation(db, conversationPublicId);
+				if (conversation is null)
+					return Results.NotFound("Conversation not found");
+
+				if (conversation.IsGroup != true)
+					return Results.BadRequest("Nicknames are only available in group conversations");
+
+				var member = conversation.Members!.FirstOrDefault(m => m.UserId == userId);
+				if (member is null)
+					return Results.Forbid();
+
+				member.Nickname = string.IsNullOrWhiteSpace(dto.Nickname)
+					? null
+					: dto.Nickname.Trim();
+
+				await db.SaveChangesAsync();
+				await DmHubNotifier.NotifyMemberUpdated(hub, conversationPublicId, member);
+
+				return Results.Ok(MapMember(member));
+			})
+			.WithSummary("Update your nickname in a group conversation.");
+
+			dm.MapPatch("/{conversationPublicId}/members/{targetUserId}/nickname", async (
+				AppDbContext db,
+				ClaimsPrincipal userClaims,
+				IHubContext<DmHub> hub,
+				string conversationPublicId,
+				string targetUserId,
+				UpdateNicknameDto dto) =>
+			{
+				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
+				if (userId is null)
+					return Results.BadRequest("User not found");
+
+				var conversation = await LoadConversation(db, conversationPublicId);
+				if (conversation is null)
+					return Results.NotFound("Conversation not found");
+
+				if (conversation.IsGroup != true)
+					return Results.BadRequest("Nicknames are only available in group conversations");
+
+				var actor = conversation.Members!.FirstOrDefault(m => m.UserId == userId);
+				if (actor is null)
+					return Results.Forbid();
+
+				var target = conversation.Members!.FirstOrDefault(m => m.UserId == targetUserId);
+				if (target is null)
+					return Results.NotFound("Member not found");
+
+				if (userId != targetUserId && !ConversationMemberHelper.CanSetNicknameForOther(actor))
+					return Results.Forbid();
+
+				target.Nickname = string.IsNullOrWhiteSpace(dto.Nickname)
+					? null
+					: dto.Nickname.Trim();
+
+				await db.SaveChangesAsync();
+				await DmHubNotifier.NotifyMemberUpdated(hub, conversationPublicId, target);
+
+				return Results.Ok(MapMember(target));
+			})
+			.WithSummary("Set a member's nickname (self or Owner/Admin for others).");
+
+			dm.MapPatch("/{conversationPublicId}/members/{targetUserId}/role", async (
+				AppDbContext db,
+				ClaimsPrincipal userClaims,
+				IHubContext<DmHub> hub,
+				string conversationPublicId,
+				string targetUserId,
+				UpdateMemberRoleDto dto) =>
+			{
+				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
+				if (userId is null)
+					return Results.BadRequest("User not found");
+
+				if (!ConversationMemberHelper.TryParseRole(dto.Role, out var newRole))
+					return Results.BadRequest("Invalid role. Use Member, Admin, or Owner.");
+
+				var conversation = await LoadConversation(db, conversationPublicId);
+				if (conversation is null)
+					return Results.NotFound("Conversation not found");
+
+				if (conversation.IsGroup != true)
+					return Results.BadRequest("Roles are only available in group conversations");
+
+				var actor = conversation.Members!.FirstOrDefault(m => m.UserId == userId);
+				if (actor is null)
+					return Results.Forbid();
+
+				var target = conversation.Members!.FirstOrDefault(m => m.UserId == targetUserId);
+				if (target is null)
+					return Results.NotFound("Member not found");
+
+				if (!ConversationMemberHelper.CanChangeRole(actor))
+					return Results.Forbid();
+
+				if (newRole == ConversationMemberRole.Owner)
+				{
+					if (targetUserId == userId)
+						return Results.BadRequest("You are already the owner");
+
+					actor.Role = ConversationMemberRole.Admin;
+					target.Role = ConversationMemberRole.Owner;
+					conversation.CreatedByUserId = targetUserId;
+				}
+				else if (target.Role == ConversationMemberRole.Owner)
+				{
+					return Results.BadRequest("Transfer ownership by assigning Owner role to another member");
+				}
+				else
+				{
+					target.Role = newRole;
+				}
+
+				await db.SaveChangesAsync();
+
+				await DmHubNotifier.NotifyMemberUpdated(hub, conversationPublicId, target);
+				if (newRole == ConversationMemberRole.Owner)
+					await DmHubNotifier.NotifyMemberUpdated(hub, conversationPublicId, actor);
+
+				return Results.Ok(MapMember(target));
+			})
+			.WithSummary("Change a member's role (Owner only). Assign Owner to transfer ownership.");
+
+			dm.MapDelete("/{conversationPublicId}/members/{targetUserId}", async (
+				AppDbContext db,
+				ClaimsPrincipal userClaims,
+				IHubContext<DmHub> hub,
+				string conversationPublicId,
+				string targetUserId) =>
+			{
+				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
+				if (userId is null)
+					return Results.BadRequest("User not found");
+
+				var conversation = await LoadConversation(db, conversationPublicId);
+				if (conversation is null)
+					return Results.NotFound("Conversation not found");
+
+				var actor = conversation.Members!.FirstOrDefault(m => m.UserId == userId);
+				if (actor is null)
+					return Results.Forbid();
+
+				var target = conversation.Members!.FirstOrDefault(m => m.UserId == targetUserId);
+				if (target is null)
+					return Results.NotFound("Member not found");
+
+				if (userId == targetUserId)
+					return await RemoveMemberAsync(db, hub, conversation, target, userId, null);
+
+				if (!ConversationMemberHelper.CanKick(actor, target))
+					return Results.Forbid();
+
+				return await RemoveMemberAsync(db, hub, conversation, target, targetUserId, userId);
+			})
+			.WithSummary("Remove a member from a group (Owner/Admin) or yourself.");
 
 			dm.MapDelete("/{conversationPublicId}/leave", async (
 				AppDbContext db,
 				ClaimsPrincipal userClaims,
+				IHubContext<DmHub> hub,
 				string conversationPublicId) =>
 			{
 				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
 				if (userId is null)
 					return Results.BadRequest("User not found");
 
-				var conversation = await db.Conversations
-					.Include(c => c.Members)
-					.FirstOrDefaultAsync(c => c.PublicId.ToString() == conversationPublicId);
-
+				var conversation = await LoadConversation(db, conversationPublicId);
 				if (conversation is null)
 					return Results.NotFound("Conversation not found");
 
@@ -433,13 +623,113 @@ namespace TeamUpBackEnd.Extensions
 				if (member is null)
 					return Results.BadRequest("You are not a member of this conversation");
 
-				conversation.Members!.Remove(member);
-				await db.SaveChangesAsync();
+				if (conversation.IsGroup == true && member.Role == ConversationMemberRole.Owner)
+				{
+					ConversationMemberHelper.PromoteNewOwner(conversation.Members!, userId);
+					if (conversation.CreatedByUserId == userId)
+					{
+						var newOwner = conversation.Members!
+							.FirstOrDefault(m => m.Role == ConversationMemberRole.Owner);
+						conversation.CreatedByUserId = newOwner?.UserId;
+					}
+				}
 
-				return Results.Ok("Left the conversation");
+				return await RemoveMemberAsync(db, hub, conversation, member, userId, null);
 			})
-			.WithSummary("Removes the calling user from a conversation. Works on both 1:1 and group DMs — the conversation and its history are preserved for the other participants.");
+			.WithSummary("Leave a conversation.");
 		}
+
+		private static async Task<Conversation?> LoadConversation(AppDbContext db, string conversationPublicId) =>
+			await db.Conversations
+				.Include(c => c.Members!)
+					.ThenInclude(m => m.User)
+				.FirstOrDefaultAsync(c => c.PublicId.ToString() == conversationPublicId);
+
+		private static async Task<IResult> RemoveMemberAsync(
+			AppDbContext db,
+			IHubContext<DmHub> hub,
+			Conversation conversation,
+			ConversationMember target,
+			string removedUserId,
+			string? removedByUserId)
+		{
+			conversation.Members!.Remove(target);
+			await db.SaveChangesAsync();
+
+			await DmHubNotifier.NotifyMemberRemoved(
+				hub,
+				conversation.PublicId.ToString(),
+				removedUserId,
+				removedByUserId);
+
+			return Results.Ok("Left the conversation");
+		}
+
+		private static object MapMember(ConversationMember m) => new
+		{
+			m.UserId,
+			m.User?.UserName,
+			m.Nickname,
+			Role = ConversationMemberHelper.RoleToString(m.Role),
+			DisplayName = ConversationMemberHelper.GetDisplayName(m),
+			m.User?.ProfilePictureUrl,
+			m.JoinedAt
+		};
+
+		private static object MapMessage(
+			Message m,
+			bool isGroup,
+			Dictionary<string, ConversationMember> memberMap)
+		{
+			var displayName = m.Sender?.UserName;
+			if (isGroup && m.SenderId is not null && memberMap.TryGetValue(m.SenderId, out var senderMember))
+				displayName = ConversationMemberHelper.GetDisplayName(senderMember);
+
+			return new
+			{
+				m.PublicId,
+				m.Content,
+				m.SentAt,
+				SenderId = m.SenderId,
+				Sender = new
+				{
+					m.Sender?.UserName,
+					DisplayName = displayName,
+					m.Sender?.ProfilePictureUrl
+				}
+			};
+		}
+
+		private static object MapConversation(Conversation c, string currentUserId)
+		{
+			var actor = c.Members!.FirstOrDefault(m => m.UserId == currentUserId);
+			return new
+			{
+				c.PublicId,
+				c.Title,
+				c.IsGroup,
+				c.LastMessageAt,
+				Members = c.Members!.Select(m => MapMember(m)),
+				CurrentUserRole = actor is null ? null : ConversationMemberHelper.RoleToString(actor.Role),
+				CanManage = actor is not null && ConversationMemberHelper.CanRename(actor)
+			};
+		}
+
+		private static object MapConversationDetail(Conversation c, ConversationMember actor) => new
+		{
+			c.PublicId,
+			c.Title,
+			c.IsGroup,
+			c.LastMessageAt,
+			c.CreatedByUserId,
+			Members = c.Members!
+				.OrderByDescending(m => m.Role)
+				.ThenBy(m => m.JoinedAt)
+				.Select(m => MapMember(m)),
+			CurrentUserRole = ConversationMemberHelper.RoleToString(actor.Role),
+			CanManage = ConversationMemberHelper.CanRename(actor),
+			CanChangeRoles = ConversationMemberHelper.CanChangeRole(actor)
+		};
 	}
 
 	public record AddConversationMemberDto()

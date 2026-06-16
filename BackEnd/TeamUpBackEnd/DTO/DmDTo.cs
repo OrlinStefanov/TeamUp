@@ -18,5 +18,20 @@
 			public string? Identifier { get; init; }
 		}
 
+		public record UpdateConversationDto
+		{
+			public string? Title { get; init; }
+		}
+
+		public record UpdateNicknameDto
+		{
+			public string? Nickname { get; init; }
+		}
+
+		public record UpdateMemberRoleDto
+		{
+			public string? Role { get; init; }
+		}
+
 	}
 }

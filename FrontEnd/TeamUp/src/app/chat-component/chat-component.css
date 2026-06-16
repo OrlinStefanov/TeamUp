@@ -188,11 +188,20 @@
   color: #f0eeff;
 }
 
+.dark-mode .conversation-header p {
+  color: #9a98a8;
+}
+
 .message-bubble time {
   display: block;
   color: #858391;
   text-align: right;
   font-size: 10px;
+}
+
+.dark-mode .message-bubble time,
+.dark-mode .typing-indicator {
+  color: #9a98a8;
 }
 
 .typing-indicator {

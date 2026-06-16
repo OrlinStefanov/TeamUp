@@ -14,6 +14,9 @@ namespace TeamUpBackEnd.Models.Chat
 
 		public DateTime? LastMessageAt { get; set; }
 
+		public string? CreatedByUserId { get; set; }
+		public ApplicationUser? CreatedBy { get; set; }
+
 		public ICollection<Message>? Messages { get; set; }
 		public ICollection<ConversationMember>? Members { get; set; }
 	}

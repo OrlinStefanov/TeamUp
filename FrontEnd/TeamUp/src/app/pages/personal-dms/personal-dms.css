@@ -75,8 +75,7 @@
 }
 
 .icon-btn,
-.send-btn,
-.modal-close {
+.send-btn {
   border: 0;
   background: transparent;
   color: inherit;
@@ -205,6 +204,7 @@
 .dark-mode .person-search {
   background: #171721;
   border-color: #343346;
+  color: #f0eeff;
 }
 
 .chat-filter input,
@@ -320,6 +320,15 @@
 .search-hints,
 .empty-results {
   color: #858391;
+}
+
+.dark-mode .chat-copy small,
+.dark-mode .chat-row time,
+.dark-mode .conversation-header p,
+.dark-mode .message-bubble time,
+.dark-mode .search-hints,
+.dark-mode .empty-results {
+  color: #9a98a8;
 }
 
 .chat-row time {
@@ -553,68 +562,21 @@
   color: #fff;
 }
 
-.dm-modal-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding-top: 94px;
-  background: rgba(0, 0, 0, 0.78);
-}
+/* personal-dms modal extensions (base: global tu-modal-* in styles.css) */
 
-.dm-modal {
-  position: relative;
-  width: min(512px, calc(100vw - 32px));
-  min-height: 280px;
-  padding: 28px 24px;
-  border: 1px solid #dcd9e7;
-  border-radius: 12px;
-  background: #fbfbfd;
-  color: #26232d;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.32);
-}
-
-.dark-mode .dm-modal {
-  background: #17171f;
-  color: #f5f2ff;
-  border-color: #363345;
-}
-
-.modal-close {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  font-size: 24px;
-  line-height: 1;
-  color: #5f5d68;
-}
-
-.dark-mode .modal-close {
-  color: #b8b6c3;
-}
-
-.modal-close:hover {
-  background: rgba(168, 85, 247, 0.12);
-}
-
-.dm-modal h2 {
+.tu-modal h2 {
   margin: 0 0 8px;
   font-size: 16px;
   font-weight: 800;
 }
 
-.dm-modal p {
+.tu-modal p {
   margin: 0 0 12px;
   color: #777484;
   font-size: 12px;
 }
 
-.dark-mode .dm-modal p {
+.dark-mode .tu-modal p {
   color: #9a98a8;
 }
 
@@ -857,4 +819,133 @@
   .message-composer input {
     height: 42px;
   }
+}
+
+.message-sender {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: #7c3aed;
+  margin-bottom: 4px;
+}
+
+.dark-mode .message-sender {
+  color: #c4b5fd;
+}
+
+.group-settings-modal {
+  max-width: 520px;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.group-settings-section {
+  margin-bottom: 18px;
+}
+
+.group-settings-section h3 {
+  margin: 0 0 10px;
+  font-size: 13px;
+}
+
+.inline-edit-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+
+.readonly-value {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.group-member-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.group-member-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 8px;
+  border: 1px solid #e8e6ef;
+  border-radius: 10px;
+}
+
+.dark-mode .group-member-row {
+  border-color: #343346;
+}
+
+.group-member-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.group-member-copy small {
+  color: #858391;
+  font-size: 11px;
+}
+
+.role-badge {
+  display: inline-block;
+  width: fit-content;
+  margin-top: 2px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  background: rgba(168, 85, 247, 0.12);
+  color: #7c3aed;
+}
+
+.role-badge.owner {
+  background: rgba(234, 179, 8, 0.15);
+  color: #b45309;
+}
+
+.role-badge.admin {
+  background: rgba(59, 130, 246, 0.12);
+  color: #2563eb;
+}
+
+.group-member-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: flex-end;
+}
+
+.member-action-btn {
+  border: 1px solid #d5d2e2;
+  background: transparent;
+  color: inherit;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.member-action-btn.danger {
+  border-color: rgba(239, 68, 68, 0.35);
+  color: #dc2626;
+}
+
+.dark-mode .member-action-btn {
+  border-color: #343346;
+}
+
+.leave-group-btn {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.nickname-modal {
+  max-width: 400px;
 }

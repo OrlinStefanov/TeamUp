@@ -548,15 +548,15 @@
 .header-row,
 .join-header {
   display: flex;
-  justify-content: space-between;
   align-items: flex-start;
-  padding: 20px 24px 15px;
+  gap: 12px;
+  padding: 20px 48px 15px 24px;
   border-bottom: 1px solid #ebebf5;
 }
 
 .create-workspace-modal .header-row {
-  align-items: center;
-  padding: 22px 30px 18px;
+  align-items: flex-start;
+  padding: 22px 48px 18px 30px;
 }
 
 .create-workspace-modal .tm-title {
@@ -1008,66 +1008,441 @@
   }
 }
 
-/*orcho e pipal*/
-.info-field 
-{
-  border: 1px solid #7c3aed;
-  border-radius: 15px;
-  background-color: #e2dfdf23;
+/* ── Workspace settings modal (Bootstrap + tu-modal-shell) ── */
 
-  min-height: 50px;
+.settings-modal .modal-dialog {
+  max-width: min(520px, calc(100vw - 32px));
 }
 
-.info-field label {
-  font-size: 14px;
+.settings-modal .modal-content {
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid #dcd9e7;
+  background: #fbfbfd;
+  color: #26232d;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.32);
 }
 
 .settings-modal.dark-mode .modal-content {
-  background-color: #1a1a22;
-  border-color: #2a2a3a;
-  color: #f0eeff;
+  background: #17171f;
+  color: #f5f2ff;
+  border-color: #363345;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+}
+
+.settings-modal .modal-header.ws-settings-header {
+  align-items: flex-start;
+  gap: 0;
+  padding: 20px 48px 16px 20px;
+  border-bottom: 1px solid #dedee8;
 }
 
 .settings-modal.dark-mode .modal-header,
 .settings-modal.dark-mode .modal-footer {
+  border-color: #363345;
+}
+
+.ws-settings-header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.ws-settings-icon {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #7c3aed, #a78bfa);
+  color: #fff;
+  font-size: 18px;
+  font-weight: 800;
+  box-shadow: 0 8px 20px rgba(124, 58, 237, 0.28);
+}
+
+.ws-settings-heading {
+  min-width: 0;
+}
+
+.ws-settings-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ws-settings-subtitle {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #777484;
+}
+
+.settings-modal.dark-mode .ws-settings-subtitle {
+  color: #9a98a8;
+}
+
+.settings-modal .modal-body.ws-settings-body {
+  padding: 18px 20px 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-height: min(60vh, 520px);
+}
+
+.ws-settings-desc {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #777484;
+}
+
+.settings-modal.dark-mode .ws-settings-desc {
+  color: #9a98a8;
+}
+
+.ws-settings-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.ws-stat-tile {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid #e0dff0;
+  background: #f8f7ff;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.ws-stat-tile:hover {
+  border-color: #c4b5fd;
+  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.1);
+  transform: translateY(-1px);
+}
+
+.settings-modal.dark-mode .ws-stat-tile {
+  background: #1a1a24;
   border-color: #2a2a3a;
 }
 
-.settings-modal.dark-mode .form-control {
-  background-color: #0f0f14;
-  border-color: #333;
-  color: #f0eeff;
+.settings-modal.dark-mode .ws-stat-tile:hover {
+  border-color: #4c3d8f;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
 }
 
-.settings-modal.dark-mode .text-muted {
-  color: #9ca3af !important;
+.ws-stat-tile--wide {
+  grid-column: 1 / -1;
 }
 
-.settings-modal.dark-mode .btn-close {
-  filter: invert(1);
+.ws-stat-icon {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  color: #7c3aed;
+}
+
+.ws-stat-icon--role {
+  background: rgba(124, 58, 237, 0.12);
+}
+
+.ws-stat-icon--members {
+  background: rgba(0, 188, 212, 0.12);
+  color: #00bcd4;
+}
+
+.ws-stat-icon--date {
+  background: rgba(245, 158, 11, 0.12);
+  color: #f59e0b;
+}
+
+.settings-modal.dark-mode .ws-stat-icon--role {
+  background: rgba(124, 58, 237, 0.18);
+  color: #c4b5fd;
+}
+
+.settings-modal.dark-mode .ws-stat-icon--members {
+  background: rgba(0, 188, 212, 0.15);
+  color: #4dd0e1;
+}
+
+.settings-modal.dark-mode .ws-stat-icon--date {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+}
+
+.ws-stat-content {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ws-stat-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #9898b8;
+}
+
+.settings-modal.dark-mode .ws-stat-label {
+  color: #6b6b8a;
+}
+
+.ws-stat-value {
+  font-size: 15px;
+  font-weight: 700;
+  color: inherit;
+}
+
+.ws-role-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
 }
 
 .role-owner {
-  background-color: #facc154d;
-  border: 1px solid #facc15;
+  background-color: rgba(250, 204, 21, 0.18);
+  border: 1px solid rgba(250, 204, 21, 0.45);
+  color: #a07c00;
 }
 
 .role-admin {
-  background-color: #9233ea2d;
-  border: 1px solid #7c3aed;
+  background-color: rgba(168, 85, 247, 0.14);
+  border: 1px solid rgba(168, 85, 247, 0.45);
+  color: #7c3aed;
 }
 
 .role-member {
-  background-color: #6b7280;
-  color: #ffffff;
+  background-color: rgba(107, 114, 128, 0.15);
+  border: 1px solid rgba(107, 114, 128, 0.4);
+  color: #6b7280;
 }
 
-.settings-modal.dark-mode .role-owner, .settings-modal.dark-mode .role-admin, .settings-modal.dark-mode .role-member {
-  color: #f0eeff;
+.settings-modal.dark-mode .role-owner {
+  color: #facc15;
 }
 
-.settings-modal.light-mode .role-owner, .settings-modal.light-mode .role-admin, .settings-modal.light-mode .role-member {
-  color: #1f2937;;
+.settings-modal.dark-mode .role-admin {
+  color: #d8b4fe;
+}
+
+.settings-modal.dark-mode .role-member {
+  color: #d1d5db;
+}
+
+.ws-invite-panel {
+  padding: 16px;
+  border-radius: 14px;
+  border: 1px solid #e0dff0;
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.06) 0%, rgba(124, 58, 237, 0.02) 100%);
+}
+
+.settings-modal.dark-mode .ws-invite-panel {
+  border-color: #2a2a3a;
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.14) 0%, rgba(22, 22, 31, 0.9) 100%);
+}
+
+.ws-invite-panel-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.ws-invite-panel-icon {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: rgba(124, 58, 237, 0.14);
+  color: #7c3aed;
+}
+
+.settings-modal.dark-mode .ws-invite-panel-icon {
+  background: rgba(124, 58, 237, 0.22);
+  color: #c4b5fd;
+}
+
+.ws-invite-panel-title {
+  margin: 0 0 2px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.ws-invite-panel-hint {
+  margin: 0;
+  font-size: 12px;
+  color: #9898b8;
+}
+
+.settings-modal.dark-mode .ws-invite-panel-hint {
+  color: #6b6b8a;
+}
+
+.ws-invite-copy-row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.ws-invite-code {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px dashed #c4b5fd;
+  background: #fff;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #7c3aed;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.settings-modal.dark-mode .ws-invite-code {
+  background: #0f0f14;
+  border-color: #4c3d8f;
+  color: #d8b4fe;
+}
+
+.ws-copy-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 96px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #7c3aed, #9333ea);
+  color: #fff;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s ease, transform 0.1s ease, background 0.2s ease;
+}
+
+.ws-copy-btn:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+
+.ws-copy-btn:active {
+  transform: scale(0.98);
+}
+
+.ws-copy-btn.copied {
+  background: linear-gradient(135deg, #16a34a, #22c55e);
+}
+
+.settings-modal .modal-footer.ws-settings-footer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 14px 20px 18px;
+  border-top: 1px solid #dedee8;
+}
+
+.ws-settings-action {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid rgba(124, 58, 237, 0.35);
+  border-radius: 10px;
+  background: rgba(124, 58, 237, 0.08);
+  color: #7c3aed;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+
+.settings-modal.dark-mode .ws-settings-action {
+  background: rgba(124, 58, 237, 0.14);
+  border-color: rgba(168, 85, 247, 0.35);
+  color: #d8b4fe;
+}
+
+.ws-settings-action:hover {
+  background: rgba(124, 58, 237, 0.16);
+  transform: translateY(-1px);
+}
+
+.ws-settings-action--danger {
+  border-color: rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.08);
+  color: #ef4444;
+}
+
+.settings-modal.dark-mode .ws-settings-action--danger {
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+}
+
+.ws-settings-action--danger:hover {
+  background: rgba(239, 68, 68, 0.16);
+}
+
+@media (max-width: 575.98px) {
+  .settings-modal .modal-dialog {
+    margin: 0.5rem auto;
+    max-width: calc(100vw - 16px);
+  }
+
+  .settings-modal .modal-content {
+    max-height: 92vh;
+  }
+
+  .ws-settings-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .ws-stat-tile--wide {
+    grid-column: auto;
+  }
+
+  .ws-invite-copy-row {
+    flex-direction: column;
+  }
+
+  .ws-copy-btn {
+    width: 100%;
+    min-height: 42px;
+  }
+
+  .settings-modal .modal-footer.ws-settings-footer {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Polished dashboard and workspace modal controls */
@@ -1086,7 +1461,6 @@
 }
 
 .workspace-card .btn,
-.settings-modal .btn,
 .createWorkspace-overlay .btn,
 .joinWorkspace-overlay .btn {
   min-height: 36px;
@@ -1109,8 +1483,7 @@
 }
 
 .createWorkspace-box,
-.joinWorkspace-box,
-.settings-modal .modal-content {
+.joinWorkspace-box {
   border-radius: 8px;
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.48);
 }
@@ -1313,45 +1686,6 @@
   overflow: visible;
 }
 
-.settings-actions-footer {
-  justify-content: stretch;
-  padding: 16px 20px;
-}
-
-.settings-action-row {
-  width: 100%;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
-.settings-action-btn {
-  min-height: 42px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  border: 1px solid rgba(166, 75, 251, 0.35);
-  border-radius: 8px;
-  background: rgba(166, 75, 251, 0.08);
-  color: #7c3aed;
-  font-weight: 700;
-}
-
-.settings-action-btn:hover {
-  background: rgba(166, 75, 251, 0.16);
-}
-
-.settings-action-btn.danger {
-  border-color: rgba(239, 68, 68, 0.35);
-  background: rgba(239, 68, 68, 0.08);
-  color: #ef4444;
-}
-
-.settings-action-btn.danger:hover {
-  background: rgba(239, 68, 68, 0.15);
-}
-
 .workspace-mode-tabs {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1385,10 +1719,6 @@
 }
 
 @media (max-width: 768px) {
-  .settings-action-row {
-    grid-template-columns: 1fr;
-  }
-
   .workspace-mode-tabs {
     padding-left: 18px;
     padding-right: 18px;

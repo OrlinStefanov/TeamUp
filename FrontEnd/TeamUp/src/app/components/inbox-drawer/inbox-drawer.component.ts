@@ -20,10 +20,8 @@ import { takeUntil } from 'rxjs/operators';
               Clear all
             </button>
           }
-          <button class="btn-close" type="button" (click)="closeDrawer()">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
-            <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
-          </svg>
+          <button class="tu-modal-close inbox-drawer-close" type="button" aria-label="Close inbox" (click)="closeDrawer()">
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
         </button>
         </div>
       </div>
@@ -139,7 +137,8 @@ import { takeUntil } from 'rxjs/operators';
     }
 
     .inbox-drawer-header {
-      padding: 1.5rem;
+      position: relative;
+      padding: 1.25rem 3rem 1.25rem 1.5rem;
       border-bottom: 1px solid var(--border-color, #e0e0e0);
       display: flex;
       justify-content: space-between;
@@ -147,10 +146,18 @@ import { takeUntil } from 'rxjs/operators';
       flex-shrink: 0;
     }
 
+    .inbox-drawer-close {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      z-index: 2;
+    }
+
     .inbox-header-actions {
       display: flex;
       align-items: center;
       gap: 0.75rem;
+      padding-right: 2rem;
     }
 
     .btn-clear-all {
@@ -170,22 +177,6 @@ import { takeUntil } from 'rxjs/operators';
     .inbox-drawer-header h5 {
       font-weight: 600;
       margin: 0;
-    }
-
-    .btn-close {
-      background: none;
-      border: none;
-      cursor: pointer;
-      padding: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--text-color, #333);
-      transition: color 0.2s ease;
-    }
-
-    .btn-close:hover {
-      color: var(--text-danger, #dc3545);
     }
 
     .inbox-drawer-content {
@@ -343,17 +334,45 @@ import { takeUntil } from 'rxjs/operators';
     }
 
     /* Dark mode support */
+    :host(.dark-mode),
     :host-context(.dark-mode) {
-      --bg-color: #1e1e1e;
-      --text-color: #e0e0e0;
-      --text-secondary: #b0b0b0;
-      --text-muted: #808080;
-      --border-color: #333;
-      --bg-light: #2a2a2a;
-      --bg-lighter: #333;
-      --bg-primary-light: #1a3a52;
+      --bg-color: #17171f;
+      --text-color: #f5f2ff;
+      --text-secondary: #9a98a8;
+      --text-muted: #6b6b8a;
+      --text-muted-light: #6b6b8a;
+      --border-color: #363345;
+      --bg-light: #1e1e2e;
+      --bg-lighter: #241b33;
+      --bg-primary-light: rgba(168, 85, 247, 0.12);
+      --primary-color: #a855f7;
     }
 
+    :host(.dark-mode) .btn-outline-secondary,
+    :host-context(.dark-mode) .btn-outline-secondary {
+      border-color: #2a2a3a;
+      color: #b0b0d0;
+      background: transparent;
+    }
+
+    :host(.dark-mode) .btn-outline-secondary:hover,
+    :host-context(.dark-mode) .btn-outline-secondary:hover {
+      background: rgba(168, 85, 247, 0.12);
+      border-color: #7c3aed;
+      color: #c4b5fd;
+    }
+
+    :host(.dark-mode) .unread-indicator,
+    :host-context(.dark-mode) .unread-indicator {
+      background-color: #a855f7;
+    }
+
+    :host(.dark-mode) .message-item.unread,
+    :host-context(.dark-mode) .message-item.unread {
+      border-left-color: #a855f7;
+    }
+
+    :host(.light-mode),
     :host-context(.light-mode) {
       --bg-color: white;
       --text-color: #333;

@@ -3,7 +3,7 @@ import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/co
 import { FormsModule } from '@angular/forms';
 import { Observable, Subscription } from 'rxjs';
 import { Auth } from '../../services/auth/auth';
-import { DirectMessagesService, DmConversation, DmMessage, UserSearchResult } from '../../services/direct-messages.service';
+import { DirectMessagesService, DmConversation, DmMember, DmMemberRole, DmMessage, UserSearchResult } from '../../services/direct-messages.service';
 import { Router } from '@angular/router';
 
 type ChatView = {
@@ -45,6 +45,7 @@ export class PersonalDms implements OnInit, OnDestroy {
   messageText = '';
   isNewMessageOpen = false;
   isAddMemberOpen = false;
+  isGroupSettingsOpen = false;
   isMobileChatOpen = false;
   selectedConversationId: string | null = null;
   conversations: DmConversation[] = [];
@@ -53,6 +54,11 @@ export class PersonalDms implements OnInit, OnDestroy {
   isLoadingOlderMessages = false;
 
   typingUsers: string[] = [];
+
+  editGroupTitle = '';
+  myNickname = '';
+  nicknameEditMember: DmMember | null = null;
+  nicknameEditValue = '';
 
   private subscription = new Subscription();
   private currentConversationId: string | null = null;
@@ -94,6 +100,19 @@ export class PersonalDms implements OnInit, OnDestroy {
         this.messages = [...this.messages, message];
         this.scrollToBottom();
       })
+    );
+
+    this.subscription.add(
+      this.dmService.memberAdded$.subscribe(event => this.handleMemberAdded(event))
+    );
+    this.subscription.add(
+      this.dmService.memberRemoved$.subscribe(event => this.handleMemberRemoved(event))
+    );
+    this.subscription.add(
+      this.dmService.conversationUpdated$.subscribe(event => this.handleConversationUpdated(event))
+    );
+    this.subscription.add(
+      this.dmService.memberUpdated$.subscribe(event => this.handleMemberUpdated(event))
     );
   }
 
@@ -153,6 +172,41 @@ export class PersonalDms implements OnInit, OnDestroy {
 
   get selectedConversation(): DmConversation | undefined {
     return this.conversations.find(c => c.publicId === this.selectedConversationId);
+  }
+
+  get canManageGroup(): boolean {
+    return !!this.selectedConversation?.canManage;
+  }
+
+  get canChangeRoles(): boolean {
+    return !!this.selectedConversation?.canChangeRoles;
+  }
+
+  get currentUserRole(): DmMemberRole | undefined {
+    return this.selectedConversation?.currentUserRole;
+  }
+
+  get sortedGroupMembers(): DmMember[] {
+    const members = this.selectedConversation?.members ?? [];
+    const roleOrder: Record<string, number> = { Owner: 0, Admin: 1, Member: 2 };
+    return [...members].sort((a, b) => {
+      const ra = roleOrder[a.role ?? 'Member'] ?? 2;
+      const rb = roleOrder[b.role ?? 'Member'] ?? 2;
+      if (ra !== rb) return ra - rb;
+      return (a.displayName ?? a.userName ?? '').localeCompare(b.displayName ?? b.userName ?? '');
+    });
+  }
+
+  canKickMember(member: DmMember): boolean {
+    if (!this.canManageGroup || member.userId === this.auth.getUserId()) return false;
+    if (member.role === 'Owner') return false;
+    if (this.currentUserRole === 'Admin' && member.role === 'Admin') return false;
+    return true;
+  }
+
+  getMessageSenderLabel(message: DmMessage): string {
+    if (message.senderId === this.auth.getUserId()) return '';
+    return message.sender?.displayName ?? message.sender?.userName ?? '';
   }
 
   private buildChatView(conversation: DmConversation): ChatView {
@@ -307,15 +361,127 @@ export class PersonalDms implements OnInit, OnDestroy {
   openAddMember() {
     this.isAddMemberOpen = true;
     this.isNewMessageOpen = false;
+    this.isGroupSettingsOpen = false;
     this.searchText = '';
     this.searchResults = [];
     this.selectedUser = null;
     setTimeout(() => this.personSearchInput?.nativeElement.focus(), 0);
   }
 
+  openGroupSettings() {
+    const conversation = this.selectedConversation;
+    if (!conversation?.isGroup) return;
+
+    this.isGroupSettingsOpen = true;
+    this.isNewMessageOpen = false;
+    this.isAddMemberOpen = false;
+    this.editGroupTitle = conversation.title ?? '';
+    const me = conversation.members.find(m => m.userId === this.auth.getUserId());
+    this.myNickname = me?.nickname ?? '';
+
+    this.dmService.getConversation(conversation.publicId).subscribe({
+      next: detail => this.patchConversation(detail),
+      error: () => {}
+    });
+  }
+
+  closeGroupSettings() {
+    this.isGroupSettingsOpen = false;
+    this.nicknameEditMember = null;
+    this.nicknameEditValue = '';
+  }
+
+  saveGroupTitle() {
+    if (!this.selectedConversationId || !this.editGroupTitle.trim()) return;
+
+    this.dmService.updateConversationTitle(this.selectedConversationId, this.editGroupTitle.trim())
+      .subscribe({
+        next: () => {
+          const conversation = this.conversations.find(c => c.publicId === this.selectedConversationId);
+          if (conversation) {
+            conversation.title = this.editGroupTitle.trim();
+          }
+        }
+      });
+  }
+
+  saveMyNickname() {
+    if (!this.selectedConversationId) return;
+
+    const nickname = this.myNickname.trim() || null;
+    this.dmService.updateMyNickname(this.selectedConversationId, nickname).subscribe({
+      next: member => {
+        const conversation = this.conversations.find(c => c.publicId === this.selectedConversationId);
+        const me = conversation?.members.find(m => m.userId === this.auth.getUserId());
+        if (me) {
+          me.nickname = member.nickname;
+          me.displayName = member.displayName;
+        }
+      }
+    });
+  }
+
+  openNicknameEdit(member: DmMember) {
+    this.nicknameEditMember = member;
+    this.nicknameEditValue = member.nickname ?? '';
+  }
+
+  saveMemberNickname() {
+    if (!this.selectedConversationId || !this.nicknameEditMember) return;
+
+    const nickname = this.nicknameEditValue.trim() || null;
+    const targetId = this.nicknameEditMember.userId;
+    const isSelf = targetId === this.auth.getUserId();
+
+    const request = isSelf
+      ? this.dmService.updateMyNickname(this.selectedConversationId, nickname)
+      : this.dmService.updateMemberNickname(this.selectedConversationId, targetId, nickname);
+
+    request.subscribe({
+      next: member => {
+        const conversation = this.conversations.find(c => c.publicId === this.selectedConversationId);
+        const target = conversation?.members.find(m => m.userId === targetId);
+        if (target) {
+          target.nickname = member.nickname;
+          target.displayName = member.displayName;
+        }
+        if (isSelf) this.myNickname = member.nickname ?? '';
+        this.nicknameEditMember = null;
+        this.nicknameEditValue = '';
+      }
+    });
+  }
+
+  kickMember(member: DmMember) {
+    if (!this.selectedConversationId || !confirm(`Remove ${member.displayName ?? member.userName} from the group?`)) {
+      return;
+    }
+
+    this.dmService.removeMember(this.selectedConversationId, member.userId).subscribe({
+      next: () => this.removeMemberFromLocal(member.userId)
+    });
+  }
+
+  promoteToAdmin(member: DmMember) {
+    if (!this.selectedConversationId) return;
+    this.dmService.updateMemberRole(this.selectedConversationId, member.userId, 'Admin').subscribe();
+  }
+
+  demoteToMember(member: DmMember) {
+    if (!this.selectedConversationId) return;
+    this.dmService.updateMemberRole(this.selectedConversationId, member.userId, 'Member').subscribe();
+  }
+
+  transferOwnership(member: DmMember) {
+    if (!this.selectedConversationId) return;
+    if (!confirm(`Transfer ownership to ${member.displayName ?? member.userName}?`)) return;
+    this.dmService.updateMemberRole(this.selectedConversationId, member.userId, 'Owner').subscribe();
+  }
+
   closeNewMessage() {
     this.isNewMessageOpen = false;
     this.isAddMemberOpen = false;
+    this.isGroupSettingsOpen = false;
     this.searchText = '';
     this.searchResults = [];
     this.selectedUser = null;
@@ -332,6 +498,7 @@ export class PersonalDms implements OnInit, OnDestroy {
     this.selectedConversationId = conversationId;
     this.currentConversationId = conversationId;
     this.isMobileChatOpen = true;
+    this.isGroupSettingsOpen = false;
     this.hasMoreMessages = false;
     this.oldestMessageId = null;
 
@@ -409,17 +576,22 @@ export class PersonalDms implements OnInit, OnDestroy {
     this.dmService
       .addMember(this.selectedConversationId, this.selectedUser.id)
       .subscribe({
-        next: () => {
+        next: (res: any) => {
+          const added = res?.addedUser ?? res?.AddedUser;
           const conversation = this.conversations.find(
             c => c.publicId === this.selectedConversationId
           );
 
-          if (conversation) {
+          if (conversation && added) {
             conversation.members.push({
-              userId: this.selectedUser!.id,
-              userName: this.selectedUser!.userName,
-              profilePictureUrl: this.selectedUser!.profilePictureUrl
+              userId: added.userId ?? added.id ?? added.Id,
+              userName: added.userName ?? added.UserName,
+              nickname: added.nickname ?? added.Nickname,
+              displayName: added.displayName ?? added.DisplayName ?? added.userName ?? added.UserName,
+              role: added.role ?? added.Role ?? 'Member',
+              profilePictureUrl: added.profilePictureUrl ?? added.ProfilePictureUrl
             });
+            this.conversations = [...this.conversations];
           }
 
           this.closeNewMessage();
@@ -432,18 +604,7 @@ export class PersonalDms implements OnInit, OnDestroy {
 
     const conversationId = this.selectedConversationId;
     this.dmService.leaveConversationApi(conversationId).subscribe({
-      next: () => {
-        this.conversations = this.conversations.filter(c => c.publicId !== conversationId);
-        this.dmService.leaveConversation(conversationId).catch(() => {});
-        this.selectedConversationId = null;
-        this.currentConversationId = null;
-        this.messages = [];
-        this.isMobileChatOpen = false;
-
-        if (this.conversations.length > 0) {
-          this.selectChat(this.conversations[0].publicId);
-        }
-      }
+      next: () => this.afterLeftConversation(conversationId)
     });
   }
 
@@ -461,24 +622,72 @@ export class PersonalDms implements OnInit, OnDestroy {
   private afterConversationStarted(conversation: DmConversation) {
     this.closeNewMessage();
 
-    if (!this.conversations.some(c => c.publicId === conversation.publicId)) {
-      this.conversations = [conversation, ...this.conversations];
+    const normalized = this.normalizeConversation(conversation);
+
+    if (!this.conversations.some(c => c.publicId === normalized.publicId)) {
+      this.conversations = [normalized, ...this.conversations];
     }
 
-    this.selectChat(conversation.publicId);
+    this.selectChat(normalized.publicId);
   }
 
   private loadConversations() {
     this.dmService.getConversations()
-      .subscribe(conversations => {
-        this.conversations = conversations;
+      .subscribe({
+        next: conversations => {
+          this.conversations = conversations
+            .map(c => this.normalizeConversation(c))
+            .sort((a, b) => this.getConversationSortTime(b) - this.getConversationSortTime(a));
 
-        this.conversations = this.conversations.filter(c => c.lastMessageAt).sort((a, b) => new Date(b.lastMessageAt!).getTime() - new Date(a.lastMessageAt!).getTime());
-       
-        if (!this.selectedConversationId && conversations.length > 0) {
-          this.selectChat(conversations[0].publicId);
+          if (!this.selectedConversationId && this.conversations.length > 0) {
+            this.selectChat(this.conversations[0].publicId);
+          }
+        },
+        error: () => {
+          this.conversations = [];
         }
       });
+  }
+
+  private normalizeConversation(raw: any): DmConversation {
+    const members = (raw?.members ?? raw?.Members ?? []).map((m: any) => ({
+      userId: m.userId ?? m.UserId,
+      userName: m.userName ?? m.UserName,
+      nickname: m.nickname ?? m.Nickname,
+      displayName: m.displayName ?? m.DisplayName,
+      role: m.role ?? m.Role,
+      profilePictureUrl: m.profilePictureUrl ?? m.ProfilePictureUrl,
+      joinedAt: m.joinedAt ?? m.JoinedAt,
+    }));
+
+    const lastMessage = raw?.lastMessage ?? raw?.LastMessage;
+
+    return {
+      publicId: raw?.publicId ?? raw?.PublicId,
+      title: raw?.title ?? raw?.Title ?? null,
+      isGroup: raw?.isGroup === true || raw?.IsGroup === true,
+      lastMessageAt: raw?.lastMessageAt ?? raw?.LastMessageAt ?? null,
+      members,
+      unreadCount: raw?.unreadCount ?? raw?.UnreadCount ?? 0,
+      lastMessage: lastMessage
+        ? {
+            content: lastMessage.content ?? lastMessage.Content ?? '',
+            sentAt: lastMessage.sentAt ?? lastMessage.SentAt ?? '',
+            senderName: lastMessage.senderName ?? lastMessage.SenderName ?? '',
+          }
+        : null,
+      currentUserRole: raw?.currentUserRole ?? raw?.CurrentUserRole,
+      canManage: raw?.canManage ?? raw?.CanManage ?? false,
+      canChangeRoles: raw?.canChangeRoles ?? raw?.CanChangeRoles ?? false,
+      createdByUserId: raw?.createdByUserId ?? raw?.CreatedByUserId,
+    };
+  }
+
+  private getConversationSortTime(conversation: DmConversation): number {
+    if (conversation.lastMessageAt) {
+      return new Date(conversation.lastMessageAt).getTime();
+    }
+    return 0;
   }
 
   private loadMessages(conversationId: string) {
@@ -588,5 +797,105 @@ export class PersonalDms implements OnInit, OnDestroy {
     }
 
     return `hsl(${hash % 360}, 62%, 45%)`;
+  }
+
+  private patchConversation(detail: DmConversation) {
+    const index = this.conversations.findIndex(c => c.publicId === detail.publicId);
+    if (index === -1) {
+      this.conversations = [detail, ...this.conversations];
+      return;
+    }
+    const existing = this.conversations[index];
+    this.conversations[index] = { ...existing, ...detail, members: detail.members };
+    this.conversations = [...this.conversations];
+  }
+
+  private handleMemberAdded(event: { conversationId: string; member: DmMember }) {
+    const conversation = this.conversations.find(c => c.publicId === event.conversationId);
+    if (!conversation) return;
+    if (!conversation.members.some(m => m.userId === event.member.userId)) {
+      conversation.members = [...conversation.members, event.member];
+      this.conversations = [...this.conversations];
+    }
+  }
+
+  private handleMemberRemoved(event: { conversationId: string; userId: string }) {
+    if (event.userId === this.auth.getUserId()) {
+      this.afterLeftConversation(event.conversationId);
+      return;
+    }
+    this.removeMemberFromLocal(event.userId, event.conversationId);
+  }
+
+  private handleConversationUpdated(event: { conversationId: string; title: string | null }) {
+    const conversation = this.conversations.find(c => c.publicId === event.conversationId);
+    if (conversation) {
+      conversation.title = event.title;
+      if (this.isGroupSettingsOpen && this.selectedConversationId === event.conversationId) {
+        this.editGroupTitle = event.title ?? '';
+      }
+      this.conversations = [...this.conversations];
+    }
+  }
+
+  private handleMemberUpdated(event: {
+    conversationId: string;
+    userId: string;
+    nickname?: string | null;
+    role?: DmMemberRole;
+    displayName?: string;
+  }) {
+    const conversation = this.conversations.find(c => c.publicId === event.conversationId);
+    const member = conversation?.members.find(m => m.userId === event.userId);
+    if (!member) return;
+
+    if (event.nickname !== undefined) member.nickname = event.nickname;
+    if (event.role) member.role = event.role;
+    if (event.displayName) member.displayName = event.displayName;
+
+    if (event.userId === this.auth.getUserId()) {
+      if (event.role) {
+        conversation!.currentUserRole = event.role;
+        conversation!.canManage = event.role === 'Owner' || event.role === 'Admin';
+        conversation!.canChangeRoles = event.role === 'Owner';
+      }
+      if (event.nickname !== undefined) this.myNickname = event.nickname ?? '';
+    }
+
+    if (event.role === 'Owner' && event.userId !== this.auth.getUserId()) {
+      const me = conversation!.members.find(m => m.userId === this.auth.getUserId());
+      if (me?.role === 'Owner') {
+        me.role = 'Admin';
+        conversation!.currentUserRole = 'Admin';
+        conversation!.canChangeRoles = false;
+      }
+      conversation!.members.forEach(m => {
+        if (m.userId !== event.userId && m.role === 'Owner') m.role = 'Admin';
+      });
+    }
+
+    this.conversations = [...this.conversations];
+  }
+
+  private removeMemberFromLocal(userId: string, conversationId?: string) {
+    const id = conversationId ?? this.selectedConversationId;
+    const conversation = this.conversations.find(c => c.publicId === id);
+    if (!conversation) return;
+    conversation.members = conversation.members.filter(m => m.userId !== userId);
+    this.conversations = [...this.conversations];
+  }
+
+  private afterLeftConversation(conversationId: string) {
+    this.conversations = this.conversations.filter(c => c.publicId !== conversationId);
+    this.dmService.leaveConversation(conversationId).catch(() => {});
+    this.isGroupSettingsOpen = false;
+    this.selectedConversationId = null;
+    this.currentConversationId = null;
+    this.messages = [];
+    this.isMobileChatOpen = false;
+
+    if (this.conversations.length > 0) {
+      this.selectChat(this.conversations[0].publicId);
+    }
   }
 }

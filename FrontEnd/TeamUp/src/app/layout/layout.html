@@ -19,6 +19,7 @@
       </button>
     </div>
 
+    <div class="mobile-sidebar-body">
     <ul class="nav-section list-unstyled w-100">
       <li>
         <a class="nav-link-custom" routerLink="/dashboard" [class.active]="isActive('/dashboard')"
@@ -47,9 +48,7 @@
           <span>Messages</span>
         </a>
       </li>
-      @if (!isDesktopSidebarCollapsed) {
-        <p class="workspace-title">Workspaces</p>
-      }
+      <p class="workspace-title">Workspaces</p>
 
       <ul class="workspace-list list-unstyled">
         @if (myWorkspaces$ | async; as myWorkspaces) {
@@ -65,7 +64,7 @@
           @if (isMyWorkspacesOpen) {
             @for (workspace of myWorkspaces; track workspace) {
               <li>
-                <a class="workspace-item workspace-child" (click)="openWorkspace(workspace.publicId)">
+                <a class="workspace-item workspace-child" (click)="openWorkspace(workspace.publicId); isSidebarOpen = false">
                   <span class="workspace-icon">
                     {{ workspace?.title?.charAt(0) }}
                   </span>
@@ -105,35 +104,49 @@
         }
       </ul>
     </ul>
+    </div>
 
     @if ((user$ | async); as user) {
       <div class="nav-footer">
-        <img [src]="user.profilePictureUrl" alt="Profile" class="logo" />
-        <p class="userName">{{user.userName}}</p>
-        <div class="settings-wrapper">
-        <button class="settingsBtn" type="button" (click)="toggleSettings()">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-gear" viewBox="0 0 16 16"> <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492M5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0"/> <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115z"/> </svg>
-        </button>
+        <div class="nav-footer-user">
+          @if (user.profilePictureUrl) {
+            <img [src]="user.profilePictureUrl" [routerLink]="['/profile']" alt="Profile" class="logo nav-footer-avatar" (click)="isSidebarOpen = false" />
+          } @else {
+            <a [routerLink]="['/profile']" class="nav-footer-avatar nav-footer-avatar-fallback" (click)="isSidebarOpen = false">
+              {{ user.userName.charAt(0) }}
+            </a>
+          }
+          <p class="userName">{{ user.userName }}</p>
         </div>
-        <div class="settings-dropdown" *ngIf="isSettingsOpen">
-            <button class="dropdown-item icon-dropdown-item" (click)="toggleTheme()" [title]="(isDarkMode$ | async) ? 'Light mode' : 'Dark mode'">
-              @if (isDarkMode$ | async) {
-                <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-                  <path d="M12 4V2m0 20v-2m8-8h2M2 12h2m14.4-6.4 1.4-1.4M4.2 19.8l1.4-1.4m0-12.8L4.2 4.2m15.6 15.6-1.4-1.4M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                </svg>
-              } @else {
-                <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-                  <path d="M21 14.6A8 8 0 0 1 9.4 3 7 7 0 1 0 21 14.6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                </svg>
-              }
-            </button>
 
-            <button class="dropdown-item icon-dropdown-item danger" (click)="logout()" title="Sign out">
-              <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-                <path d="M10 17l5-5-5-5M15 12H3m6-7V4a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2h-7a2 2 0 0 1-2-2v-1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </button>
-          </div>
+        <div class="settings-wrapper">
+          <button class="settingsBtn" type="button" (click)="toggleSettings()" aria-label="Settings">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-gear" viewBox="0 0 16 16">
+              <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492M5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0"/>
+              <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115z"/>
+            </svg>
+          </button>
+          @if (isSettingsOpen) {
+            <div class="settings-dropdown">
+              <button class="dropdown-item icon-dropdown-item" type="button" (click)="toggleTheme()" [title]="(isDarkMode$ | async) ? 'Light mode' : 'Dark mode'">
+                @if (isDarkMode$ | async) {
+                  <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                    <path d="M12 4V2m0 20v-2m8-8h2M2 12h2m14.4-6.4 1.4-1.4M4.2 19.8l1.4-1.4m0-12.8L4.2 4.2m15.6 15.6-1.4-1.4M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                } @else {
+                  <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                    <path d="M21 14.6A8 8 0 0 1 9.4 3 7 7 0 1 0 21 14.6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                  </svg>
+                }
+              </button>
+              <button class="dropdown-item icon-dropdown-item danger" type="button" (click)="logout()" title="Sign out">
+                <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                  <path d="M10 17l5-5-5-5M15 12H3m6-7V4a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2h-7a2 2 0 0 1-2-2v-1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+            </div>
+          }
+        </div>
       </div>
     }
   </nav>
@@ -280,26 +293,27 @@
         </div>
 
         @if ((user$ | async); as user) {
-          <div class="nav-footer justify-content-between">
-            <div class="d-flex align-items-center">
+          <div class="nav-footer">
+            <div class="nav-footer-user">
               @if (user.profilePictureUrl) {
-                <img [src]="user.profilePictureUrl" style="width:30px; height:30px; object-fit:cover; cursor: pointer;" [routerLink]="['/profile']" alt="Profile" class="logo"/>
-                } @else {
-                  <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" style="width:30px; height:30px; font-size:18px; cursor: pointer;">
-                    <a [routerLink]="['/profile']" style="text-decoration: none; color: inherit;">{{ user.userName.charAt(0) }}</a> 
-                  </div>
-                }
-                @if (!isDesktopSidebarCollapsed) {
-                  <p class="userName ms-3">{{user.userName}}</p>
-                }
+                <img [src]="user.profilePictureUrl" [routerLink]="['/profile']" alt="Profile" class="logo nav-footer-avatar" />
+              } @else {
+                <a [routerLink]="['/profile']" class="nav-footer-avatar nav-footer-avatar-fallback">
+                  {{ user.userName.charAt(0) }}
+                </a>
+              }
+              @if (!isDesktopSidebarCollapsed) {
+                <p class="userName">{{ user.userName }}</p>
+              }
             </div>
 
             <div class="settings-wrapper">
-                <button class="settingsBtn" type="button" (click)="toggleSettings()">
+                <button class="settingsBtn" type="button" (click)="toggleSettings()" aria-label="Settings">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-gear" viewBox="0 0 16 16"> <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492M5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0"/> <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115z"/> </svg>
                 </button>
-                  <div class="settings-dropdown" *ngIf="isSettingsOpen">
-                    <button class="dropdown-item icon-dropdown-item" (click)="toggleTheme()" [title]="(isDarkMode$ | async) ? 'Light mode' : 'Dark mode'">
+                @if (isSettingsOpen) {
+                  <div class="settings-dropdown">
+                    <button class="dropdown-item icon-dropdown-item" type="button" (click)="toggleTheme()" [title]="(isDarkMode$ | async) ? 'Light mode' : 'Dark mode'">
                       @if (isDarkMode$ | async) {
                         <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
                           <path d="M12 4V2m0 20v-2m8-8h2M2 12h2m14.4-6.4 1.4-1.4M4.2 19.8l1.4-1.4m0-12.8L4.2 4.2m15.6 15.6-1.4-1.4M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -311,13 +325,14 @@
                       }
                     </button>
 
-                    <button class="dropdown-item icon-dropdown-item danger" (click)="logout()" title="Sign out">
+                    <button class="dropdown-item icon-dropdown-item danger" type="button" (click)="logout()" title="Sign out">
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-box-arrow-right" viewBox="0 0 16 16">
                         <path fill-rule="evenodd" d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0z"/>
                         <path fill-rule="evenodd" d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708z"/>
                       </svg>
                     </button>
-                </div>
+                  </div>
+                }
               </div>
           </div>
         }
@@ -346,7 +361,7 @@
   </div>
 
   @if (showCreateWorkspace) {
-  <div class="createWorkspace-overlay" [ngClass]="{'light-mode': !(isDarkMode$ | async), 'dark-mode': isDarkMode$ | async}">
+  <div class="tu-modal-overlay createWorkspace-overlay" [ngClass]="{'light-mode': !(isDarkMode$ | async), 'dark-mode': isDarkMode$ | async}">
 
     <form #createWorkspaceForm="ngForm" (ngSubmit)="createWorkspace()">
 
@@ -365,7 +380,7 @@
               </div>
           </div>
 
-          <button type="button" class="btn-cancel tm-close icon-button" (click)="closeCreateWorkspace()" aria-label="Close create workspace">
+          <button type="button" class="tu-modal-close" (click)="closeCreateWorkspace()" aria-label="Close create workspace">
             <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
               <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
             </svg>
@@ -442,7 +457,7 @@
                     </ul>
                   </div>
 
-                  <button type="button" class="btn-cancel tm-close icon-button" (click)="removeMember(member)" aria-label="Remove member">
+                  <button type="button" class="tu-chip-remove" (click)="removeMember(member)" aria-label="Remove member">
                     <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
                       <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                     </svg>
@@ -470,7 +485,7 @@
   }
 
   @if (showJoinWorkspace) {
-  <div class="joinWorkspace-overlay" [ngClass]="{'light-mode': !(isDarkMode$ | async), 'dark-mode': isDarkMode$ | async}">
+  <div class="tu-modal-overlay joinWorkspace-overlay" [ngClass]="{'light-mode': !(isDarkMode$ | async), 'dark-mode': isDarkMode$ | async}">
 
     <form #joinForm="ngForm" (ngSubmit)="joinWorkspace()">
 
@@ -489,7 +504,7 @@
                 <p class="tm-subtitle" style=" font-size: 0.85rem;">Enter an invite code or workspace link to join.</p>
               </div>
           </div>
-          <button type="button" class="btn-cancel tm-close icon-button" (click)="closeJoinWorkspace()" aria-label="Close join workspace">
+          <button type="button" class="tu-modal-close" (click)="closeJoinWorkspace()" aria-label="Close join workspace">
             <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
               <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
             </svg>

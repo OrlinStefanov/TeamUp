@@ -30,6 +30,8 @@ export class Members implements OnInit {
   addMemberQuery: string = '';
   addMemberSuggestions: any[] = [];
   addMemberIsLoading: boolean = false;
+  addingUserId: string | null = null;
+  inviteRole: number = 0;
   private addMemberSearchTimeout: any;
 
   activeTab: string = 'members';
@@ -275,6 +277,8 @@ export class Members implements OnInit {
     this.addMemberQuery = '';
     this.addMemberSuggestions = [];
     this.addMemberIsLoading = false;
+    this.addingUserId = null;
+    this.inviteRole = 0;
 
     const modalEl = document.getElementById('addMemberModal');
     if (!modalEl) return;
@@ -314,7 +318,7 @@ export class Members implements OnInit {
   }
 
   selectUserToAdd(user: any): void {
-    if (this.isUserInWorkspace(user)) {
+    if (this.isUserInWorkspace(user) || this.addingUserId) {
       return;
     }
 
@@ -327,16 +331,16 @@ export class Members implements OnInit {
       return;
     }
 
-    this.addMemberIsLoading = true;
+    this.addingUserId = this.getUserTrackKey(user);
     const payload = {
       publicId: this.workspacePublicId,
       emailOrUsername,
-      role: 0
+      role: this.inviteRole
     };
 
     this.auth.addMemberToWorkspace(payload).subscribe({
       next: () => {
-        this.addMemberIsLoading = false;
+        this.addingUserId = null;
         this.addMemberQuery = '';
         this.addMemberSuggestions = [];
 
@@ -347,9 +351,21 @@ export class Members implements OnInit {
         this.refreshWorkspaceInfo();
       },
       error: () => {
-        this.addMemberIsLoading = false;
+        this.addingUserId = null;
       }
     });
+  }
+
+  setInviteRole(role: number): void {
+    this.inviteRole = role;
+  }
+
+  getUserTrackKey(user: any): string {
+    return String(user?.id ?? user?.userId ?? user?.publicId ?? user?.userName ?? user?.email ?? '');
+  }
+
+  isInvitingUser(user: any): boolean {
+    return this.addingUserId === this.getUserTrackKey(user);
   }
 
   private isUserInWorkspace(user: any): boolean {

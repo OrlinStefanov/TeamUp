@@ -1,42 +1,35 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Auth } from '../../services/auth/auth';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { Router } from '@angular/router';
-import { error } from 'node:console';
+import { UpdateUser } from '../../services/auth/auth-types';
 import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-profile',
-  imports: [ CommonModule , FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './profile.html',
   styleUrl: './profile.css',
 })
-
-export class Profile {
-  constructor(private auth: Auth, private router: Router) {}
+export class Profile implements OnInit {
+  constructor(private auth: Auth) {}
 
   isDarkMode$!: Observable<boolean>;
-  isEditMode: boolean = false;
+  isEditMode = false;
   user_data: any = null;
-  previewProfilePictureUrl: string = '';
+  previewProfilePictureUrl = '';
   selectedProfileFile: File | null = null;
-  isUploadingProfilePicture: boolean = false;
+  isUploadingProfilePicture = false;
+  isSavingInfo = false;
+  isChangingPassword = false;
 
-  currentPassword: string = '';
-  newPassword: string = '';
-  confirmNewPassword: string = '';
-  passwordMessage: string = '';
-  successfulPasswordChange: boolean = false;
+  currentPassword = '';
+  newPassword = '';
+  confirmNewPassword = '';
+  passwordMessage = '';
+  successfulPasswordChange = false;
 
-  mockUserData = {
-    fullName: 'John Doe',
-    userName: 'john.doe',
-    email: 'john.doe@example.com',
-    phone: '+359 88 123 4567',
-    birthDate: '1998-01-01'
-  };
   editableUserData = {
     fullName: '',
     userName: '',
@@ -44,16 +37,22 @@ export class Profile {
     phone: '',
     birthDate: ''
   };
-  saveInfoMessage: string = '';
+  saveInfoMessage = '';
+  saveInfoSuccess = false;
 
   ngOnInit() {
     this.isDarkMode$ = this.auth.darkMode$;
 
-    this.auth.me().subscribe((res) => {
-      this.user_data = res;
-      this.previewProfilePictureUrl = this.user_data?.profilePictureUrl ?? '';
-      this.populateEditableData();
-      console.log(this.user_data);
+    this.auth.me().subscribe({
+      next: (res) => {
+        this.user_data = res;
+        this.previewProfilePictureUrl = this.user_data?.profilePictureUrl ?? '';
+        this.populateEditableData();
+      },
+      error: () => {
+        this.saveInfoMessage = 'Could not load profile. Please try again.';
+        this.saveInfoSuccess = false;
+      }
     });
   }
 
@@ -61,9 +60,16 @@ export class Profile {
     return this.previewProfilePictureUrl || this.user_data?.profilePictureUrl || '';
   }
 
+  get displayName(): string {
+    const firstName = this.user_data?.firstName ?? '';
+    const lastName = this.user_data?.lastName ?? '';
+    const fullName = `${firstName} ${lastName}`.trim();
+    return fullName || this.user_data?.userName || 'Your profile';
+  }
+
   get userInitial(): string {
-    const userName = this.user_data?.userName ?? this.mockUserData.fullName;
-    return userName?.charAt(0)?.toUpperCase() || '?';
+    const name = this.user_data?.userName ?? this.displayName;
+    return name?.charAt(0)?.toUpperCase() || '?';
   }
 
   triggerFilePicker(fileInput: HTMLInputElement): void {
@@ -83,6 +89,7 @@ export class Profile {
     reader.readAsDataURL(file);
 
     this.uploadProfilePicture();
+    input.value = '';
   }
 
   uploadProfilePicture(): void {
@@ -92,46 +99,56 @@ export class Profile {
 
     this.isUploadingProfilePicture = true;
     this.auth.uploadProfilePic(this.selectedProfileFile).subscribe({
-      next: (res: any) => {
-        const uploadedUrl = res?.profilePictureUrl ?? res?.url ?? this.previewProfilePictureUrl;
-        this.user_data = {
-          ...(this.user_data || {}),
-          profilePictureUrl: uploadedUrl
-        };
-        this.previewProfilePictureUrl = uploadedUrl;
+      next: (res: unknown) => {
+        const uploadedUrl = this.extractUploadedImageUrl(res);
+        if (uploadedUrl) {
+          this.user_data = {
+            ...(this.user_data || {}),
+            profilePictureUrl: uploadedUrl
+          };
+          this.previewProfilePictureUrl = uploadedUrl;
+        }
         this.selectedProfileFile = null;
         this.isUploadingProfilePicture = false;
       },
       error: () => {
         this.isUploadingProfilePicture = false;
+        this.previewProfilePictureUrl = this.user_data?.profilePictureUrl ?? '';
       }
     });
   }
 
   saveUserInfo(): void {
-    // Local save for now (until profile update endpoint is available)
     const [firstName, ...rest] = this.editableUserData.fullName.trim().split(' ');
     const lastName = rest.join(' ');
 
-    this.user_data = {
-      ...(this.user_data || {}),
+    const payload: UpdateUser = {
       firstName: firstName || '',
       lastName: lastName || '',
       userName: this.editableUserData.userName,
       email: this.editableUserData.email,
       phoneNumber: this.editableUserData.phone,
-      birthDate: this.editableUserData.birthDate
+      birthDate: this.editableUserData.birthDate as unknown as Date
     };
 
-    this.auth.updateUserInfo(this.user_data).subscribe({
-      next: (res) => {
-        console.log(res);
-      },
-      error: () => {
-      } 
-    });
+    this.isSavingInfo = true;
+    this.saveInfoMessage = '';
 
-    this.saveInfoMessage = 'Profile info saved locally.';
+    this.auth.updateUserInfo(payload).subscribe({
+      next: (res) => {
+        this.user_data = res;
+        this.populateEditableData();
+        this.isEditMode = false;
+        this.isSavingInfo = false;
+        this.saveInfoMessage = 'Profile updated successfully.';
+        this.saveInfoSuccess = true;
+      },
+      error: (err) => {
+        this.isSavingInfo = false;
+        this.saveInfoMessage = this.formatApiError(err.error) || 'Failed to update profile.';
+        this.saveInfoSuccess = false;
+      }
+    });
   }
 
   private populateEditableData(): void {
@@ -140,40 +157,44 @@ export class Profile {
     const fullNameFromApi = `${firstName} ${lastName}`.trim();
 
     this.editableUserData = {
-      fullName: fullNameFromApi || this.mockUserData.fullName,
-      userName: this.user_data?.userName || this.mockUserData.userName,
-      email: this.user_data?.email || this.mockUserData.email,
-      phone: this.user_data?.phoneNumber || this.mockUserData.phone,
-      birthDate: this.user_data?.birthDate || this.mockUserData.birthDate
+      fullName: fullNameFromApi,
+      userName: this.user_data?.userName ?? '',
+      email: this.user_data?.email ?? '',
+      phone: this.user_data?.phoneNumber ?? '',
+      birthDate: this.normalizeBirthDate(this.user_data?.birthDate)
     };
   }
 
   handleEditClick() {
     if (this.isEditMode) {
-      this.cancelEdit(); // като closeJoinWorkspace()
+      this.cancelEdit();
     } else {
-      this.toggleEdit();
+      this.isEditMode = true;
+      this.saveInfoMessage = '';
     }
   }
 
   cancelEdit() {
+    this.populateEditableData();
     this.isEditMode = false;
-  }
-
-  toggleEdit() {
-    this.isEditMode = !this.isEditMode;
+    this.saveInfoMessage = '';
   }
 
   changePassword(): void {
     if (!this.currentPassword || !this.newPassword || !this.confirmNewPassword) {
       this.passwordMessage = 'All fields are required.';
+      this.successfulPasswordChange = false;
       return;
     }
 
     if (this.newPassword !== this.confirmNewPassword) {
       this.passwordMessage = 'New passwords do not match.';
+      this.successfulPasswordChange = false;
       return;
     }
+
+    this.isChangingPassword = true;
+    this.passwordMessage = '';
 
     this.auth.changePassword({
       currentPassword: this.currentPassword,
@@ -185,12 +206,49 @@ export class Profile {
         this.currentPassword = '';
         this.newPassword = '';
         this.confirmNewPassword = '';
+        this.isChangingPassword = false;
       },
       error: (err) => {
-        console.log(err.error); // THIS is the important part
-        this.passwordMessage = err.error;
+        this.passwordMessage = this.formatApiError(err.error) || 'Failed to update password.';
         this.successfulPasswordChange = false;
+        this.isChangingPassword = false;
       }
     });
+  }
+
+  private extractUploadedImageUrl(res: unknown): string {
+    if (typeof res === 'string') {
+      return res.replace(/^Image uploaded\s*/i, '').trim();
+    }
+
+    if (res && typeof res === 'object') {
+      const data = res as { profilePictureUrl?: string; url?: string };
+      return data.profilePictureUrl ?? data.url ?? '';
+    }
+
+    return '';
+  }
+
+  private normalizeBirthDate(value: unknown): string {
+    if (!value) return '';
+    if (typeof value === 'string') {
+      return value.length >= 10 ? value.slice(0, 10) : value;
+    }
+    return '';
+  }
+
+  private formatApiError(error: unknown): string {
+    if (Array.isArray(error)) {
+      return error
+        .map((item) => (typeof item === 'string' ? item : item?.description ?? ''))
+        .filter(Boolean)
+        .join(' ');
+    }
+
+    if (typeof error === 'string') {
+      return error;
+    }
+
+    return '';
   }
 }

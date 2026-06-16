@@ -1,6 +1,6 @@
 ﻿import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, of } from 'rxjs';
+import { BehaviorSubject, Observable, of, Subject } from 'rxjs';
 import { tap, shareReplay } from 'rxjs/operators';
 import * as signalR from '@microsoft/signalr';
 
@@ -12,10 +12,16 @@ export interface UserSearchResult {
   profilePictureUrl?: string;
 }
 
+export type DmMemberRole = 'Member' | 'Admin' | 'Owner';
+
 export interface DmMember {
   userId: string;
   userName?: string;
+  nickname?: string | null;
+  displayName?: string;
+  role?: DmMemberRole;
   profilePictureUrl?: string;
+  joinedAt?: string;
 }
 
 export interface DmConversation {
@@ -30,6 +36,10 @@ export interface DmConversation {
     sentAt: string;
     senderName: string;
   } | null;
+  currentUserRole?: DmMemberRole;
+  canManage?: boolean;
+  canChangeRoles?: boolean;
+  createdByUserId?: string;
 }
 
 export interface DmMessage {
@@ -40,8 +50,33 @@ export interface DmMessage {
   conversationId?: string;
   sender: {
     userName: string;
+    displayName?: string;
     profilePictureUrl?: string;
   };
+}
+
+export interface DmMemberAddedEvent {
+  conversationId: string;
+  member: DmMember;
+}
+
+export interface DmMemberRemovedEvent {
+  conversationId: string;
+  userId: string;
+  removedByUserId?: string;
+}
+
+export interface DmConversationUpdatedEvent {
+  conversationId: string;
+  title: string | null;
+}
+
+export interface DmMemberUpdatedEvent {
+  conversationId: string;
+  userId: string;
+  nickname?: string | null;
+  role?: DmMemberRole;
+  displayName?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -66,6 +101,18 @@ export class DirectMessagesService {
   private typingUsersSubject = new BehaviorSubject<Record<string, string[]>>({});
   typingUsers$ = this.typingUsersSubject.asObservable();
 
+  private memberAddedSubject = new Subject<DmMemberAddedEvent>();
+  memberAdded$ = this.memberAddedSubject.asObservable();
+
+  private memberRemovedSubject = new Subject<DmMemberRemovedEvent>();
+  memberRemoved$ = this.memberRemovedSubject.asObservable();
+
+  private conversationUpdatedSubject = new Subject<DmConversationUpdatedEvent>();
+  conversationUpdated$ = this.conversationUpdatedSubject.asObservable();
+
+  private memberUpdatedSubject = new Subject<DmMemberUpdatedEvent>();
+  memberUpdated$ = this.memberUpdatedSubject.asObservable();
+
   private connectionPromise: Promise<void> | null = null;
   private joinedConversationIds = new Set<string>();
 
@@ -88,6 +135,13 @@ export class DirectMessagesService {
     );
   }
 
+  getConversation(conversationPublicId: string): Observable<DmConversation> {
+    return this.http.get<DmConversation>(
+      `${this.apiUrl}/api/direct-messages/${conversationPublicId}`,
+      { withCredentials: true }
+    );
+  }
+
   resetConversationUnread(conversationPublicId: string) {
     const current = this.unreadSubject.value;
     const count = current[conversationPublicId] || 0;
@@ -102,6 +156,14 @@ export class DirectMessagesService {
       withCredentials: true,
       headers: { 'Content-Type': 'application/json' }
     });
+  }
+
+  updateConversationTitle(conversationPublicId: string, title: string) {
+    return this.http.patch<{ publicId: string; title: string }>(
+      `${this.apiUrl}/api/direct-messages/${conversationPublicId}`,
+      { title },
+      { withCredentials: true, headers: { 'Content-Type': 'application/json' } }
+    );
   }
 
   getMessages(conversationPublicId: string, before?: string): Observable<{ conversationId: string; messages: DmMessage[]; hasMore: boolean; }> {
@@ -120,6 +182,37 @@ export class DirectMessagesService {
         withCredentials: true,
         headers: { 'Content-Type': 'application/json' }
       }
+    );
+  }
+
+  removeMember(conversationPublicId: string, userId: string) {
+    return this.http.delete<any>(
+      `${this.apiUrl}/api/direct-messages/${conversationPublicId}/members/${userId}`,
+      { withCredentials: true }
+    );
+  }
+
+  updateMyNickname(conversationPublicId: string, nickname: string | null) {
+    return this.http.patch<DmMember>(
+      `${this.apiUrl}/api/direct-messages/${conversationPublicId}/members/me`,
+      { nickname },
+      { withCredentials: true, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+
+  updateMemberNickname(conversationPublicId: string, userId: string, nickname: string | null) {
+    return this.http.patch<DmMember>(
+      `${this.apiUrl}/api/direct-messages/${conversationPublicId}/members/${userId}/nickname`,
+      { nickname },
+      { withCredentials: true, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+
+  updateMemberRole(conversationPublicId: string, userId: string, role: DmMemberRole) {
+    return this.http.patch<DmMember>(
+      `${this.apiUrl}/api/direct-messages/${conversationPublicId}/members/${userId}/role`,
+      { role },
+      { withCredentials: true, headers: { 'Content-Type': 'application/json' } }
     );
   }
 
@@ -172,6 +265,7 @@ export class DirectMessagesService {
         conversationId: msg.conversationId,
         sender: {
           userName: msg.sender?.userName,
+          displayName: msg.sender?.displayName ?? msg.sender?.userName,
           profilePictureUrl: msg.sender?.profilePictureUrl,
         }
       };
@@ -194,7 +288,8 @@ export class DirectMessagesService {
       if (!this.typingUserIdMap.has(data.conversationId)) {
         this.typingUserIdMap.set(data.conversationId, new Map());
       }
-      this.typingUserIdMap.get(data.conversationId)!.set(data.userId, data.userName);
+      const label = data.displayName ?? data.userName ?? 'Someone';
+      this.typingUserIdMap.get(data.conversationId)!.set(data.userId, label);
       const names = Array.from(this.typingUserIdMap.get(data.conversationId)!.values());
       this.typingUsersSubject.next({ ...this.typingUsersSubject.value, [data.conversationId]: names });
     });
@@ -206,6 +301,22 @@ export class DirectMessagesService {
         const names = Array.from(map.values());
         this.typingUsersSubject.next({ ...this.typingUsersSubject.value, [data.conversationId]: names });
       }
+    });
+
+    this.hubConnection.on('DmMemberAdded', (data: DmMemberAddedEvent) => {
+      this.memberAddedSubject.next(data);
+    });
+
+    this.hubConnection.on('DmMemberRemoved', (data: DmMemberRemovedEvent) => {
+      this.memberRemovedSubject.next(data);
+    });
+
+    this.hubConnection.on('DmConversationUpdated', (data: DmConversationUpdatedEvent) => {
+      this.conversationUpdatedSubject.next(data);
+    });
+
+    this.hubConnection.on('DmMemberUpdated', (data: DmMemberUpdatedEvent) => {
+      this.memberUpdatedSubject.next(data);
     });
 
     this.hubConnection.onreconnected(() => {
