@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { InboxService } from './inbox.service';
 import { InboxMessage, InboxMessageType, InboxResponse } from '../models/inbox.models';
+import { environment } from '../../environments/environment';
 
 describe('InboxService', () => {
   let service: InboxService;
@@ -59,7 +60,7 @@ describe('InboxService', () => {
         ],
       };
 
-      const req1 = httpMock.expectOne('https://localhost:7094/api/workspace/workspace-1/inbox?page=1');
+      const req1 = httpMock.expectOne(`${environment.apiUrl}/api/workspace/workspace-1/inbox?page=1`);
       req1.flush(mockResponse);
 
       service.inboxState$.subscribe((state) => {
@@ -126,7 +127,7 @@ describe('InboxService', () => {
         });
       });
 
-      const req = httpMock.expectOne('https://localhost:7094/api/workspace/workspace-123/inbox?page=1');
+      const req = httpMock.expectOne(`${environment.apiUrl}/api/workspace/workspace-123/inbox?page=1`);
       expect(req.request.method).toBe('GET');
       expect(req.request.withCredentials).toBe(true);
       req.flush(mockResponse);
@@ -165,7 +166,7 @@ describe('InboxService', () => {
 
       service.getInboxMessages(1).subscribe();
 
-      const req = httpMock.expectOne('https://localhost:7094/api/workspace/workspace-123/inbox?page=1');
+      const req = httpMock.expectOne(`${environment.apiUrl}/api/workspace/workspace-123/inbox?page=1`);
       req.flush(mockResponse);
 
       service.inboxState$.subscribe((state) => {
@@ -200,7 +201,7 @@ describe('InboxService', () => {
 
       service.getInboxMessages(1).subscribe();
 
-      const req1 = httpMock.expectOne('https://localhost:7094/api/workspace/workspace-123/inbox?page=1');
+      const req1 = httpMock.expectOne(`${environment.apiUrl}/api/workspace/workspace-123/inbox?page=1`);
       req1.flush(mockResponse1);
 
       // Load page 2
@@ -226,7 +227,7 @@ describe('InboxService', () => {
 
         service.getInboxMessages(2).subscribe();
 
-        const req2 = httpMock.expectOne('https://localhost:7094/api/workspace/workspace-123/inbox?page=2');
+        const req2 = httpMock.expectOne(`${environment.apiUrl}/api/workspace/workspace-123/inbox?page=2`);
         req2.flush(mockResponse2);
 
         service.inboxState$.subscribe((state) => {
@@ -278,12 +279,12 @@ describe('InboxService', () => {
 
       service.getInboxMessages(1).subscribe();
 
-      const req1 = httpMock.expectOne('https://localhost:7094/api/workspace/workspace-123/inbox?page=1');
+      const req1 = httpMock.expectOne(`${environment.apiUrl}/api/workspace/workspace-123/inbox?page=1`);
       req1.flush(mockResponse);
 
       service.markInboxAsRead().subscribe();
 
-      const req2 = httpMock.expectOne('https://localhost:7094/api/workspace/workspace-123/inbox/mark-read');
+      const req2 = httpMock.expectOne(`${environment.apiUrl}/api/workspace/workspace-123/inbox/mark-read`);
       expect(req2.request.method).toBe('POST');
       expect(req2.request.withCredentials).toBe(true);
       req2.flush('Marked as read');
@@ -416,12 +417,12 @@ describe('InboxService', () => {
 
       service.getInboxMessages(1).subscribe();
 
-      const req1 = httpMock.expectOne('https://localhost:7094/api/workspace/workspace-123/inbox?page=1');
+      const req1 = httpMock.expectOne(`${environment.apiUrl}/api/workspace/workspace-123/inbox?page=1`);
       req1.flush(mockResponse);
 
       service.discardMessage('msg-1').subscribe();
 
-      const req2 = httpMock.expectOne('https://localhost:7094/api/workspace/workspace-123/inbox/discard/msg-1');
+      const req2 = httpMock.expectOne(`${environment.apiUrl}/api/workspace/workspace-123/inbox/discard/msg-1`);
       expect(req2.request.method).toBe('POST');
       req2.flush(null);
 
@@ -462,14 +463,14 @@ describe('InboxService', () => {
 
       service.getInboxMessages(1).subscribe();
 
-      const req1 = httpMock.expectOne('https://localhost:7094/api/workspace/workspace-123/inbox?page=1');
+      const req1 = httpMock.expectOne(`${environment.apiUrl}/api/workspace/workspace-123/inbox?page=1`);
       req1.flush(mockResponse);
 
       service.discardAllMessages().subscribe((response) => {
         expect(response.dismissedCount).toBe(1);
       });
 
-      const req2 = httpMock.expectOne('https://localhost:7094/api/workspace/workspace-123/inbox/discard-all');
+      const req2 = httpMock.expectOne(`${environment.apiUrl}/api/workspace/workspace-123/inbox/discard-all`);
       expect(req2.request.method).toBe('POST');
       req2.flush({ dismissedCount: 1 });
 
@@ -489,7 +490,7 @@ describe('InboxService', () => {
       // Wait for at least one polling interval
       setTimeout(() => {
         // Should have made a request
-        const req = httpMock.expectOne('https://localhost:7094/api/workspace/workspace-123/inbox?page=1');
+        const req = httpMock.expectOne(`${environment.apiUrl}/api/workspace/workspace-123/inbox?page=1`);
         req.flush({
           page: 1,
           pageSize: 20,
@@ -509,7 +510,7 @@ describe('InboxService', () => {
 
       setTimeout(() => {
         service.stopPolling();
-        httpMock.expectNone('https://localhost:7094/api/workspace/workspace-123/inbox?page=1');
+        httpMock.expectNone(`${environment.apiUrl}/api/workspace/workspace-123/inbox?page=1`);
         done();
       }, 500);
     });

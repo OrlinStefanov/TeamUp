@@ -4,6 +4,7 @@ import { BehaviorSubject } from 'rxjs';
 import { InboxService } from './inbox.service';
 import { InboxMessage, InboxMessageType } from '../models/inbox.models';
 import { Auth } from './auth/auth';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
@@ -19,7 +20,7 @@ export class Taskhub {
 
   private tasksCache = new Map<string, any[]>();
 
-  private apiUrl = 'https://localhost:7094';
+  private apiUrl = environment.apiUrl;
 
   constructor(
     private inboxService: InboxService,
@@ -39,7 +40,7 @@ export class Taskhub {
 
     this.hubConnection = new signalR.HubConnectionBuilder()
       .withUrl(`${this.apiUrl}/taskhub`, {
-        accessTokenFactory: () => token
+        accessTokenFactory: () => this.auth.getToken() ?? ''
       })
       .withAutomaticReconnect()
       .build();

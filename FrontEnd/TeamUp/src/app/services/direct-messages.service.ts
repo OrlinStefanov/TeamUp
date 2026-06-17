@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, of, Subject } from 'rxjs';
 import { tap, shareReplay } from 'rxjs/operators';
 import * as signalR from '@microsoft/signalr';
+import { environment } from '../../environments/environment';
 
 export interface UserSearchResult {
   id: string;
@@ -84,7 +85,7 @@ export interface DmMemberUpdatedEvent {
 @Injectable({ providedIn: 'root' })
 
 export class DirectMessagesService {
-  private apiUrl = 'https://localhost:7094';
+  private apiUrl = environment.apiUrl;
   private hubConnection!: signalR.HubConnection;
 
   private messageCache = new Map<string, DmMessage[]>();
@@ -274,7 +275,7 @@ export class DirectMessagesService {
 
     this.hubConnection = new signalR.HubConnectionBuilder()
       .withUrl(`${this.apiUrl}/dmhub`, {
-        accessTokenFactory: () => token
+        accessTokenFactory: () => localStorage.getItem('token') ?? ''
       })
       .withAutomaticReconnect()
       .build();

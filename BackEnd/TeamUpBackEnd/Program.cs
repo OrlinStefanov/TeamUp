@@ -31,7 +31,13 @@ static string? FindEnvFile()
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.WebHost.UseUrls("https://localhost:7094");
+var backendUrl = Environment.GetEnvironmentVariable("BACKEND_URL")
+	?? Environment.GetEnvironmentVariable("API_URL")
+	?? "https://localhost:7094";
+var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL")
+	?? "http://localhost:4200";
+
+builder.WebHost.UseUrls(backendUrl);
 
 builder.Services.AddControllers();
 
@@ -106,7 +112,7 @@ builder.Services.AddCors(options =>
 {
 	options.AddPolicy("AllowAll", builder =>
 	{
-		builder.WithOrigins("http://localhost:4200")
+		builder.WithOrigins(frontendUrl)
 				.AllowAnyHeader()
 				.AllowAnyMethod()
 				.AllowCredentials();

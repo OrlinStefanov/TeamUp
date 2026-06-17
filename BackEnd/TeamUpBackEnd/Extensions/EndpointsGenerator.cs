@@ -370,8 +370,8 @@ namespace TeamUpBackEnd.Extensions
 
 				if (user_email is null) return Results.BadRequest("User email not found");
 
-				var link = $"https://localhost:4200/forgot-password?email={Uri.EscapeDataString(user_email)}&token={encodedToken}"; // in development
-																																	//$"https://teamup.com/reset-password";
+				var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "http://localhost:4200";
+				var link = $"{frontendUrl.TrimEnd('/')}/forgot-password?email={Uri.EscapeDataString(user_email)}&token={encodedToken}";
 				var userName = user.UserName ?? "User";
 				var emailBody = TeamUpBackEnd.Templates.EmailTemplates.ResetPasswordEmail(link, userName);
 				await emailService.SendEmailAsync(

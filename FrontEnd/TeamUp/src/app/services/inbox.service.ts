@@ -10,10 +10,11 @@ import {
   TASK_INBOX_TYPES,
   MEMBER_INBOX_TYPES,
 } from '../models/inbox.models';
+import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class InboxService {
-  private apiUrl = 'https://localhost:7094';
+  private apiUrl = environment.apiUrl;
   private currentWorkspaceId: string | null = null;
 
   private inboxStateSubject = new BehaviorSubject<InboxState>({

@@ -3,13 +3,14 @@ import { BehaviorSubject, of } from 'rxjs';
 import * as signalR from '@microsoft/signalr';
 import { HttpClient } from '@angular/common/http';
 import { tap, shareReplay } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class ChatService {
 
   private hubConnection!: signalR.HubConnection;
 
-  private apiUrl = 'https://localhost:7094';
+  private apiUrl = environment.apiUrl;
 
   // =========================
   // STATE
@@ -51,7 +52,7 @@ export class ChatService {
 
     this.hubConnection = new signalR.HubConnectionBuilder()
       .withUrl(`${this.apiUrl}/chatHub`, {
-        accessTokenFactory: () => token
+        accessTokenFactory: () => localStorage.getItem('token') ?? ''
       })
       .withAutomaticReconnect()
       .build();

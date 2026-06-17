@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { LoginUser, RegisterUser, ResetUser, UpdateUser, User } from './auth-types';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, finalize, Observable, of, shareReplay, tap } from 'rxjs';
+import { BehaviorSubject, catchError, finalize, Observable, of, shareReplay, tap, throwError } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 
 @Injectable({
@@ -15,7 +16,7 @@ export class Auth {
     this.loadUserFromStorage();
   };
 
-  private apiUrl = 'https://localhost:7094';
+  private apiUrl = environment.apiUrl;
   private tokenKey = 'token';
   private userSubject = new BehaviorSubject<any | null>(null);
   user$ = this.userSubject.asObservable();
@@ -32,6 +33,9 @@ export class Auth {
   // prevent duplicate calls (important)
   private workspaceRequests = new Map<string, Observable<any>>();
   private taskRequests = new Map<string, Observable<any>>();
+  private refreshInFlight$: Observable<string> | null = null;
+  private refreshTimeoutId: ReturnType<typeof setTimeout> | null = null;
+  private readonly refreshBufferMs = 10 * 60 * 1000;
 
   getUserId(): string {
     const user = this.userSubject.value;
@@ -40,22 +44,80 @@ export class Auth {
 
   login(user: LoginUser) {
     return this.http.post<{ token: string }>(`${this.apiUrl}/login`, user).pipe(
-      tap(res => {
-        localStorage.setItem(this.tokenKey, res.token);
-        this.userSubject.next(this.decodeToken(res.token));
-      })
+      tap(res => this.setToken(res.token))
     );
   }
 
   logout() {
+    return this.http.post(`${this.apiUrl}/logout`, {}).pipe(
+      finalize(() => this.logoutLocal())
+    );
+  }
+
+  logoutLocal(): void {
+    if (this.refreshTimeoutId) {
+      clearTimeout(this.refreshTimeoutId);
+      this.refreshTimeoutId = null;
+    }
+
     localStorage.removeItem(this.tokenKey);
     this.userSubject.next(null);
-
     this.workspaceCache.clear();
     this.tasksCache.clear();
     this.workspaceSubject.next([]);
+  }
 
-    return this.http.post(`${this.apiUrl}/logout`, {});
+  setToken(token: string): void {
+    localStorage.setItem(this.tokenKey, token);
+    this.userSubject.next(this.decodeToken(token));
+    this.scheduleTokenRefresh();
+  }
+
+  refreshToken(): Observable<string> {
+    if (!this.getToken()) {
+      return throwError(() => new Error('No token available'));
+    }
+
+    if (!this.refreshInFlight$) {
+      this.refreshInFlight$ = this.http.post<string>(`${this.apiUrl}/refresh-token`, {}).pipe(
+        tap(token => this.setToken(token)),
+        catchError(err => {
+          this.logoutLocal();
+          return throwError(() => err);
+        }),
+        finalize(() => {
+          this.refreshInFlight$ = null;
+        }),
+        shareReplay(1)
+      );
+    }
+
+    return this.refreshInFlight$;
+  }
+
+  private scheduleTokenRefresh(): void {
+    if (this.refreshTimeoutId) {
+      clearTimeout(this.refreshTimeoutId);
+      this.refreshTimeoutId = null;
+    }
+
+    const token = this.getToken();
+    if (!token) return;
+
+    const user = this.decodeToken(token);
+    const expiresAt = user.exp * 1000;
+    const msUntilRefresh = expiresAt - Date.now() - this.refreshBufferMs;
+
+    if (msUntilRefresh <= 0) {
+      if (Date.now() < expiresAt) {
+        this.refreshToken().subscribe();
+      }
+      return;
+    }
+
+    this.refreshTimeoutId = setTimeout(() => {
+      this.refreshToken().subscribe();
+    }, msUntilRefresh);
   }
 
   setUser(user : any)
@@ -386,10 +448,20 @@ export class Auth {
 
     const user = this.decodeToken(token);
     if (Date.now() >= user.exp * 1000) {
-      this.logout(); // token expired
-    } else {
-      this.userSubject.next(user);
+      this.logoutLocal();
+      return;
     }
+
+    const msUntilExpiry = user.exp * 1000 - Date.now();
+    if (msUntilExpiry <= this.refreshBufferMs) {
+      this.refreshToken().subscribe({
+        error: () => this.logoutLocal(),
+      });
+      return;
+    }
+
+    this.userSubject.next(user);
+    this.scheduleTokenRefresh();
   }
 
   isLoggedIn(): boolean {
