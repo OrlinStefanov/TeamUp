@@ -78,11 +78,9 @@ export class PersonalDms implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.dmService.startConnection().catch(() => {
-      this.router.navigate(['/dashboard']);
-    });
-
-    this.loadConversations();
+    this.dmService.startConnection()
+      .then(() => this.loadConversations())
+      .catch(() => this.router.navigate(['/dashboard']));
 
     this.subscription.add(
       this.dmService.incomingMessage$.subscribe((message) => {
@@ -116,7 +114,7 @@ export class PersonalDms implements OnInit, OnDestroy {
       this.dmService.memberUpdated$.subscribe(event => this.handleMemberUpdated(event))
     );
     this.subscription.add(
-      this.dmService.onlineUserIds$.subscribe(ids => {
+      this.dmService.onlineUserIds$.subscribe((ids: Set<string>) => {
         this.onlineUserIds = ids;
         this.patchMemberOnlineStates();
       })
@@ -704,10 +702,9 @@ export class PersonalDms implements OnInit, OnDestroy {
   private loadMessages(conversationId: string) {
     this.dmService.getMessages(conversationId)
       .subscribe(response => {
-        this.messages = response.messages.map(msg => ({
-          ...msg,
-          conversationId: response.conversationId
-        }));
+        this.messages = response.messages.map(msg =>
+          this.normalizeMessage(msg, response.conversationId)
+        );
 
         this.hasMoreMessages = response.hasMore;
         this.oldestMessageId = this.messages[0]?.publicId ?? null;
@@ -728,10 +725,9 @@ export class PersonalDms implements OnInit, OnDestroy {
     this.dmService.getMessages(this.selectedConversationId, this.oldestMessageId)
       .subscribe({
         next: response => {
-          const olderMessages = response.messages.map(msg => ({
-            ...msg,
-            conversationId: response.conversationId
-          }));
+          const olderMessages = response.messages.map(msg =>
+            this.normalizeMessage(msg, response.conversationId)
+          );
 
           this.messages = [...olderMessages, ...this.messages];
           this.hasMoreMessages = response.hasMore;
@@ -908,12 +904,35 @@ export class PersonalDms implements OnInit, OnDestroy {
     );
   }
 
+  private normalizeMessage(raw: any, conversationId: string): DmMessage {
+    const senderId = raw.senderId ?? raw.SenderId ?? '';
+    const senderRaw = raw.sender ?? raw.Sender ?? {};
+
+    return {
+      publicId: raw.publicId ?? raw.PublicId,
+      content: raw.content ?? raw.Content ?? '',
+      sentAt: raw.sentAt ?? raw.SentAt ?? '',
+      senderId,
+      conversationId,
+      sender: {
+        userName: senderRaw.userName ?? senderRaw.UserName ?? '',
+        displayName: senderRaw.displayName ?? senderRaw.DisplayName,
+        profilePictureUrl: senderRaw.profilePictureUrl ?? senderRaw.ProfilePictureUrl,
+        isOnline: senderRaw.isOnline ?? senderRaw.IsOnline ?? this.onlineUserIds.has(senderId),
+      },
+    };
+  }
+
   private patchMemberOnlineStates() {
+    const presenceReady = this.dmService.isPresenceReady();
+
     this.conversations = this.conversations.map(conversation => ({
       ...conversation,
       members: conversation.members.map(member => ({
         ...member,
-        isOnline: this.onlineUserIds.has(member.userId)
+        isOnline: presenceReady
+          ? this.onlineUserIds.has(member.userId)
+          : (member.isOnline === true || this.onlineUserIds.has(member.userId))
       }))
     }));
 
@@ -921,7 +940,9 @@ export class PersonalDms implements OnInit, OnDestroy {
       ...message,
       sender: {
         ...message.sender,
-        isOnline: this.onlineUserIds.has(message.senderId)
+        isOnline: presenceReady
+          ? this.onlineUserIds.has(message.senderId)
+          : (message.sender?.isOnline === true || this.onlineUserIds.has(message.senderId))
       }
     }));
   }

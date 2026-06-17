@@ -46,15 +46,21 @@ export class ChatComponent implements OnInit {
     this.currentUserId = this.auth.getUserId();
     this.isDarkMode$ = this.auth.darkMode$;
     this.dmService.startConnection().catch(() => {});
-    this.dmService.onlineUserIds$.subscribe(ids => {
+    this.dmService.onlineUserIds$.subscribe((ids: Set<string>) => {
       this.onlineUserIds = ids;
-      this.messages = this.messages.map(msg => ({
-        ...msg,
-        sender: {
-          ...msg.sender,
-          isOnline: ids.has(msg.senderId)
-        }
-      }));
+      const presenceReady = this.dmService.isPresenceReady();
+      this.messages = this.messages.map(msg => {
+        const senderId = msg.senderId ?? msg.SenderId;
+        return {
+          ...msg,
+          sender: {
+            ...msg.sender,
+            isOnline: presenceReady
+              ? ids.has(senderId)
+              : (msg.sender?.isOnline === true || ids.has(senderId))
+          }
+        };
+      });
     });
 
     this.route.parent?.parent?.paramMap.subscribe(params => {
@@ -159,6 +165,7 @@ export class ChatComponent implements OnInit {
   }
 
   isSenderOnline(msg: any): boolean {
-    return !!msg?.senderId && msg.senderId !== this.currentUserId && this.onlineUserIds.has(msg.senderId);
+    const senderId = msg?.senderId ?? msg?.SenderId;
+    return !!senderId && senderId !== this.currentUserId && this.onlineUserIds.has(senderId);
   }
 }

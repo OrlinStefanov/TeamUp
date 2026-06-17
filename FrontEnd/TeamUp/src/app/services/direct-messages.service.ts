@@ -120,8 +120,26 @@ export class DirectMessagesService {
 
   private connectionPromise: Promise<void> | null = null;
   private joinedConversationIds = new Set<string>();
+  private presenceReady = false;
 
   constructor(private http: HttpClient) {}
+
+  isPresenceReady(): boolean {
+    return this.presenceReady;
+  }
+
+  private refreshOnlineUserIds(): Promise<void> {
+    if (!this.hubConnection) {
+      return Promise.resolve();
+    }
+
+    return this.hubConnection.invoke<string[]>('GetOnlineUserIds')
+      .then(ids => {
+        this.onlineUserIdsSubject.next(new Set(ids || []));
+        this.presenceReady = true;
+      })
+      .catch(() => {});
+  }
 
   getConversations(): Observable<DmConversation[]> {
     return this.http.get<DmConversation[]>(`${this.apiUrl}/api/direct-messages/conversations`, {
@@ -326,11 +344,12 @@ export class DirectMessagesService {
     });
 
     this.hubConnection.on('DmPresenceChanged', (data: any) => {
-      const userId = data?.userId;
+      const userId = data?.userId ?? data?.UserId;
       if (!userId) return;
 
       const next = new Set(this.onlineUserIdsSubject.value);
-      if (data.isOnline) {
+      const isOnline = data.isOnline ?? data.IsOnline;
+      if (isOnline) {
         next.add(userId);
       } else {
         next.delete(userId);
@@ -338,17 +357,19 @@ export class DirectMessagesService {
       this.onlineUserIdsSubject.next(next);
     });
 
-    this.hubConnection.onreconnected(() => {
-      this.joinedConversationIds.forEach(id =>
-        this.hubConnection.invoke('JoinConversation', id).catch(() => {})
-      );
+    this.hubConnection.onreconnecting(() => {
+      this.presenceReady = false;
     });
 
-    this.connectionPromise = this.hubConnection.start().then(() => {
-      return this.hubConnection.invoke<string[]>('GetOnlineUserIds')
-        .then(ids => this.onlineUserIdsSubject.next(new Set(ids || [])))
-        .catch(() => {});
-    }).catch(err => {
+    this.hubConnection.onreconnected(() => {
+      this.refreshOnlineUserIds().then(() => {
+        this.joinedConversationIds.forEach(id =>
+          this.hubConnection.invoke('JoinConversation', id).catch(() => {})
+        );
+      });
+    });
+
+    this.connectionPromise = this.hubConnection.start().then(() => this.refreshOnlineUserIds()).catch(err => {
       this.connectionPromise = null;
       throw err;
     });
@@ -357,6 +378,7 @@ export class DirectMessagesService {
 
   stopConnection(): Promise<void> {
     this.connectionPromise = null;
+    this.presenceReady = false;
     this.joinedConversationIds.clear();
     this.typingUserIdMap.clear();
     this.typingUsersSubject.next({});

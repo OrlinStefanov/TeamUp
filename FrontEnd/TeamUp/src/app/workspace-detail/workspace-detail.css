@@ -51,11 +51,26 @@
 
 .inbox-icon {
   color: #9938fa;
+  transition: color 0.2s ease, transform 0.2s ease;
 }
 
 .inbox-btn {
   color: inherit;
   text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  padding: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.inbox-btn:hover .inbox-icon {
+  color: #7c3aed;
+}
+
+.inbox-btn:hover {
+  background: rgba(124, 58, 237, 0.1);
 }
 
 .navbar.dark-mode .inbox-icon {

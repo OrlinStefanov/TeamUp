@@ -147,7 +147,7 @@ app.UseRateLimiter();
 app.MapHub<ChatHub>("/chathub");
 app.MapHub<TaskHub>("/taskhub");
 
-app.MapHub<DmHub>("/dmhub");
+app.MapHub<DmHub>("/dmhub").RequireAuthorization();
 
 EndpointsGenerator.MapEndpoints(app);
 DirectMessagesEndpoints.MapDirectMessages(app);

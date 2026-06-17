@@ -108,7 +108,7 @@ export class Dashboard implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.presenceSub?.unsubscribe();
-  }
+  } 
 
   private loadInboxUnreadCounts(workspaces: any[]) {
     const requests = workspaces.map(workspace =>
@@ -136,9 +136,11 @@ export class Dashboard implements OnInit, OnDestroy {
   }
 
   activeMemberCount(workspace: any): number {
-    return (workspace?.members || []).filter((member: any) =>
-      member.isOnline || this.onlineUserIds.has(member.userId)
-    ).length;
+    return (workspace?.members || []).filter((member: any) => {
+      const userId = member.userId ?? member.UserId;
+      const isOnline = member.isOnline ?? member.IsOnline;
+      return isOnline === true || (userId && this.onlineUserIds.has(userId));
+    }).length;
   }
 
   workspaceMemberCount(workspace: any): number {
@@ -147,6 +149,24 @@ export class Dashboard implements OnInit, OnDestroy {
 
   workspaceHandle(workspace: any): string {
     return `@${(workspace?.title || 'workspace').toLowerCase().trim().replace(/\s+/g, '-')}`;
+  }
+
+  workspaceAccent(workspace: any): string {
+    const id = workspace?.publicId || workspace?.title || 'workspace';
+    let hash = 0;
+    for (let i = 0; i < id.length; i++) {
+      hash = id.charCodeAt(i) + ((hash << 5) - hash);
+    }
+
+    const accents = [
+      'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)',
+      'linear-gradient(135deg, #2dd4bf 0%, #0d9488 100%)',
+      'linear-gradient(135deg, #fb923c 0%, #ea580c 100%)',
+      'linear-gradient(135deg, #60a5fa 0%, #2563eb 100%)',
+      'linear-gradient(135deg, #f472b6 0%, #db2777 100%)',
+    ];
+
+    return accents[Math.abs(hash) % accents.length];
   }
 
   ownedWorkspaceCount(workspaces: any[]): number {

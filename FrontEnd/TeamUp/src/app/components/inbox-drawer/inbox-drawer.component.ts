@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { InboxService } from '../../services/inbox.service';
-import { InboxState, InboxMessage, getMessageTypeIcon, getMessageTypeColor } from '../../models/inbox.models';
+import { InboxState, InboxMessage, getMessageTypeSvgPath } from '../../models/inbox.models';
 import { Observable, Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
@@ -46,9 +46,9 @@ import { takeUntil } from 'rxjs/operators';
           <div class="messages-list">
             @for (message of state.messages; track message.publicId) {
               <div class="message-item" [class.unread]="!message.isRead">
-                <div class="message-type-badge" [class]="getMessageTypeColor(message.type)">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                    <use [attr.xlink:href]="'#icon-' + getMessageTypeIcon(message.type)"></use>
+                <div class="message-type-icon" aria-hidden="true">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                    <path [attr.d]="getMessageTypeSvgPath(message.type)" />
                   </svg>
                 </div>
                 <div class="message-content">
@@ -230,41 +230,22 @@ import { takeUntil } from 'rxjs/operators';
       background-color: var(--bg-primary-light, #f0f7ff);
     }
 
-    .message-type-badge {
+    .message-type-icon {
       width: 40px;
       height: 40px;
-      border-radius: 50%;
+      border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
-      color: white;
-      font-size: 0.9rem;
+      background: #f3eefc;
+      color: #7c3aed;
     }
 
-    .message-type-badge.primary {
-      background-color: #007bff;
-    }
-
-    .message-type-badge.success {
-      background-color: #28a745;
-    }
-
-    .message-type-badge.danger {
-      background-color: #dc3545;
-    }
-
-    .message-type-badge.warning {
-      background-color: #ffc107;
-      color: #333;
-    }
-
-    .message-type-badge.info {
-      background-color: #17a2b8;
-    }
-
-    .message-type-badge.secondary {
-      background-color: #6c757d;
+    :host(.dark-mode) .message-type-icon,
+    :host-context(.dark-mode) .message-type-icon {
+      background: #2a2438;
+      color: #a78bfa;
     }
 
     .message-content {
@@ -452,11 +433,7 @@ export class InboxDrawerComponent implements OnInit, OnDestroy {
     return date.toLocaleDateString();
   }
 
-  getMessageTypeIcon(type: string): string {
-    return getMessageTypeIcon(type as any);
-  }
-
-  getMessageTypeColor(type: string): string {
-    return getMessageTypeColor(type as any);
+  getMessageTypeSvgPath(type: string): string {
+    return getMessageTypeSvgPath(type as any);
   }
 }
