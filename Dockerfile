@@ -1,81 +1,44 @@
 # Stage 1: Build Frontend (Angular)
 FROM node:20-alpine AS frontend-builder
-
 WORKDIR /app/frontend
 
-# Copy frontend files
+# Copy frontend dependency files using exact casing
 COPY FrontEnd/TeamUp/package*.json ./
-
-# Install dependencies
 RUN npm ci
 
-# Copy frontend source
+# Copy frontend source and build
 COPY FrontEnd/TeamUp .
+RUN npm run build -- --configuration=production
 
-# Build Angular app (production)
-RUN npm run build
-
-# Stage 2: Build Backend (.NET)
-FROM mcr.microsoft.com/dotnet/sdk:10 AS backend-builder
-
+# Stage 2: Build Backend (.NET 10)
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS backend-builder
 WORKDIR /app/backend
 
-# Copy backend project files
+# Copy backend project files and restore
 COPY BackEnd/TeamUpBackEnd/TeamUpBackEnd.csproj .
-
-# Restore dependencies
 RUN dotnet restore TeamUpBackEnd.csproj
 
-# Copy backend source
+# Copy backend source and publish
 COPY BackEnd/TeamUpBackEnd .
-
-# Build and publish
 RUN dotnet publish TeamUpBackEnd.csproj -c Release -o /app/backend/publish
 
-# Stage 3: Runtime - Run both services
-FROM mcr.microsoft.com/dotnet/aspnet:10 AS runtime
-
-# Install Node.js for serving frontend (if needed) and other utilities
-RUN apt-get update && apt-get install -y \
-    curl \
-    nodejs \
-    npm \
-    && rm -rf /var/lib/apt/lists/*
-
+# Stage 3: Runtime - Pure .NET 10 environment
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
 
-# Copy published backend from builder
-COPY --from=backend-builder /app/backend/publish ./backend
+# Copy published backend app directly into the working directory
+COPY --from=backend-builder /app/backend/publish .
 
-# Copy built frontend from frontend-builder
-COPY --from=frontend-builder /app/frontend/dist/TeamUp/browser ./backend/wwwroot
+# Copy built Angular static files into the .NET wwwroot directory
+# NOTE: If your build fails here, double-check your angular.json "outputPath" 
+COPY --from=frontend-builder /app/frontend/dist/TeamUp/browser ./wwwroot
 
-# Set working directory to backend
-WORKDIR /app/backend
+# Expose standard web port for cloud hosting
+EXPOSE 8080
 
-# Create a startup script that handles both services
-RUN echo '#!/bin/bash\n\
-echo "Starting TeamUp application..."\n\
-echo "Backend running on: $BACKEND_URL or https://localhost:7094"\n\
-echo "Frontend will be served from backend at: $FRONTEND_URL or http://localhost:4200"\n\
-\n\
-# Start the backend (which will serve the frontend)\n\
-exec dotnet TeamUpBackEnd.dll' > /app/startup.sh
-
-RUN chmod +x /app/startup.sh
-
-# Expose ports
-EXPOSE 7094 4200
-
-# Environment variables (can be overridden at runtime)
+# Production environment configurations
 ENV ASPNETCORE_ENVIRONMENT=Production \
-    ASPNETCORE_URLS=https://+:7094 \
-    ASPNETCORE_Kestrel__Certificates__Default__Path=/app/backend/cert.pem \
-    ASPNETCORE_Kestrel__Certificates__Default__KeyPath=/app/backend/key.pem
+    ASPNETCORE_URLS=http://+:8080
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:7094/health || exit 1
-
-# Run the backend
-CMD ["dotnet", "TeamUpBackEnd.dll"]
+# Start the application
+ENTRYPOINT ["dotnet", "TeamUpBackEnd.dll"]
