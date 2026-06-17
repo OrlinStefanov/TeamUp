@@ -165,6 +165,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseDefaultFiles();
 app.UseStaticFiles();
+
+app.MapFallbackToFile("index.html");
 	
 app.UseCors("AllowAll");
 
