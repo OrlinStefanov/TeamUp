@@ -31,7 +31,7 @@
 
           <span class="channel-copy">
             <strong>{{ channel.name }}</strong>
-            <small>{{ channel.memberCount || 0 }} members</small>
+            <small>{{ (channel.memberCount + 1) || 0 }} members</small>
           </span>
 
           @if (unreadMap[channel.publicId] > 0) {

@@ -9,7 +9,7 @@
       <span class="channel-mark">#</span>
       <div class="channel-heading">
         <h1>{{ channel.name }}</h1>
-        <p>{{ channel.memberCount || 0 }} members</p>
+        <p>{{ (channel.memberCount + 1) || 0 }} members</p>
       </div>
     </header>
   } @else {

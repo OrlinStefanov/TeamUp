@@ -316,7 +316,7 @@ html:has(.page.light-mode)::-webkit-scrollbar-thumb:hover { background: #a78bfa;
   justify-content: flex-end;
   margin-top: 20px;
   padding-top: 16px;
-  border-top: 1px solid #dedee8;
+  border-top: 1px solid #dcd9e7;
 }
 
 .dark-mode .tu-modal-footer,
@@ -362,7 +362,7 @@ html:has(.page.light-mode)::-webkit-scrollbar-thumb:hover { background: #a78bfa;
   align-items: flex-start;
   gap: 12px;
   padding: 16px 48px 16px 20px;
-  border-bottom: 1px solid #dedee8;
+  border-bottom: 1px solid #dcd9e7;
 }
 
 .modal.tu-modal-shell.dark-mode .modal-header {
@@ -383,13 +383,13 @@ html:has(.page.light-mode)::-webkit-scrollbar-thumb:hover { background: #a78bfa;
 
 .modal.tu-modal-shell .modal-body::-webkit-scrollbar { width: 4px; }
 .modal.tu-modal-shell .modal-body::-webkit-scrollbar-track { background: transparent; }
-.modal.tu-modal-shell.dark-mode .modal-body::-webkit-scrollbar-thumb { background: #2a2a3a; border-radius: 4px; }
+.modal.tu-modal-shell.dark-mode .modal-body::-webkit-scrollbar-thumb { background: #363345; border-radius: 4px; }
 .modal.tu-modal-shell.light-mode .modal-body::-webkit-scrollbar-thumb,
-.modal.tu-modal-shell .modal-body::-webkit-scrollbar-thumb { background: #e0dff0; border-radius: 4px; }
+.modal.tu-modal-shell .modal-body::-webkit-scrollbar-thumb { background: #dcd9e7; border-radius: 4px; }
 
 .modal.tu-modal-shell .modal-footer {
   padding: 12px 20px 16px;
-  border-top: 1px solid #dedee8;
+  border-top: 1px solid #dcd9e7;
   gap: 10px;
 }
 

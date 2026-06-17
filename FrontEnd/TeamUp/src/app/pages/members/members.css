@@ -576,6 +576,19 @@
   border-radius: 12px;
   overflow: hidden;
   pointer-events: all;
+  border: 1px solid transparent;
+}
+
+#addMemberModal .tm-box.dark-mode {
+  background: #17171f;
+  border-color: #363345;
+  color: #f5f2ff;
+}
+
+#addMemberModal .tm-box.light-mode {
+  background: #fbfbfd;
+  border-color: #dcd9e7;
+  color: #26232d;
 }
 
 #addMemberModal .tm-header {
@@ -583,11 +596,11 @@
   align-items: flex-start;
   gap: 12px;
   padding: 18px 48px 14px 20px;
-  border-bottom: 1px solid #ebebf5;
+  border-bottom: 1px solid #dcd9e7;
 }
 
 #addMemberModal .tm-box.dark-mode .tm-header {
-  border-bottom-color: #1e1e2e;
+  border-bottom-color: #363345;
 }
 
 #addMemberModal .tm-header-left {
@@ -654,12 +667,12 @@
 }
 
 #addMemberModal .tm-body::-webkit-scrollbar-thumb {
-  background: #e0dff0;
+  background: #dcd9e7;
   border-radius: 4px;
 }
 
 #addMemberModal .tm-box.dark-mode .tm-body::-webkit-scrollbar-thumb {
-  background: #2a2a3a;
+  background: #363345;
 }
 
 #addMemberModal .tm-field {

@@ -87,15 +87,11 @@ namespace TeamUpBackEnd.Extensions
 
 					await db.SaveChangesAsync();
 
+					var emailBody = TeamUpBackEnd.Templates.EmailTemplates.VerificationCodeEmail(code);
 					await emailService.SendEmailAsync(
 						request.Email,
-						"TeamUp Verification Code",
-						$"""
-						<h2>Email Verification</h2>
-						<p>Your verification code is:</p>
-						<h1>{code}</h1>
-						<p>This code expires in 10 minutes.</p>
-						""");
+						"Verify Your Email - TeamUp",
+						emailBody);
 
 					return Results.Ok("Verification code sent");
 				})
@@ -376,13 +372,15 @@ namespace TeamUpBackEnd.Extensions
 
 				var link = $"https://localhost:4200/forgot-password?email={Uri.EscapeDataString(user_email)}&token={encodedToken}"; // in development
 																																	//$"https://teamup.com/reset-password";
+				var userName = user.UserName ?? "User";
+				var emailBody = TeamUpBackEnd.Templates.EmailTemplates.ResetPasswordEmail(link, userName);
 				await emailService.SendEmailAsync(
 					user_email,
-					"Reset Password",
-					$"Click here to reset your password:<br><a href='{link}'>Reset</a>");
+					"Reset Your Password - TeamUp",
+					emailBody);
 
 				return Results.Ok("Reset email sent");
-			}).RequireAuthorization().WithSummary("Resets the old password and via email sends link in the frontend for a new one")
+			}).WithSummary("Resets the old password and via email sends link in the frontend for a new one")
 				.WithTags("User Management");
 
 			//resets the password using the token that was sent to the user's email. If the token is invalid, it returns a bad request status with the error(s) that occurred during password reset.

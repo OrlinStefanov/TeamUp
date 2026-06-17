@@ -65,11 +65,11 @@
         </div>
       }
 
-      @if (userData.emailOrUsername.length > 0) {
-        <div class="flex-1">
+      <div class="flex-1" [hidden]="userData.emailOrUsername.length === 0">
+        @if (userData.emailOrUsername.length > 0) {
           <a (click)="openResetConfirm()" class="text-sm" style="color: #a64bfb;">Forgot Password?</a>
-        </div>
-      }
+        }
+      </div>
 
       <!-- Submit Button -->
       <div class="text-center">
