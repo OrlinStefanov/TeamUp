@@ -37,8 +37,6 @@ var backendUrl = Environment.GetEnvironmentVariable("BACKEND_URL")
 var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL")
 	?? "http://localhost:4200";
 
-builder.WebHost.UseUrls(backendUrl);
-
 builder.Services.AddControllers();
 
 var connectionString = Environment.GetEnvironmentVariable("DATABASE_CONNECTION_STRING")
