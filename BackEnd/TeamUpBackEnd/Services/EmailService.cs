@@ -16,18 +16,22 @@ namespace TeamUpBackEnd.Services
 
 		public async Task SendEmailAsync(string toEmail, string subject, string body)
 		{
-			var smtpClient = new SmtpClient(_config["Email:SmtpServer"])
+			var smtpServer = Environment.GetEnvironmentVariable("SMTP_SERVER") ?? _config["Email:SmtpServer"];
+			var smtpPort = int.Parse(Environment.GetEnvironmentVariable("SMTP_PORT") ?? _config["Email:Port"] ?? "587");
+			var username = Environment.GetEnvironmentVariable("EMAIL_USERNAME") ?? _config["Email:Username"];
+			var password = Environment.GetEnvironmentVariable("EMAIL_PASSWORD") ?? _config["Email:Password"];
+			var from = Environment.GetEnvironmentVariable("EMAIL_FROM") ?? _config["Email:From"];
+
+			var smtpClient = new SmtpClient(smtpServer)
 			{
-				Port = int.Parse(_config["Email:Port"]),
-				Credentials = new NetworkCredential(
-					_config["Email:Username"],
-					_config["Email:Password"]),
+				Port = smtpPort,
+				Credentials = new NetworkCredential(username, password),
 				EnableSsl = true
 			};
 
 			using var message = new MailMessage
 			{
-				From = new MailAddress(_config["Email:From"]),
+				From = new MailAddress(from),
 				Subject = subject,
 				Body = body,
 				IsBodyHtml = true

@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using System.Text;
+using DotNetEnv;
 using TeamUpBackEnd.DbContext;
 using TeamUpBackEnd.Extensions;
 using TeamUpBackEnd.Helpers;
@@ -13,14 +14,32 @@ using TeamUpBackEnd.Interfaces;
 using TeamUpBackEnd.Models;
 using TeamUpBackEnd.Services;
 
+var envPath = FindEnvFile();
+if (!string.IsNullOrEmpty(envPath)) Env.Load(envPath);
+
+static string? FindEnvFile()
+{
+	var currentDir = new DirectoryInfo(Directory.GetCurrentDirectory());
+	while (currentDir != null)
+	{
+		var envFile = Path.Combine(currentDir.FullName, ".env");
+		if (File.Exists(envFile)) return envFile;
+		currentDir = currentDir.Parent;
+	}
+	return null;
+}
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.WebHost.UseUrls("https://localhost:7094");
 
 builder.Services.AddControllers();
 
+var connectionString = Environment.GetEnvironmentVariable("DATABASE_CONNECTION_STRING")
+	?? throw new InvalidOperationException("DATABASE_CONNECTION_STRING environment variable is not set");
+
 builder.Services.AddDbContext<AppDbContext>(options =>
-	options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+	options.UseNpgsql(connectionString));
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
 	.AddEntityFrameworkStores<AppDbContext>()
@@ -48,15 +67,19 @@ builder.Services.AddAuthentication(options =>
 
 .AddJwtBearer(options =>
 {
-	var key = Encoding.ASCII.GetBytes(builder.Configuration["Jwt:Key"]!);
+	var jwtKey = Environment.GetEnvironmentVariable("JWT_KEY") ?? builder.Configuration["Jwt:Key"];
+	var jwtIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER") ?? builder.Configuration["Jwt:Issuer"];
+	var jwtAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE") ?? builder.Configuration["Jwt:Audience"];
+
+	var key = Encoding.ASCII.GetBytes(jwtKey!);
 	options.TokenValidationParameters = new TokenValidationParameters
 	{
 		ValidateIssuer = true,
 		ValidateAudience = true,
 		ValidateLifetime = true,
 		ValidateIssuerSigningKey = true,
-		ValidIssuer = builder.Configuration["Jwt:Issuer"],
-		ValidAudience = builder.Configuration["Jwt:Audience"],
+		ValidIssuer = jwtIssuer,
+		ValidAudience = jwtAudience,
 		IssuerSigningKey = new SymmetricSecurityKey(key)
 	};
 

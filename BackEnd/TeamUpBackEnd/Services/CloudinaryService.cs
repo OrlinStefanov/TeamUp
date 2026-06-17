@@ -11,12 +11,11 @@ namespace TeamUpBackEnd.Services
 
 		public CloudinaryService(IConfiguration config)
 		{
-			var account = new Account(
-				config["Cloudinary:CloudName"],
-				config["Cloudinary:ApiKey"],
-				config["Cloudinary:ApiSecret"]
-			);
+			var cloudName = Environment.GetEnvironmentVariable("CLOUDINARY_CLOUD_NAME") ?? config["Cloudinary:CloudName"];
+			var apiKey = Environment.GetEnvironmentVariable("CLOUDINARY_API_KEY") ?? config["Cloudinary:ApiKey"];
+			var apiSecret = Environment.GetEnvironmentVariable("CLOUDINARY_API_SECRET") ?? config["Cloudinary:ApiSecret"];
 
+			var account = new Account(cloudName, apiKey, apiSecret);
 			_cloudinary = new Cloudinary(account);
 		}
 
