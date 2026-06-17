@@ -8,7 +8,7 @@ RUN npm ci
 
 # Copy frontend source and build
 COPY FrontEnd/TeamUp .
-RUN npm run build -- --configuration=production
+RUN npx ng build --configuration=production
 
 # Stage 2: Build Backend (.NET 10)
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS backend-builder
