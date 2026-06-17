@@ -12,13 +12,13 @@ namespace TeamUpBackEnd.Services
 		{
 			if (user == null) throw new ArgumentNullException(nameof(user));
 
-			if (string.IsNullOrEmpty(config["Jwt_Key"]))
+			if (string.IsNullOrEmpty(config["JWT_KEY"]))
 				throw new InvalidOperationException("JWT key is not configured.");
 
 			if (string.IsNullOrEmpty(user.Email))
 				throw new InvalidOperationException("User email is required for token generation.");
 
-			var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["Jwt_Key"]));
+			var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["JWT_KEY"]));
 			var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
 			var claims = new[]
@@ -30,8 +30,8 @@ namespace TeamUpBackEnd.Services
 			};
 
 			var token = new JwtSecurityToken(
-				issuer: config["Jwt_Issuer"],
-				audience: config["Jwt_Audience"],
+				issuer: config["JWT_ISSUER"],
+				audience: config["JWT_AUDIENCE"],
 				claims: claims,
 				expires: DateTime.UtcNow.AddDays(3),
 				signingCredentials: creds
