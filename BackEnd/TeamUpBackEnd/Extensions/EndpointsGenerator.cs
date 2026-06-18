@@ -2484,6 +2484,8 @@ namespace TeamUpBackEnd.Extensions
 				var messages = await db.Messages
 					.Where(m => m.ChannelId == channel.Id)
 					.Include(m => m.Sender)
+					.Include(m => m.Likes!)
+						.ThenInclude(l => l.User)
 					.OrderBy(m => m.SentAt)
 					.Select(m => new
 					{
@@ -2495,7 +2497,12 @@ namespace TeamUpBackEnd.Extensions
 						{
 							m.Sender!.UserName,
 							m.Sender!.ProfilePictureUrl
-						}
+						},
+						Likes = m.Likes!.Select(l => new
+						{
+							l.UserId,
+							l.User!.UserName
+						}).ToList()
 					}).ToListAsync();
 
 				if (messages is null || messages.Count <= 0) return Results.BadRequest("No messages found");
@@ -2503,6 +2510,61 @@ namespace TeamUpBackEnd.Extensions
 				return Results.Ok(messages);
 
 			}).RequireAuthorization().WithSummary("Returns all messages that are stored in the database").WithTags("Chat Management");
+
+			// LIKE MESSAGE
+			app.MapPost("/channels/{channelPublicId}/messages/{messagePublicId}/like", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, string channelPublicId, string messagePublicId) =>
+			{
+				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
+				if (string.IsNullOrEmpty(userId)) return Results.BadRequest("User not found");
+
+				var channel = await db.Channels.FirstOrDefaultAsync(c => c.PublicId.ToString() == channelPublicId);
+				if (channel is null) return Results.BadRequest("Channel not found");
+
+				var message = await db.Messages
+					.FirstOrDefaultAsync(m => m.PublicId.ToString() == messagePublicId && m.ChannelId == channel.Id);
+				if (message is null) return Results.BadRequest("Message not found");
+
+				var existingLike = await db.MessageLikes
+					.FirstOrDefaultAsync(l => l.MessageId == message.Id && l.UserId == userId);
+
+				if (existingLike != null) return Results.BadRequest("Already liked");
+
+				var like = new MessageLike
+				{
+					MessageId = message.Id,
+					UserId = userId,
+					CreatedAt = DateTime.UtcNow
+				};
+
+				await db.MessageLikes.AddAsync(like);
+				await db.SaveChangesAsync();
+
+				return Results.Ok("Message liked");
+			}).RequireAuthorization().WithSummary("Like a message").WithTags("Chat Management");
+
+			// UNLIKE MESSAGE
+			app.MapDelete("/channels/{channelPublicId}/messages/{messagePublicId}/like", [Authorize] async (AppDbContext db, ClaimsPrincipal userClaims, string channelPublicId, string messagePublicId) =>
+			{
+				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
+				if (string.IsNullOrEmpty(userId)) return Results.BadRequest("User not found");
+
+				var channel = await db.Channels.FirstOrDefaultAsync(c => c.PublicId.ToString() == channelPublicId);
+				if (channel is null) return Results.BadRequest("Channel not found");
+
+				var message = await db.Messages
+					.FirstOrDefaultAsync(m => m.PublicId.ToString() == messagePublicId && m.ChannelId == channel.Id);
+				if (message is null) return Results.BadRequest("Message not found");
+
+				var like = await db.MessageLikes
+					.FirstOrDefaultAsync(l => l.MessageId == message.Id && l.UserId == userId);
+
+				if (like is null) return Results.BadRequest("Like not found");
+
+				db.MessageLikes.Remove(like);
+				await db.SaveChangesAsync();
+
+				return Results.Ok("Message unliked");
+			}).RequireAuthorization().WithSummary("Unlike a message").WithTags("Chat Management");
 		}
 
 		public static void LeaderBoard(WebApplication app)

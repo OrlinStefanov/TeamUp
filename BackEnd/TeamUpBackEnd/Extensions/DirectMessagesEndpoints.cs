@@ -319,6 +319,81 @@ namespace TeamUpBackEnd.Extensions
 			})
 			.WithSummary("Returns paginated message history for a conversation.");
 
+			// LIKE MESSAGE IN DM
+			dm.MapPost("/{conversationPublicId}/messages/{messagePublicId}/like", async (
+				AppDbContext db,
+				ClaimsPrincipal userClaims,
+				string conversationPublicId,
+				string messagePublicId) =>
+			{
+				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
+				if (string.IsNullOrEmpty(userId))
+					return Results.BadRequest("User not found");
+
+				var conversation = await db.Conversations
+					.FirstOrDefaultAsync(c => c.PublicId.ToString() == conversationPublicId);
+				if (conversation is null)
+					return Results.BadRequest("Conversation not found");
+
+				var message = await db.Messages
+					.FirstOrDefaultAsync(m => m.PublicId.ToString() == messagePublicId && m.ConversationId == conversation.Id);
+				if (message is null)
+					return Results.BadRequest("Message not found");
+
+				var existingLike = await db.MessageLikes
+					.FirstOrDefaultAsync(l => l.MessageId == message.Id && l.UserId == userId);
+
+				if (existingLike != null)
+					return Results.BadRequest("Already liked");
+
+				var like = new MessageLike
+				{
+					MessageId = message.Id,
+					UserId = userId,
+					CreatedAt = DateTime.UtcNow
+				};
+
+				await db.MessageLikes.AddAsync(like);
+				await db.SaveChangesAsync();
+
+				return Results.Ok("Message liked");
+			})
+			.WithSummary("Like a message in a conversation");
+
+			// UNLIKE MESSAGE IN DM
+			dm.MapDelete("/{conversationPublicId}/messages/{messagePublicId}/like", async (
+				AppDbContext db,
+				ClaimsPrincipal userClaims,
+				string conversationPublicId,
+				string messagePublicId) =>
+			{
+				var userId = userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
+				if (string.IsNullOrEmpty(userId))
+					return Results.BadRequest("User not found");
+
+				var conversation = await db.Conversations
+					.FirstOrDefaultAsync(c => c.PublicId.ToString() == conversationPublicId);
+				if (conversation is null)
+					return Results.BadRequest("Conversation not found");
+
+				var message = await db.Messages
+					.FirstOrDefaultAsync(m => m.PublicId.ToString() == messagePublicId && m.ConversationId == conversation.Id);
+				if (message is null)
+					return Results.BadRequest("Message not found");
+
+				var like = await db.MessageLikes
+					.FirstOrDefaultAsync(l => l.MessageId == message.Id && l.UserId == userId);
+
+				if (like is null)
+					return Results.BadRequest("Like not found");
+
+				db.MessageLikes.Remove(like);
+				await db.SaveChangesAsync();
+
+				return Results.Ok("Message unliked");
+			})
+			.WithSummary("Unlike a message in a conversation");
+
 			dm.MapPost("/{conversationPublicId}/add-member", async (
 				AppDbContext db,
 				ClaimsPrincipal userClaims,

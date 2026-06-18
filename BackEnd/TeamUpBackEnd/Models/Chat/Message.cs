@@ -17,5 +17,7 @@
 
 		public int? ChannelId { get; set; }
 		public Channel? Channel { get; set; }
+
+		public ICollection<MessageLike> Likes { get; set; } = new List<MessageLike>();
 	}
 }

@@ -18,6 +18,7 @@ namespace TeamUpBackEnd.DbContext
 		public DbSet<Channel> Channels { get; set; }
 		public DbSet<Conversation> Conversations { get; set; }
 		public DbSet<Message> Messages { get; set; }
+		public DbSet<MessageLike> MessageLikes { get; set; }
 		public DbSet<ChannelMember> ChannelMembers { get; set; }
 		public DbSet<ConversationMember> ConversationMembers { get; set; }
 
