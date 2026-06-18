@@ -90,11 +90,19 @@
           <p>{{ message.content }}</p>
           <time>{{ message.sentAt | date:'shortTime' }}</time>
 
-          <div class="message-reactions" *ngIf="selectedChat.isGroup && getLikeCount(message) > 0">
-            <button class="likes-count-btn" (click)="toggleLikesList(message)" [attr.aria-label]="getLikeCount(message) + ' likes'">
-              ❤️ {{ getLikeCount(message) }}
-            </button>
-          </div>
+          @if (getLikeCount(message) > 0) {
+            @if (selectedChat.isGroup) {
+              <div class="message-reactions">
+                <button class="likes-count-btn" (click)="toggleLikesList(message)" [attr.aria-label]="getLikeCount(message) + ' likes'">
+                  ❤️ {{ getLikeCount(message) }}
+                </button>
+              </div>
+            } @else {
+              <div class="message-reactions">
+                <span class="heart-only">❤️</span>
+              </div>
+            }
+          }
 
           <div class="likes-list" *ngIf="message.showLikesList">
             <div class="likes-list-header">
