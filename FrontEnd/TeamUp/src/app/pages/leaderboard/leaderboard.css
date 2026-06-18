@@ -1,6 +1,18 @@
-.container-fluid
-{
-    padding: 20px 20px 0;
+.container-fluid {
+  padding: 0 20px 0;
+}
+
+.leaderboard-page {
+  margin-top: 0;
+}
+
+.workspace-page-header {
+  padding: 20px 20px 0;
+}
+
+.workspace-page-title {
+  font-weight: 800;
+  letter-spacing: 0.01em;
 }
 
 .container-fluid.dark-mode {
@@ -271,6 +283,10 @@
     margin-top: 0 !important;
   }
 
+  .workspace-page-header {
+    padding: 12px 12px 0;
+  }
+
   .col-md-12:first-child {
     margin-bottom: 16px;
   }
@@ -311,21 +327,21 @@
     min-height: 280px;
     padding: 20px 8px 12px;
     gap: 8px;
-    overflow-x: auto;
-    justify-content: flex-start;
+    overflow-x: hidden;
+    justify-content: center;
     -webkit-overflow-scrolling: touch;
     margin-bottom: 20px;
   }
 
   .podium-first .podium-card {
-    width: 150px;
+    width: 132px;
     min-height: 240px;
     padding: 16px 12px;
   }
 
   .podium-second .podium-card,
   .podium-third .podium-card {
-    width: 125px;
+    width: 108px;
     min-height: 210px;
     padding: 14px 10px;
   }
@@ -430,14 +446,14 @@
   }
 
   .podium-first .podium-card {
-    width: 140px;
+    width: 120px;
     min-height: 220px;
     padding: 12px 10px;
   }
 
   .podium-second .podium-card,
   .podium-third .podium-card {
-    width: 115px;
+    width: 96px;
     min-height: 190px;
     padding: 10px 8px;
   }
