@@ -64,7 +64,7 @@
 
           <div class="message-reactions" *ngIf="getLikeCount(msg) > 0">
             <button class="likes-count-btn" (click)="toggleLikesList(msg)" [attr.aria-label]="getLikeCount(msg) + ' likes'">
-              {{ getLikeCount(msg) }}
+              ❤️ {{ getLikeCount(msg) }}
             </button>
           </div>
 

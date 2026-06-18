@@ -979,7 +979,8 @@ export class PersonalDms implements OnInit, OnDestroy {
     return likes.some((like: any) => like.userId === this.auth.getUserId());
   }
 
-  toggleLike(message: DmMessage): void {
+  toggleLike(message: DmMessage, event?: Event): void {
+    if (event) event.preventDefault();
     if (!message.publicId || !this.selectedConversationId) return;
 
     const isLiked = this.isMessageLikedByUser(message);
