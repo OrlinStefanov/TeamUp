@@ -1029,20 +1029,20 @@
   }
 
   .btn-m {
-    padding: 10px !important;
+    padding: 10px 14px !important;
     height: 42px;
-    width: 42px;
+    width: auto;
     display: flex;
     align-items: center;
     justify-content: center;
     white-space: nowrap;
     gap: 6px;
     flex-shrink: 0;
-    font-size: 0;
+    font-size: 13px;
   }
 
   .btn-m:not(.btn-primary) {
-    font-size: 0 !important;
+    font-size: 13px !important;
   }
 
   .btn-m.btn-primary {
