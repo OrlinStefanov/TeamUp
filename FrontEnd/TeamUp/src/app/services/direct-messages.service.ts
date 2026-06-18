@@ -429,4 +429,19 @@ export class DirectMessagesService {
   getCachedMessages(conversationPublicId: string) {
     return this.messageCache.get(conversationPublicId);
   }
+
+  likeMessage(conversationPublicId: string, messagePublicId: string) {
+    return this.http.post(
+      `${this.apiUrl}/api/direct-messages/${conversationPublicId}/messages/${messagePublicId}/like`,
+      {},
+      { withCredentials: true }
+    );
+  }
+
+  unlikeMessage(conversationPublicId: string, messagePublicId: string) {
+    return this.http.delete(
+      `${this.apiUrl}/api/direct-messages/${conversationPublicId}/messages/${messagePublicId}/like`,
+      { withCredentials: true }
+    );
+  }
 }

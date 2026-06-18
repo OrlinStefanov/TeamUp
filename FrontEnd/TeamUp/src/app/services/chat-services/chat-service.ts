@@ -211,4 +211,23 @@ export class ChatService {
   getCachedMessages(channelId: string) {
     return this.messagesCache.get(channelId);
   }
+
+  // =========================
+  // REACTIONS/LIKES
+  // =========================
+
+  likeMessage(channelId: string, messagePublicId: string) {
+    return this.http.post(
+      `${this.apiUrl}/channels/${channelId}/messages/${messagePublicId}/like`,
+      {},
+      { withCredentials: true }
+    );
+  }
+
+  unlikeMessage(channelId: string, messagePublicId: string) {
+    return this.http.delete(
+      `${this.apiUrl}/channels/${channelId}/messages/${messagePublicId}/like`,
+      { withCredentials: true }
+    );
+  }
 }

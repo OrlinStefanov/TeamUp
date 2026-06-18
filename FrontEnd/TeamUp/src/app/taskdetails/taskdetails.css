@@ -988,28 +988,52 @@
 /* Mobile Responsive - Header & Filters */
 @media (max-width: 768px) {
   .header-controls {
-    flex-direction: column !important;
-    gap: 8px !important;
+    flex-direction: row !important;
+    gap: 6px !important;
+    align-items: center;
   }
 
   .input-group {
     max-width: 100% !important;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .input-group .form-control {
+    font-size: 12px;
+    padding: 8px 10px !important;
+    height: 38px;
+  }
+
+  .input-group-text {
+    padding: 0 10px !important;
+    height: 38px;
+    font-size: 12px;
   }
 
   .btn-m {
     font-size: 12px;
     padding: 8px 12px !important;
-    flex: 1;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
 
   .btn-m svg {
-    width: 12px;
-    height: 12px;
+    width: 13px;
+    height: 13px;
+    margin-right: 4px;
   }
 
-  .header-controls .btn-m:not(:first-of-type) {
-    display: flex;
-    gap: 8px;
+  .header-controls .btn-m:nth-of-type(2) {
+    flex: 0 0 auto;
+  }
+
+  .header-controls .btn-m:nth-of-type(3) {
+    flex: 0 0 auto;
   }
 
   /* Filters Row Mobile */

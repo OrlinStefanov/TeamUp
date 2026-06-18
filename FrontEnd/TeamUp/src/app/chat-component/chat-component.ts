@@ -168,4 +168,38 @@ export class ChatComponent implements OnInit {
     const senderId = msg?.senderId ?? msg?.SenderId;
     return !!senderId && senderId !== this.currentUserId && this.onlineUserIds.has(senderId);
   }
+
+  getLikeCount(msg: any): number {
+    return msg.likes?.length ?? 0;
+  }
+
+  isMessageLikedByUser(msg: any): boolean {
+    if (!msg.likes) return false;
+    return msg.likes.some((like: any) => like.userId === this.currentUserId);
+  }
+
+  toggleLike(msg: any): void {
+    if (!msg.publicId) return;
+
+    const isLiked = this.isMessageLikedByUser(msg);
+
+    if (isLiked) {
+      this.chat.unlikeMessage(this.currentChannelId, msg.publicId).subscribe(() => {
+        msg.likes = msg.likes.filter((like: any) => like.userId !== this.currentUserId);
+      });
+    } else {
+      this.chat.likeMessage(this.currentChannelId, msg.publicId).subscribe((response: any) => {
+        if (!msg.likes) msg.likes = [];
+        msg.likes.push({ userId: this.currentUserId, userName: this.auth.getCurrentUser()?.userName });
+      });
+    }
+  }
+
+  toggleLikesList(msg: any): void {
+    msg.showLikesList = !msg.showLikesList;
+  }
+
+  closeLikesList(msg: any): void {
+    msg.showLikesList = false;
+  }
 }

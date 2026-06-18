@@ -968,4 +968,45 @@ export class PersonalDms implements OnInit, OnDestroy {
       this.selectChat(this.conversations[0].publicId);
     }
   }
+
+  getLikeCount(message: DmMessage): number {
+    return (message as any).likes?.length ?? 0;
+  }
+
+  isMessageLikedByUser(message: DmMessage): boolean {
+    const likes = (message as any).likes;
+    if (!likes) return false;
+    return likes.some((like: any) => like.userId === this.auth.getUserId());
+  }
+
+  toggleLike(message: DmMessage): void {
+    if (!message.publicId || !this.selectedConversationId) return;
+
+    const isLiked = this.isMessageLikedByUser(message);
+
+    if (isLiked) {
+      this.dmService.unlikeMessage(this.selectedConversationId, message.publicId).subscribe(() => {
+        const likes = (message as any).likes || [];
+        (message as any).likes = likes.filter((like: any) => like.userId !== this.auth.getUserId());
+      });
+    } else {
+      this.dmService.likeMessage(this.selectedConversationId, message.publicId).subscribe(() => {
+        if (!(message as any).likes) {
+          (message as any).likes = [];
+        }
+        (message as any).likes.push({
+          userId: this.auth.getUserId(),
+          userName: this.auth.getCurrentUser()?.userName
+        });
+      });
+    }
+  }
+
+  toggleLikesList(message: DmMessage): void {
+    (message as any).showLikesList = !(message as any).showLikesList;
+  }
+
+  closeLikesList(message: DmMessage): void {
+    (message as any).showLikesList = false;
+  }
 }

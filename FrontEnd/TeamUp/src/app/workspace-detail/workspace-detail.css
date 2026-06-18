@@ -210,11 +210,27 @@
     padding: 0;
   }
 
-  :host.workspace-chat-route .nav-3items {
-    display: none;
+  .nav-3items {
+    overflow-x: auto;
   }
 
   :host.workspace-chat-route .navbar {
     min-height: 48px;
+  }
+
+  .nav-link {
+    font-size: 11px;
+    padding: 6px 14px !important;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .nav-link svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .nav-3items {
+    gap: 4px !important;
   }
 }
