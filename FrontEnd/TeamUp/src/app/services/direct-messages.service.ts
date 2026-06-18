@@ -56,6 +56,11 @@ export interface DmMessage {
     profilePictureUrl?: string;
     isOnline?: boolean;
   };
+  likes?: Array<{
+    userId: string;
+    userName: string;
+  }>;
+  showLikesList?: boolean;
 }
 
 export interface DmMemberAddedEvent {
