@@ -131,7 +131,8 @@
 
 .members-search-input {
   flex: 1 1 auto;
-  min-width: 280px;
+  min-width: 0;
+  width: 100%;
   border-radius: 10px;
   border: 1px solid #e0dff0;
   padding: 14px 18px;
@@ -139,6 +140,7 @@
   font-family: inherit;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
   height: 50px;
+  box-sizing: border-box;
 }
 
 .container-fluid.dark-mode .members-search-input {
@@ -214,6 +216,9 @@
 .invite-avatar {
   width: 36px;
   height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  flex-shrink: 0;
   border-radius: 50%;
   display: grid;
   place-items: center;
@@ -337,16 +342,23 @@
 
 /* avatar initial circle */
 .profileIcon {
-  width: 36px !important;
-  height: 36px !important;
   font-size: 13px;
 }
 
-/* override inline 30px on the <img> and initials div */
+.member-avatar,
 .member-row img,
 .member-row .profileIcon {
-  width: 36px !important;
-  height: 36px !important;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  flex-shrink: 0;
+  border-radius: 50% !important;
+}
+
+.member-row img.member-avatar {
+  object-fit: cover;
+  display: block;
 }
 
 .container-fluid.dark-mode .role-owner {
@@ -1013,32 +1025,71 @@
   .members-toolbar-form {
     flex-direction: column;
     gap: 10px;
+    align-items: stretch;
   }
 
-  .members-search-input,
+  .members-search-input {
+    min-height: 44px;
+    height: 44px;
+    font-size: 16px;
+    padding: 10px 14px;
+  }
+
   .members-filter-btn {
-    min-height: 40px;
+    min-height: 44px;
+    height: 44px;
     font-size: 13px;
+    width: 100%;
   }
 
   .role-filter-menu {
     width: 100%;
+    margin-left: 0;
   }
 
   .member-row {
-    flex-wrap: wrap;
-    gap: 10px;
+    flex-wrap: nowrap;
+    gap: 8px;
     padding: 10px 12px;
     margin-bottom: 6px;
   }
 
-  .member-row .d-flex:first-child {
-    flex-wrap: wrap;
+  .member-row > .d-flex:first-child {
+    flex: 1;
+    min-width: 0;
+    flex-wrap: nowrap;
     gap: 8px;
   }
 
   .member-row .member-actions-menu {
-    margin-left: auto;
+    margin-left: 0;
+    flex-shrink: 0;
+  }
+
+  .member-avatar,
+  .member-row img,
+  .member-row .profileIcon {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
+    font-size: 12px;
+  }
+
+  .member-row .badge {
+    flex-shrink: 0;
+    font-size: 10px;
+    padding: 3px 6px;
+    white-space: nowrap;
+  }
+
+  .usName {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+    min-width: 0;
   }
 
   .member-actions-dropdown,
@@ -1071,44 +1122,6 @@
 }
 
 @media (max-width: 480px) {
-  .members-toolbar {
-    padding: 12px !important;
-    margin: 12px 0;
-  }
-
-  .members-toolbar-form {
-    gap: 8px;
-    flex-direction: row;
-    align-items: center;
-  }
-
-  .members-search-input {
-    min-width: 0;
-    padding: 10px 14px;
-    font-size: 14px;
-    height: 42px;
-    flex: 1 1 auto;
-  }
-
-  .members-filter-btn {
-    min-height: 42px;
-    padding: 10px 14px;
-    font-size: 13px;
-    width: auto;
-    flex-shrink: 0;
-  }
-
-  .members-filter-btn span {
-    display: inline;
-  }
-
-  .members-filter-btn svg {
-    width: 14px;
-    height: 14px;
-    display: inline;
-    margin-right: 6px;
-  }
-
   .members-tabs {
     grid-template-columns: 1fr;
     padding: 0 !important;
@@ -1125,17 +1138,6 @@
     height: 16px;
   }
 
-  .profileIcon {
-    width: 24px !important;
-    height: 24px !important;
-    font-size: 10px;
-  }
-
-  .member-row img {
-    width: 24px !important;
-    height: 24px !important;
-  }
-
   .action-trigger {
     width: 30px;
     height: 30px;
@@ -1145,82 +1147,5 @@
   .action-trigger svg {
     width: 14px;
     height: 14px;
-  }
-
-  .members-toolbar {
-    margin: 12px 0 10px 0;
-    padding: 0 !important;
-  }
-
-  .members-toolbar-form {
-    flex-direction: row;
-    gap: 8px;
-    align-items: center;
-  }
-
-  .members-search-input {
-    flex: 1;
-    padding: 8px 11px;
-    font-size: 12px;
-    min-height: 38px;
-  }
-
-  .members-filter-btn {
-    width: 38px;
-    min-width: 38px;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 38px;
-    font-size: 0;
-  }
-
-  .members-filter-btn span {
-    display: none;
-  }
-
-  .members-filter-btn svg {
-    width: 16px;
-    height: 16px;
-    display: block;
-  }
-
-  .member-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    padding: 8px 10px;
-    margin-bottom: 5px;
-    flex-wrap: nowrap;
-  }
-
-  .member-row .d-flex.align-items-center {
-    flex: 1;
-    min-width: 0;
-    flex-wrap: nowrap;
-    gap: 7px;
-  }
-
-  .member-row .badge {
-    flex-shrink: 0;
-    font-size: 10px;
-    padding: 3px 6px;
-    white-space: nowrap;
-  }
-
-  .usName {
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-size: 13px;
-    min-width: 0;
-  }
-
-  .badge {
-    font-size: 10px;
-    padding: 3px 8px;
   }
 }

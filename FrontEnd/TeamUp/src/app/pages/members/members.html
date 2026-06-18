@@ -116,15 +116,14 @@
                                 *ngIf="member.profilePictureUrl; else userInitial"
                                 [src]="member.profilePictureUrl"
                                 [alt]="member.userName"
-                                class="rounded-circle"
-                                ><ng-template #userInitial>
+                                class="member-avatar rounded-circle">
+                            <ng-template #userInitial>
                                 <div [ngClass]="{
                                     'role-owner': member.role === 2,
                                     'role-admin': member.role === 1,
                                     'role-member': member.role === 0
                                 }"
-                                    class="rounded-circle d-flex align-items-center justify-content-center fw-bold profileIcon"
-                                    style="width: 36px; height: 36px; flex-shrink: 0; border-radius: 50%;">
+                                    class="member-avatar rounded-circle d-flex align-items-center justify-content-center fw-bold profileIcon">
                                     {{getUserInitial(member.userName)}}
                                 </div>
                             </ng-template>

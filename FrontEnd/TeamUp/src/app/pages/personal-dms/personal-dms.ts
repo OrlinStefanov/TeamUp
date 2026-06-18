@@ -46,6 +46,7 @@ export class PersonalDms implements OnInit, OnDestroy {
   isNewMessageOpen = false;
   isAddMemberOpen = false;
   isGroupSettingsOpen = false;
+  isGroupActionsOpen = false;
   isMobileChatOpen = false;
   selectedConversationId: string | null = null;
   conversations: DmConversation[] = [];
@@ -381,6 +382,7 @@ export class PersonalDms implements OnInit, OnDestroy {
     if (!conversation?.isGroup) return;
 
     this.isGroupSettingsOpen = true;
+    this.isGroupActionsOpen = false;
     this.isNewMessageOpen = false;
     this.isAddMemberOpen = false;
     this.editGroupTitle = conversation.title ?? '';
@@ -397,6 +399,29 @@ export class PersonalDms implements OnInit, OnDestroy {
     this.isGroupSettingsOpen = false;
     this.nicknameEditMember = null;
     this.nicknameEditValue = '';
+  }
+
+  openGroupActionsMenu() {
+    this.isGroupActionsOpen = true;
+  }
+
+  closeGroupActionsMenu() {
+    this.isGroupActionsOpen = false;
+  }
+
+  openGroupSettingsFromMenu() {
+    this.closeGroupActionsMenu();
+    this.openGroupSettings();
+  }
+
+  openAddMemberFromMenu() {
+    this.closeGroupActionsMenu();
+    this.openAddMember();
+  }
+
+  leaveGroupFromMenu() {
+    this.closeGroupActionsMenu();
+    this.leaveConversation();
   }
 
   saveGroupTitle() {
@@ -490,6 +515,7 @@ export class PersonalDms implements OnInit, OnDestroy {
     this.isNewMessageOpen = false;
     this.isAddMemberOpen = false;
     this.isGroupSettingsOpen = false;
+    this.isGroupActionsOpen = false;
     this.searchText = '';
     this.searchResults = [];
     this.selectedUser = null;
@@ -507,6 +533,7 @@ export class PersonalDms implements OnInit, OnDestroy {
     this.currentConversationId = conversationId;
     this.isMobileChatOpen = true;
     this.isGroupSettingsOpen = false;
+    this.isGroupActionsOpen = false;
     this.hasMoreMessages = false;
     this.oldestMessageId = null;
 
@@ -528,6 +555,7 @@ export class PersonalDms implements OnInit, OnDestroy {
 
   closeMobileChat() {
     this.isMobileChatOpen = false;
+    this.isGroupActionsOpen = false;
   }
 
   sendMessage() {

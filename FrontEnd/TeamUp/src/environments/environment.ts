@@ -3,6 +3,6 @@
 
 export const environment = {
   production: false,
-  apiUrl: '',
-  frontendUrl: '',
+  apiUrl: 'https://localhost:7094',
+  frontendUrl: 'http://localhost:4200',
 };
