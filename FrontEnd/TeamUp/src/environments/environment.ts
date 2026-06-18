@@ -2,7 +2,7 @@
 // Source: ../../.env
 
 export const environment = {
-  production: false,
-  apiUrl: 'https://localhost:7094',
-  frontendUrl: 'http://localhost:4200',
+  production: true,
+  apiUrl: '',
+  frontendUrl: '',
 };
