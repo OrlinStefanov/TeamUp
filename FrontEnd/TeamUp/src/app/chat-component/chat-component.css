@@ -381,41 +381,120 @@
 
   .mobile-back-btn {
     display: grid;
+    width: 42px;
+    height: 42px;
   }
 
   .conversation-header {
-    padding: 8px 10px;
+    padding: 12px 14px;
+    gap: 14px;
   }
 
   .channel-mark {
-    width: 34px;
-    height: 34px;
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+  }
+
+  .channel-heading {
+    min-width: 0;
   }
 
   .conversation-header h1 {
-    font-size: 14px;
+    font-size: 15px;
+    font-weight: 700;
   }
 
   .conversation-header p {
-    font-size: 10px;
+    font-size: 11px;
+    margin-top: 3px;
   }
 
   .message-area {
-    gap: 10px;
-    padding: 18px 12px;
+    gap: 12px;
+    padding: 20px 14px;
   }
 
   .message-row {
-    max-width: 92%;
+    max-width: 90%;
   }
 
   .avatar {
-    width: 30px;
-    height: 30px;
+    width: 32px;
+    height: 32px;
+    font-size: 13px;
   }
 
   .message-bubble {
-    padding: 9px 11px 8px;
+    padding: 10px 12px;
+  }
+
+  .message-bubble p {
+    font-size: 14px;
+  }
+
+  .message-meta strong {
+    font-size: 12px;
+  }
+
+  .message-composer {
+    padding: 12px;
+    grid-template-columns: minmax(0, 1fr) 46px;
+    gap: 10px;
+  }
+
+  .send-btn,
+  .message-composer input {
+    height: 44px;
+  }
+
+  .message-composer input {
+    padding: 0 14px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 560px) {
+  .conversation-header {
+    gap: 10px;
+    padding: 10px 12px;
+  }
+
+  .channel-mark {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .conversation-header h1 {
+    max-width: 45vw;
+    font-size: 14px;
+  }
+
+  .message-area {
+    padding: 16px 10px;
+    gap: 11px;
+  }
+
+  .message-row {
+    max-width: 94%;
+    gap: 8px;
+  }
+
+  .avatar {
+    width: 28px;
+    height: 28px;
+    font-size: 11px;
+    flex-shrink: 0;
+  }
+
+  .message-meta strong {
+    font-size: 12px;
+  }
+
+  .message-bubble {
+    padding: 9px 11px;
   }
 
   .message-bubble p {
@@ -423,57 +502,13 @@
   }
 
   .message-composer {
+    gap: 8px;
     padding: 10px;
-    grid-template-columns: minmax(0, 1fr) 44px;
+    grid-template-columns: minmax(0, 1fr) 42px;
   }
 
   .send-btn,
   .message-composer input {
     height: 42px;
-  }
-}
-
-@media (max-width: 560px) {
-  .conversation-header {
-    gap: 8px;
-  }
-
-  .channel-mark {
-    width: 30px;
-    height: 30px;
-    font-size: 14px;
-  }
-
-  .conversation-header h1 {
-    max-width: 40vw;
-  }
-
-  .message-area {
-    padding: 14px 8px;
-  }
-
-  .message-row {
-    max-width: 96%;
-    gap: 7px;
-  }
-
-  .avatar {
-    width: 26px;
-    height: 26px;
-    font-size: 10px;
-  }
-
-  .message-meta strong {
-    font-size: 11px;
-  }
-
-  .message-bubble p {
-    font-size: 12px;
-  }
-
-  .message-composer {
-    gap: 7px;
-    padding: 8px;
-    grid-template-columns: minmax(0, 1fr) 40px;
   }
 }
