@@ -117,8 +117,7 @@
                                 [src]="member.profilePictureUrl"
                                 [alt]="member.userName"
                                 class="rounded-circle"
-                                style="width: 36px; height: 36px; object-fit: cover; flex-shrink: 0; border-radius: 50%;">
-                            <ng-template #userInitial>
+                                ><ng-template #userInitial>
                                 <div [ngClass]="{
                                     'role-owner': member.role === 2,
                                     'role-admin': member.role === 1,

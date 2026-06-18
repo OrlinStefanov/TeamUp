@@ -1070,6 +1070,39 @@
 }
 
 @media (max-width: 480px) {
+  .members-toolbar {
+    padding: 12px !important;
+    margin: 12px 0;
+  }
+
+  .members-toolbar-form {
+    gap: 8px;
+  }
+
+  .members-search-input {
+    min-width: 0;
+    padding: 10px 14px;
+    font-size: 14px;
+    height: 42px;
+  }
+
+  .members-filter-btn {
+    min-height: 42px;
+    padding: 10px;
+    font-size: 0;
+    width: 42px;
+  }
+
+  .members-filter-btn span {
+    display: none;
+  }
+
+  .members-filter-btn svg {
+    width: 14px;
+    height: 14px;
+    display: block;
+  }
+
   .members-tabs {
     grid-template-columns: 1fr;
     padding: 0 !important;
