@@ -132,10 +132,11 @@
   min-width: 0;
   border-radius: 10px;
   border: 1px solid #e0dff0;
-  padding: 10px 14px;
-  font-size: 14px;
+  padding: 12px 16px;
+  font-size: 15px;
   font-family: inherit;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  height: 46px;
 }
 
 .container-fluid.dark-mode .members-search-input {
@@ -189,6 +190,7 @@
 .filter-chevron {
   opacity: 0.55;
   flex-shrink: 0;
+  display: none;
 }
 
 .members-empty-state {

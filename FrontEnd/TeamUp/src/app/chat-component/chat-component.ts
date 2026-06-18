@@ -178,14 +178,17 @@ export class ChatComponent implements OnInit {
     return msg.likes.some((like: any) => like.userId === this.currentUserId);
   }
 
-  toggleLike(msg: any): void {
+  toggleLike(msg: any, event?: Event): void {
+    if (event) event.preventDefault();
     if (!msg.publicId) return;
 
     const isLiked = this.isMessageLikedByUser(msg);
 
     if (isLiked) {
       this.chat.unlikeMessage(this.currentChannelId, msg.publicId).subscribe(() => {
-        msg.likes = msg.likes.filter((like: any) => like.userId !== this.currentUserId);
+        if (msg.likes) {
+          msg.likes = msg.likes.filter((like: any) => like.userId !== this.currentUserId);
+        }
       });
     } else {
       this.chat.likeMessage(this.currentChannelId, msg.publicId).subscribe((response: any) => {
