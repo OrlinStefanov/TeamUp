@@ -888,6 +888,7 @@
   font-weight: 800;
   margin: 0;
   font-size: 20px;
+  line-height: 1.2;
   letter-spacing: 0.01em;
 }
 
@@ -1000,6 +1001,10 @@
   flex-direction: row !important;
 }
 
+.task-filter-button {
+  white-space: nowrap;
+}
+
 /* Mobile Responsive - Header & Filters */
 @media (max-width: 768px) {
   .task-board-header {
@@ -1007,16 +1012,17 @@
   }
 
   .header-controls {
-    flex-wrap: wrap !important;
+    flex-wrap: nowrap !important;
     gap: 8px !important;
     align-items: stretch;
-    flex-direction: row;
+    flex-direction: row !important;
+    width: 100%;
   }
 
   .input-group {
-    max-width: 100% !important;
-    flex: 0 0 100% !important;
-    width: 100%;
+    max-width: none !important;
+    flex: 1 1 auto !important;
+    width: auto;
     min-width: 0;
   }
 
@@ -1033,7 +1039,7 @@
   }
 
   .btn-m {
-    padding: 10px 14px !important;
+    padding: 10px 12px !important;
     height: 42px;
     width: auto;
     display: flex;
@@ -1051,8 +1057,18 @@
 
   .btn-m.btn-primary {
     width: auto;
-    flex: 1 1 auto;
+    flex: 0 0 auto;
     font-size: 13px;
+  }
+
+  .task-filter-button {
+    flex: 0 0 42px;
+    width: 42px;
+    padding: 0 !important;
+  }
+
+  .task-filter-label {
+    display: none;
   }
 
   .btn-m svg {
