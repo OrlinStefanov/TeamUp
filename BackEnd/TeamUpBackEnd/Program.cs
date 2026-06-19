@@ -7,7 +7,6 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using System.Text;
 using DotNetEnv;
-using Resend;
 using TeamUpBackEnd.DbContext;
 using TeamUpBackEnd.Extensions;
 using TeamUpBackEnd.Helpers;
@@ -57,12 +56,6 @@ builder.Services.Configure<IdentityOptions>(options =>
 	options.Password.RequireUppercase = true;
 	options.Password.RequireLowercase = true;
 	options.Password.RequireNonAlphanumeric = true;
-});
-
-builder.Services.AddResend(o =>
-{
-	o.ApiToken = Environment.GetEnvironmentVariable("RESEND_API_KEY")
-		?? throw new InvalidOperationException("RESEND_API_KEY environment variable is not set");
 });
 
 builder.Services.AddScoped<IEmailService, EmailService>();
