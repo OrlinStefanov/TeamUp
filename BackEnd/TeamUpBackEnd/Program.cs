@@ -64,16 +64,6 @@ builder.Services.Configure<IdentityOptions>(options =>
     options.Password.RequireNonAlphanumeric = true;
 });
 
-<<<<<<< HEAD
-=======
-// 5. EXTERNAL SERVICES (RESEND & CLOUDINARY)
-builder.Services.AddResend(o =>
-{
-    o.ApiToken = Environment.GetEnvironmentVariable("RESEND_API_KEY")
-        ?? throw new InvalidOperationException("RESEND_API_KEY environment variable is not set");
-});
-
->>>>>>> eac1f007f015efdabe0ece5b3d0c00d688158514
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<CloudinaryService>();
 builder.Services.AddScoped<TokenService>();
