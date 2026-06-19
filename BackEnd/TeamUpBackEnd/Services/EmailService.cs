@@ -114,7 +114,7 @@ namespace TeamUpBackEnd.Services
 			sb.AppendLine($"Subject: {message.Subject}");
 			sb.AppendLine("MIME-Version: 1.0");
 			sb.AppendLine("Content-Type: text/html; charset=\"utf-8\"");
-			sb.AppendLine("Content-Transfer-Encoding: quoted-printable");
+			sb.AppendLine("Content-Transfer-Encoding: 7bit");
 			sb.AppendLine();
 
 			// Body

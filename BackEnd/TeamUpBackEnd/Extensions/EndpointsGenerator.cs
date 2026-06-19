@@ -355,7 +355,7 @@ namespace TeamUpBackEnd.Extensions
 				.WithSummary("Returns the current user's info").WithTags("User Management");
 
 			//forgets the old password and via email sends proposition for a new one. If the email is not found, it returns ok status without sending an email, to prevent email enumeration attacks.
-			app.MapPost("/forgot-password", async (user_data.ForgotPasswordDTO dto, UserManager<ApplicationUser> userManager, IEmailService emailService) =>
+			app.MapPost("/forgot-password", async (user_data.ForgotPasswordDTO dto, UserManager<ApplicationUser> userManager, IEmailService emailService, IConfiguration config) =>
 			{
 				var user = await userManager.FindByEmailAsync(dto.EmailOrUsername) ?? await userManager.FindByNameAsync(dto.EmailOrUsername);
 
@@ -370,8 +370,11 @@ namespace TeamUpBackEnd.Extensions
 
 				if (user_email is null) return Results.BadRequest("User email not found");
 
-				var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "http://localhost:4200";
-				var link = $"{frontendUrl.TrimEnd('/')}/forgot-password?email={Uri.EscapeDataString(user_email)}&token={encodedToken}";
+				var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") ?? config["FrontendUrl"];
+				if (string.IsNullOrEmpty(frontendUrl))
+					return Results.BadRequest("Frontend URL not configured");
+
+				var link = $"{frontendUrl.TrimEnd('/')}/reset-password?email={Uri.EscapeDataString(user_email)}&token={encodedToken}";
 				var userName = user.UserName ?? "User";
 				var emailBody = TeamUpBackEnd.Templates.EmailTemplates.ResetPasswordEmail(link, userName);
 				await emailService.SendEmailAsync(
