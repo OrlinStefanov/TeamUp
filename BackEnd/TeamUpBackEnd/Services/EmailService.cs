@@ -75,6 +75,7 @@ namespace TeamUpBackEnd.Services
 				IsBodyHtml = true
 			};
 			message.To.Add(toEmail);
+			message.AlternateViews.Add(AlternateView.CreateAlternateViewFromString(body, new System.Net.Mime.ContentType("text/html; charset=utf-8")));
 
 			// Use Gmail API with OAuth2
 			var accessToken = await GetAccessTokenAsync();
