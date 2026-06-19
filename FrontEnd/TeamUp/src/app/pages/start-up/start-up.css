@@ -1,24 +1,188 @@
 .page {
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    height:100vh;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  overflow: hidden;
+  padding: 24px;
 }
 
 .page.light-mode {
-  background-color: #f5f5f5;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(124, 58, 237, 0.12), transparent 34%),
+    linear-gradient(180deg, #ffffff 0%, #f6f5fb 100%);
   color: #333;
 }
 
 .page.dark-mode {
-  background-color: #1a1a1a;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(124, 58, 237, 0.22), transparent 36%),
+    linear-gradient(180deg, #101017 0%, #09090d 100%);
   color: #f5f5f5;
 }
 
-.mb-4 {
-  color: #333;
+.startup-stage {
+  width: min(420px, 100%);
+  display: grid;
+  justify-items: center;
+  gap: 24px;
+  text-align: center;
 }
 
-.page.dark-mode .mb-4 {
-  color: #bbb;
+.brand-mark {
+  position: relative;
+  width: 190px;
+  height: 190px;
+  display: grid;
+  place-items: center;
+}
+
+.brand-mark img {
+  position: relative;
+  z-index: 2;
+  width: 132px;
+  height: 132px;
+  object-fit: contain;
+  filter: drop-shadow(0 18px 28px rgba(0, 0, 0, 0.22));
+}
+
+.brand-ring {
+  position: absolute;
+  inset: 12px;
+  border-radius: 50%;
+  border: 1px solid rgba(124, 58, 237, 0.35);
+}
+
+.brand-ring-one {
+  animation: ringPulse 1.8s ease-in-out infinite;
+}
+
+.brand-ring-two {
+  inset: 0;
+  border-color: rgba(0, 188, 212, 0.28);
+  animation: ringPulse 1.8s ease-in-out 0.45s infinite;
+}
+
+.startup-copy h1 {
+  margin: 0;
+  color: #7c3aed;
+  font-size: clamp(36px, 10vw, 54px);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0;
+  text-shadow: 0 0 16px rgba(124, 58, 237, 0.28);
+}
+
+.startup-copy p {
+  margin: 12px 0 0;
+  color: #7a778b;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.page.dark-mode .startup-copy p {
+  color: #b8b4c8;
+}
+
+.loading-track {
+  width: min(280px, 80vw);
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(124, 58, 237, 0.14);
+}
+
+.page.dark-mode .loading-track {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.loading-fill {
+  display: block;
+  width: 42%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #7c3aed, #00bcd4, #22c55e);
+  animation: loadSweep 1.45s ease-in-out infinite;
+}
+
+.loading-steps {
+  display: flex;
+  gap: 10px;
+}
+
+.loading-steps span {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #7c3aed;
+  animation: stepBlink 1.2s ease-in-out infinite;
+}
+
+.loading-steps span:nth-child(2) {
+  background: #00bcd4;
+  animation-delay: 0.16s;
+}
+
+.loading-steps span:nth-child(3) {
+  background: #22c55e;
+  animation-delay: 0.32s;
+}
+
+@keyframes ringPulse {
+  0% {
+    opacity: 0.35;
+    transform: scale(0.9);
+  }
+
+  50% {
+    opacity: 0.9;
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.1);
+  }
+}
+
+@keyframes loadSweep {
+  0% {
+    transform: translateX(-110%);
+  }
+
+  50% {
+    transform: translateX(70%);
+  }
+
+  100% {
+    transform: translateX(250%);
+  }
+}
+
+@keyframes stepBlink {
+  0%, 100% {
+    opacity: 0.35;
+    transform: scale(0.85);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (max-width: 480px) {
+  .startup-stage {
+    gap: 20px;
+  }
+
+  .brand-mark {
+    width: 160px;
+    height: 160px;
+  }
+
+  .brand-mark img {
+    width: 112px;
+    height: 112px;
+  }
 }

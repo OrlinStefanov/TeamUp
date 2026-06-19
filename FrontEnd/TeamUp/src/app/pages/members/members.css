@@ -1,8 +1,18 @@
 /* ── Page header & primary actions ── */
 
+.container-fluid {
+  padding: 0 20px;
+}
+
+.workspace-page-header {
+  padding: 20px 20px 0;
+}
+
 .members-page-title {
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-weight: 800;
+  font-size: 20px;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
   text-align: left;
 }
 
@@ -981,15 +991,16 @@
     flex-direction: column;
     align-items: stretch !important;
     gap: 12px;
-    padding: 0 !important;
+    padding: 12px 12px 0 !important;
   }
 
   .members-header-row > div:first-child {
     gap: 8px;
+    justify-content: flex-start !important;
   }
 
   .members-page-title {
-    font-size: 18px;
+    font-size: 20px;
   }
 
   .members-count-badge {
@@ -1023,7 +1034,7 @@
   }
 
   .members-toolbar-form {
-    flex-direction: column;
+    flex-direction: row;
     gap: 10px;
     align-items: stretch;
   }
@@ -1036,15 +1047,20 @@
   }
 
   .members-filter-btn {
+    padding: 0 !important;
     min-height: 44px;
     height: 44px;
     font-size: 13px;
-    width: 100%;
+    width: 44px;
   }
 
   .role-filter-menu {
-    width: 100%;
+    width: 44px;
     margin-left: 0;
+  }
+
+  .members-filter-label {
+    display: none;
   }
 
   .member-row {
