@@ -2,6 +2,7 @@ using System.Net.Mail;
 using System.Text;
 using System.Text.Json;
 using System.Net.Http;
+using System.Net;
 using TeamUpBackEnd.Interfaces;
 
 namespace TeamUpBackEnd.Services
@@ -31,6 +32,11 @@ namespace TeamUpBackEnd.Services
 			var clientSecret = Environment.GetEnvironmentVariable("GMAIL_CLIENT_SECRET") ?? _config["Gmail:ClientSecret"];
 			var refreshToken = Environment.GetEnvironmentVariable("GMAIL_REFRESH_TOKEN") ?? _config["Gmail:RefreshToken"];
 
+			if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(clientSecret) || string.IsNullOrEmpty(refreshToken))
+			{
+				throw new InvalidOperationException("Gmail API credentials (client id, client secret and refresh token) are required for OAuth2 flow.");
+			}
+
 			var httpClient = _httpClientFactory.CreateClient();
 			var tokenRequest = new Dictionary<string, string>
 			{
@@ -47,7 +53,8 @@ namespace TeamUpBackEnd.Services
 
 			if (!response.IsSuccessStatusCode)
 			{
-				throw new Exception($"Failed to obtain access token: {response.StatusCode}");
+				var err = await response.Content.ReadAsStringAsync();
+				throw new Exception($"Failed to obtain access token: {response.StatusCode} - {err}");
 			}
 
 			var responseContent = await response.Content.ReadAsStringAsync();
@@ -62,7 +69,6 @@ namespace TeamUpBackEnd.Services
 
 		public async Task SendEmailAsync(string toEmail, string subject, string body)
 		{
-			var accessToken = await GetAccessTokenAsync();
 			var fromEmail = Environment.GetEnvironmentVariable("EMAIL_FROM") ?? _config["Gmail:FromEmail"];
 
 			// Create the email message
@@ -74,6 +80,39 @@ namespace TeamUpBackEnd.Services
 				IsBodyHtml = true
 			};
 			message.To.Add(toEmail);
+
+			// Determine if we should use Gmail API (OAuth2) or SMTP fallback
+			var refreshToken = Environment.GetEnvironmentVariable("GMAIL_REFRESH_TOKEN") ?? _config["Gmail:RefreshToken"];
+			var clientId = Environment.GetEnvironmentVariable("GMAIL_CLIENT_ID") ?? _config["Gmail:ClientId"];
+			var clientSecret = Environment.GetEnvironmentVariable("GMAIL_CLIENT_SECRET") ?? _config["Gmail:ClientSecret"];
+
+			// SMTP configuration (fallback) - can be set via environment variables or configuration
+			var smtpHost = Environment.GetEnvironmentVariable("SMTP_HOST") ?? _config["Smtp:Host"] ?? "smtp.gmail.com";
+			var smtpPortStr = Environment.GetEnvironmentVariable("SMTP_PORT") ?? _config["Smtp:Port"];
+			int smtpPort = 587;
+			if (!string.IsNullOrEmpty(smtpPortStr) && int.TryParse(smtpPortStr, out var parsedPort)) smtpPort = parsedPort;
+			var smtpUser = Environment.GetEnvironmentVariable("SMTP_USER") ?? _config["Smtp:User"] ?? fromEmail;
+			var smtpPass = Environment.GetEnvironmentVariable("SMTP_PASSWORD") ?? Environment.GetEnvironmentVariable("EMAIL_PASSWORD") ?? _config["Smtp:Password"];
+
+			if (string.IsNullOrEmpty(refreshToken) || string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(clientSecret))
+			{
+				// No refresh token/client credentials available -> use SMTP fallback if password is configured
+				if (string.IsNullOrEmpty(smtpPass))
+				{
+					throw new InvalidOperationException("No Gmail refresh token found and no SMTP password configured. Set GMAIL_REFRESH_TOKEN (plus client id/secret) or SMTP_PASSWORD/EMAIL_PASSWORD.");
+				}
+
+				using (var smtp = new SmtpClient(smtpHost, smtpPort))
+				{
+					smtp.EnableSsl = true;
+					smtp.Credentials = new NetworkCredential(smtpUser, smtpPass);
+					await smtp.SendMailAsync(message);
+					return;
+				}
+			}
+
+			// Use Gmail API with OAuth2
+			var accessToken = await GetAccessTokenAsync();
 
 			// Convert to MIME format
 			var mimeMessage = ConvertMailMessageToMimeString(message);
