@@ -14,165 +14,191 @@ using TeamUpBackEnd.Helpers;
 using TeamUpBackEnd.Interfaces;
 using TeamUpBackEnd.Models;
 using TeamUpBackEnd.Services;
+using Microsoft.AspNetCore.HttpOverrides;
 
+// 1. ENVIRONMENT CONFIGURATION
 var envPath = FindEnvFile();
 if (!string.IsNullOrEmpty(envPath)) Env.Load(envPath);
 
 static string? FindEnvFile()
 {
-	var currentDir = new DirectoryInfo(Directory.GetCurrentDirectory());
-	while (currentDir != null)
-	{
-		var envFile = Path.Combine(currentDir.FullName, ".env");
-		if (File.Exists(envFile)) return envFile;
-		currentDir = currentDir.Parent;
-	}
-	return null;
+    var currentDir = new DirectoryInfo(Directory.GetCurrentDirectory());
+    while (currentDir != null)
+    {
+        var envFile = Path.Combine(currentDir.FullName, ".env");
+        if (File.Exists(envFile)) return envFile;
+        currentDir = currentDir.Parent;
+    }
+    return null;
 }
 
 var builder = WebApplication.CreateBuilder(args);
 
 var backendUrl = Environment.GetEnvironmentVariable("BACKEND_URL")
-	?? Environment.GetEnvironmentVariable("API_URL")
-	?? "https://localhost:7094";
+    ?? Environment.GetEnvironmentVariable("API_URL")
+    ?? "https://localhost:7094";
 var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL")
-	?? "http://localhost:4200";
+    ?? "http://localhost:4200";
 
+// 2. CORE SERVICES
 builder.Services.AddControllers();
+builder.Services.AddHttpClient();
 
+// 3. DATABASE SETUP
 var connectionString = Environment.GetEnvironmentVariable("DATABASE_CONNECTION_STRING")
-	?? throw new InvalidOperationException("DATABASE_CONNECTION_STRING environment variable is not set");
+    ?? throw new InvalidOperationException("DATABASE_CONNECTION_STRING environment variable is not set");
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-	options.UseNpgsql(connectionString));
+    options.UseNpgsql(connectionString));
 
+// 4. IDENTITY SECURITY SETUP
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
-	.AddEntityFrameworkStores<AppDbContext>()
-	.AddDefaultTokenProviders();
+    .AddEntityFrameworkStores<AppDbContext>()
+    .AddDefaultTokenProviders();
 
 builder.Services.Configure<IdentityOptions>(options =>
 {
-	options.Password.RequiredLength = 8;
-	options.Password.RequireDigit = true;
-	options.Password.RequireUppercase = true;
-	options.Password.RequireLowercase = true;
-	options.Password.RequireNonAlphanumeric = true;
+    options.Password.RequiredLength = 8;
+    options.Password.RequireDigit = true;
+    options.Password.RequireUppercase = true;
+    options.Password.RequireLowercase = true;
+    options.Password.RequireNonAlphanumeric = true;
 });
 
+// 5. EXTERNAL SERVICES (RESEND & CLOUDINARY)
 builder.Services.AddResend(o =>
 {
-	o.ApiToken = Environment.GetEnvironmentVariable("RESEND_API_KEY")
-		?? throw new InvalidOperationException("RESEND_API_KEY environment variable is not set");
+    o.ApiToken = Environment.GetEnvironmentVariable("RESEND_API_KEY")
+        ?? throw new InvalidOperationException("RESEND_API_KEY environment variable is not set");
 });
 
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<CloudinaryService>();
 builder.Services.AddScoped<TokenService>();
-builder.Services.AddHttpClient();
 
+// 6. AUTHENTICATION & JWT BEARER CONFIGURATION
 builder.Services.AddAuthentication(options =>
 {
-	options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-	options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 })
-
 .AddJwtBearer(options =>
 {
-	var jwtKey = Environment.GetEnvironmentVariable("JWT_KEY") ?? builder.Configuration["Jwt:Key"];
-	var jwtIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER") ?? builder.Configuration["Jwt:Issuer"];
-	var jwtAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE") ?? builder.Configuration["Jwt:Audience"];
+    var jwtKey = Environment.GetEnvironmentVariable("JWT_KEY") ?? builder.Configuration["Jwt:Key"];
+    var jwtIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER") ?? builder.Configuration["Jwt:Issuer"];
+    var jwtAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE") ?? builder.Configuration["Jwt:Audience"];
 
-	var key = Encoding.ASCII.GetBytes(jwtKey!);
-	options.TokenValidationParameters = new TokenValidationParameters
-	{
-		ValidateIssuer = true,
-		ValidateAudience = true,
-		ValidateLifetime = true,
-		ValidateIssuerSigningKey = true,
-		ValidIssuer = jwtIssuer,
-		ValidAudience = jwtAudience,
-		IssuerSigningKey = new SymmetricSecurityKey(key)
-	};
+    var key = Encoding.ASCII.GetBytes(jwtKey!);
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtIssuer,
+        ValidAudience = jwtAudience,
+        IssuerSigningKey = new SymmetricSecurityKey(key)
+    };
 
-	options.Events = new JwtBearerEvents
-	{
-		OnMessageReceived = context =>
-		{
-			var accessToken = context.Request.Query["access_token"];
-			var path = context.HttpContext.Request.Path;
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var accessToken = context.Request.Query["access_token"];
+            var path = context.HttpContext.Request.Path;
 
-			if (!string.IsNullOrEmpty(accessToken) &&
-				(path.StartsWithSegments("/chathub") ||
-				 path.StartsWithSegments("/dmhub") ||
-				 path.StartsWithSegments("/taskhub")))
-			{
-				context.Token = accessToken;
-			}
-			return Task.CompletedTask;
-		}
-	};
+            if (!string.IsNullOrEmpty(accessToken) &&
+                (path.StartsWithSegments("/chathub") ||
+                 path.StartsWithSegments("/dmhub") ||
+                 path.StartsWithSegments("/taskhub")))
+            {
+                context.Token = accessToken;
+            }
+            return Task.CompletedTask;
+        }
+    };
 });
 
+// 7. CORS POLICY
 builder.Services.AddCors(options =>
 {
-	options.AddPolicy("AllowAll", builder =>
-	{
-		builder.WithOrigins(frontendUrl)
-				.AllowAnyHeader()
-				.AllowAnyMethod()
-				.AllowCredentials();
-	});
+    options.AddPolicy("AllowAll", policyBuilder =>
+    {
+        policyBuilder.WithOrigins(frontendUrl)
+                     .AllowAnyHeader()
+                     .AllowAnyMethod()
+                     .AllowCredentials();
+    });
 });
 
+// 8. SWAGGER DOCUMENTATION
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
-	options.SwaggerDoc("v1", new() { Title = "TeamUp API", Version = "v1" });
-	options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-	{
-		Name = "Authorization",
-		Type = SecuritySchemeType.ApiKey,
-		Scheme = "Bearer",
-		BearerFormat = "JWT",
-		In = ParameterLocation.Header,
-		Description = "Enter 'Bearer' followed by a space and your JWT token."
-	});
+    options.SwaggerDoc("v1", new() { Title = "TeamUp API", Version = "v1" });
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Enter 'Bearer' followed by a space and your JWT token."
+    });
 
-	options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
-	{
-		[new OpenApiSecuritySchemeReference("Bearer", document)] = []
-	});
+    options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+    {
+        [new OpenApiSecuritySchemeReference("Bearer", document)] = []
+    });
 });
 
+// 9. RATE LIMITING
 builder.Services.AddRateLimiter(options =>
 {
-	options.AddFixedWindowLimiter("auth", config =>
-	{
-		config.PermitLimit = 5;
-		config.Window = TimeSpan.FromMinutes(3);
-	});
+    options.AddFixedWindowLimiter("auth", config =>
+    {
+        config.PermitLimit = 5;
+        config.Window = TimeSpan.FromMinutes(3);
+    });
 });
 
+// 10. REALTIME SIGNALR
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<IUserIdProvider, CustomUserIdProvider>();
 
+// ==========================================
+// BUILD APPLICATION PIPELINE
+// ==========================================
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
+// A. REVERSE PROXY FORWARDING (Crucial for Render)
+if (!app.Environment.IsDevelopment())
 {
-	app.UseSwagger();
-	app.UseSwaggerUI(c =>
-	{
-		c.SwaggerEndpoint("/swagger/v1/swagger.json", "MyWebApi v1");
-		c.RoutePrefix = string.Empty; 
-	});
+    app.UseForwardedHeaders(new ForwardedHeadersOptions
+    {
+        ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+    });
 }
 
+// B. SWAGGER & LOCAL REDIRECTS
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "MyWebApi v1");
+        c.RoutePrefix = string.Empty; 
+    });
+    
+    // Only enforce locally; Let Render manage production HTTPS termination
+    app.UseHttpsRedirection();
+}
+
+// C. STATIC FILE MIDDLEWARE
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
-app.MapFallbackToFile("index.html");
-	
+// D. GLOBAL ROUTING & CORS PIPELINE
 app.UseCors("AllowAll");
 
 app.UseAuthentication();
@@ -180,17 +206,20 @@ app.UseAuthorization();
 
 app.UseRateLimiter();
 
-app.MapHub<ChatHub>("/chathub");
-app.MapHub<TaskHub>("/taskhub");
-
-app.MapHub<DmHub>("/dmhub").RequireAuthorization();
+// E. MAP API CONTROLLERS AND CUSTOM ENDPOINTS
+app.MapControllers();
 
 EndpointsGenerator.MapEndpoints(app);
 DirectMessagesEndpoints.MapDirectMessages(app);
 InboxEndpoints.MapInboxEndpoints(app);
 
-app.UseHttpsRedirection();
+// F. MAP REALTIME SIGNALR HUBS
+app.MapHub<ChatHub>("/chathub");
+app.MapHub<TaskHub>("/taskhub");
+app.MapHub<DmHub>("/dmhub").RequireAuthorization();
 
-app.MapControllers();
+// G. FALLBACK ROUTE (MUST BE LAST)
+// Only redirects to index.html if no api, static file, or signalR endpoint was hit
+app.MapFallbackToFile("index.html");
 
 app.Run();
