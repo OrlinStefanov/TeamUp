@@ -1,45 +1,34 @@
-﻿using Microsoft.AspNetCore.Identity;
-using System.Net;
-using System.Net.Mail;
+﻿using Resend;
 using TeamUpBackEnd.Interfaces;
 
 namespace TeamUpBackEnd.Services
 {
 	public class EmailService : IEmailService
 	{
+		private readonly IResend _resend;
 		private readonly IConfiguration _config;
 
-		public EmailService(IConfiguration config)
+		public EmailService(IResend resend, IConfiguration config)
 		{
+			_resend = resend;
 			_config = config;
 		}
 
 		public async Task SendEmailAsync(string toEmail, string subject, string body)
 		{
-			var smtpServer = Environment.GetEnvironmentVariable("SMTP_SERVER") ?? _config["Email:SmtpServer"];
-			var smtpPort = int.Parse(Environment.GetEnvironmentVariable("SMTP_PORT") ?? _config["Email:Port"] ?? "587");
-			var username = Environment.GetEnvironmentVariable("EMAIL_USERNAME") ?? _config["Email:Username"];
-			var password = Environment.GetEnvironmentVariable("EMAIL_PASSWORD") ?? _config["Email:Password"];
-			var from = Environment.GetEnvironmentVariable("EMAIL_FROM") ?? _config["Email:From"];
+			var from = Environment.GetEnvironmentVariable("EMAIL_FROM")
+				?? _config["Email:From"]
+				?? throw new InvalidOperationException("EMAIL_FROM environment variable is not set");
 
-			var smtpClient = new SmtpClient(smtpServer)
+			var message = new EmailMessage
 			{
-				Port = smtpPort,
-				Credentials = new NetworkCredential(username, password),
-				EnableSsl = true
-			};
-
-			using var message = new MailMessage
-			{
-				From = new MailAddress(from),
+				From = from,
 				Subject = subject,
-				Body = body,
-				IsBodyHtml = true
+				HtmlBody = body
 			};
-
 			message.To.Add(toEmail);
 
-			await smtpClient.SendMailAsync(message);
+			await _resend.EmailSendAsync(message);
 		}
 	}
 }
