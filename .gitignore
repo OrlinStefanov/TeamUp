@@ -62,6 +62,7 @@ npm-debug.log*
 ############################
 .env
 .env.*
+get-refresh-token.js
 
 ############################
 # ASP.NET configuration
